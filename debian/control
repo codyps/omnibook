@@ -1,0 +1,14 @@
+Source: omnibook
+Section: misc
+Priority: optional
+Maintainer: Peter Soos <sp@osb.hu>
+Build-Depends: debhelper (>> 4.0.0)
+Standards-Version: 3.6.2
+
+Package: omnibook-source
+Architecture: all
+Depends: make, module-assistant
+Recommends: kernel-package 
+Description: Source for the omnibook driver
+ This package provides the source code for the omnibook kernel module.
+ Kernel source is required to compile this module.

@@ -1,0 +1,213 @@
+Kernel Support for OneTouch buttons of HP OmniBooks
+===================================================
+
+Some HP OmniBook (and other) laptops have special multimedia keys
+(aka OneTouch buttons). These or some of them are disabled by default
+and need to be enabled.
+
+Note: these buttons may be enabled by kernel series 2.5/2.6 at startup without
+      this module, but sometimes it is useful to disable them e.g. if you
+      travel with your laptop, and want to prevent accidental pressing
+      buttons on front/side of your laptop.
+
+This module try to detect your HP OmniBook and enable OneTouch buttons
+to generate scancodes.
+Look in syslog messages for "keyboard: unknown scancode e0 xx" messages to
+identify the scancode assigned to button. Use setkeycodes from console-tools
+package to assign keycodes to them.
+
+The scancodes are different on different models:
+
+HP OmniBook XE3 GC, GD, GE and HP Pavilion N5xxx
+------------------------------------------------
+
+WWW button:			e073
+Mail button:			e074
+Presentation button:		e072
+Help button:			e071
+
+Previous Track button:		e010
+Play / Pause button:		e022
+Stop / Eject button:		e024
+Next Track button:		e019
+
+
+HP OmniBook XE3 GF
+------------------
+
+WWW button:                     e032
+Mail button:                    e06c
+Presentation button:            e074
+Help button:                    e073
+
+Previous Track button:          e010
+Play / Pause button:            e022
+Stop / Eject button:            e024
+Next Track button:              e019
+
+Volume down (& Fn-Down arrow):	e02e
+Volume up (& Fn-Up arrow):	e030
+Mute / Unmute (Fn-F7):          e020
+
+
+HP OmniBook xe4xxx and ze4xxx
+-----------------------------
+
+Mail button:                    e06c
+Presentation button:            e073
+WWW button:                     e032
+Lock button:                    e071
+Help button:                    e070
+
+Volume down button:             e02e
+Volume up button:               e030
+Mute / Unmute button:           e020
+
+
+HP OmniBook xt155
+-----------------
+
+Mail button:                    e06c
+Presentation button:            e073
+WWW button:                     e032
+Lock button:                    e071
+Help button:                    e070
+
+
+HP OmniBook XT1000 and ZT11xx
+-----------------------------
+
+Mail button:                    e06c
+Presentation button:            e074
+WWW button:                     e032
+Lock button:                    e073
+Help button:                    e072
+
+MP3 button:                     e071
+Previous Track button:          e010
+Play / Pause button:            e022
+Stop / Eject button:            e024
+Next Track button:              e019
+
+Volume down button:             e02e
+Volume up button:               e030
+Mute / Unmute button:           e020
+
+
+HP OmniBook 5xx
+---------------
+
+Presentation button:		e074
+Help button:			e073
+
+Previous Track button:          e010 (*)
+Play / Pause button:            e022 (*)
+Stop / Eject button:            e024 (*)
+Next Track button:              e019 (*)
+
+Volume down button:             e02e (*)
+Volume up button:               e030 (*)
+
+(*) On the docking station
+
+
+Toshiba Satellite 3000-100
+--------------------------
+
+WWW button:			e071
+Mail button:			e073
+
+DVD button:			e006
+CD button:			e013
+
+Stop / Eject button:		e024
+Previous Track button:		e010
+Next Track button:		e019
+Play / Pause button:		e022
+
+Volume up button:		e075
+Volume down button:		e076
+
+
+HP/Compaq nx9000
+----------------
+
+Mail button:                    e06c
+Search button:                  e073
+Information button:             e032
+Lock button:                    e071
+Help button:                    e070
+
+Volume down button:             e02e
+Volume up button:               e030
+Mute / Unmute button:           e020
+
+
+Fujitsu-Siemens Amilo D
+-----------------------
+
+User 1 / Stop / Eject button:   e071
+User 1 / Play / Pause button:   e072
+Email / Previous Track button:  e074
+WWW / Next Track button:        e073
+
+Volume up button:               e075
+Volume down button:             e076
+
+
+Acer Aspire 1350
+----------------
+
+Bluetooth			e058
+Wifi				e056
+
+
+Toshiba Satellite M70
+---------------------
+
+Lock (Fn + F1)			e06e
+Light Bubble (Fn + F2)		e062
+Suspend (Fn + F3)		e017
+Hibernate (Fn + F4)		e018
+Toggle Display (Fn + F5)	e041
+Brightness Down (Fn + F6)	e06f
+Brightness Up (Fn + F7)		e059
+Toggle Wifi (Fn + F8)		e016
+Touchpad On/Off (Fn + F9)	e01e/e01f
+Zoom - (Fn + 1)		e01a
+Zoom + (Fn + 2)		e01b
+Zoom (Fn + Space)		e043
+Internet			e013
+Media Player			e014
+Play/Pause			e077
+Stop				e012
+Next				e039
+Prev				e074
+Wifi Kill Switch		e015
+
+
+There are programs specifically designed for such application keys (e.g.
+hotkeys: http://ypwong.org/hotkeys/) or kernel level support for such
+keys at http://rick.vanrein.org/linux/funkey/.
+
+XE3L machines are same as XE3 models but they have application launcher
+buttons only but do not have multimedia (CD and volume control) buttons.
+
+The extra buttons near the touchpad are not OneTouch buttons. You need
+driver for touchpad to use them. If you have Synaptics touchpad you may
+try the driver can be found at http://www.mobilix.org/touchpad_driver.html.
+Newer version can be found at
+http://w1.894.telia.com/~u89404340/touchpad/index.html
+
+The ("Big Blue") Sleep button also not a OneTouch button, it usually
+handled by APM or ACPI stuff depending on your BIOS implementation.
+
+Unfortunately the volume control buttons on XE3GC and OB5xx style models are
+implemented in different way and do not generates scancodes.
+
+The volume control buttons on the right side of OB5xx and OB6xxxx wired into
+the sound chip. The newer ALSA driver for maestro3 sound chip contains
+support for these buttons.
+
+The volume control buttons on the docking station of OB500 are real OneTouch
+buttons (see above).

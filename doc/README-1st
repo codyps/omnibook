@@ -1,0 +1,16 @@
+This package intended to provide Linux kernel support for HP OmniBook,
+HP Pavilion, Toshiba Satellite and some Acer Aspire and Compal laptops.
+The state of this code is experimental.
+
+This code was written without any documentation about HP OmniBooks and
+other machines so it is provided as is without any warranty. Use it on
+your own risk.
+
+The code in the files in the omnibook distribution is licensed for use
+under the terms of GNU General Public License, included as the file
+named COPYING.
+
+For installation instructions please read the file named INSTALL.
+For usage informations and/or bug reports you may read file named README.
+For additional informations for using it on kernel 2.6 see README-2.6.
+For current bugs and problems see file named BUGS.

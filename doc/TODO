@@ -1,0 +1,9 @@
+TODO
+====
+
+* Fix LCD brighness handling on XE3GF style machines
+* Fully support OB5xx, OB6xxx and XE4500 style machines
+* Battery support for OB5xx, OB6xxx and XE4500 style machines
+* Adding more features of embedded controller
+* Support more machines
+* See if/how key polling can be ported to 2.6

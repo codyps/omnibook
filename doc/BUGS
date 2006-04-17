@@ -1,0 +1,40 @@
+Bugs and problems in omnibook module code
+=========================================
+
+* You can use /proc/apm emulation for battery status monitoring only.
+* Volume Control buttons do not generate scancodes on XE3GC style models.
+  Scancode emulation needs intensive testing to be reliable.
+* Volume Control buttons on machine (not on docking station) do not generate
+  scancodes on OB500 style models. It is unhandled yet.
+* Sometimes (I assume when the embedded controller is busy) the procfs
+  interface displays fake values.
+* Setting the LCD brightness on HP OmniBook XE3 GF via /proc/omnibook/lcd
+  is working if you press one of the brightness control keys once after
+  writing the value into /proc/omnibook/lcd.
+* After reenable the touchpad via /proc/omnibook/touchpad you may restart
+  X / gpm.
+* I'm not a native English speaker so text corrections are welcome.
+
+Problems with OmniBook machines running Linux
+=============================================
+
+* If you use APM there are a lot of mysterious hangs at suspend/resume on
+  the new models. The OmniBooks use ACPI not APM but ACPI for Linux does not
+  provide reliable power management functions yet. Use swsusp instead.
+* In some cases the touchpad in XE3 GF models can freeze the laptop after
+  disabling and reenabling it with the disable button and doing a tap
+  action when neither gpm nor X is running. It seems to be a BIOS or
+  firmware bug.
+  Please report if you can reproduce it.
+* On XE3 GC models Fn-s key combination try to suspend to ram which freezes
+  the machine completely.
+* The ESS winmodem in XE3 (and other) machines is not working with Linux.
+  There are binary only drivers but those have a lot of problems (eg. lock
+  up the machine at disconnect etc.)
+  The divers can be downloaded from the URLs below:
+  HP OmniBook XE3 GF:
+  http://andrew.cait.org/ess/ES2839_4Linux2_4_18-2mdk.zip
+  HP OmniBook XE3 GC:
+  http://luftstrom.bastun.net/ess-modem-1989.tar.gz
+* The 3Com winmodem in OmniBook 5xx (and other) laptops is unsupported by
+  Linux.

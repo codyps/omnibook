@@ -1,0 +1,15 @@
+--- ./arch/i386/kernel/apm.c.orig	Tue Mar 11 08:59:24 2003
++++ ./arch/i386/kernel/apm.c	Tue Mar 11 09:00:30 2003
+@@ -1906,10 +1906,12 @@
+ 	}
+ 	if ((smp_num_cpus > 1) && !power_off) {
+ 		printk(KERN_NOTICE "apm: disabled - APM is not SMP safe.\n");
++		apm_info.disabled = 1;
+ 		return -ENODEV;
+ 	}
+ 	if (PM_IS_ACTIVE()) {
+ 		printk(KERN_NOTICE "apm: overridden by ACPI.\n");
++		apm_info.disabled = 1;
+ 		return -ENODEV;
+ 	}
+ 	pm_active = 1;
