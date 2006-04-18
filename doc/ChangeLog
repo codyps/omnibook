@@ -3,6 +3,7 @@ Changelog file for omnibook package:
 
 2006-XX-XX Mathieu Bérard <math_b@users.sourceforge.net>
 * Make the module linux 2.6 only
+  kernel versions from 2.6.8 to a least 2.6.17-rc1 are supported
 * Integrate with Driver Model: register as a platform device and optional
   registration as a backlight device
 * Get rid of deprecated pm_legacy functions
