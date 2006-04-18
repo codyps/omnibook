@@ -92,7 +92,11 @@ extern int omnibook_get_ac(void);
 extern int omnibook_get_battery_status(int num, struct omnibook_battery_state *battstat);
 extern int set_omnibook_param(const char *val, struct kernel_param *kp);
 
-/* Configuration for standalone compilation */
+/* 
+ * Configuration for standalone compilation: 
+ * -Register as backlight depends on kernel config
+ * -APM emulation is disabled by default
+ */
 
 #ifdef  OMNIBOOK_STANDALONE
 #ifdef  CONFIG_BACKLIGHT_CLASS_DEVICE

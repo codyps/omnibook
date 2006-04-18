@@ -23,17 +23,28 @@
 #include <linux/proc_fs.h>
 #include <linux/dmi.h>
 #include <linux/version.h>
-#include <linux/platform_device.h>
 #include <asm/uaccess.h>
 
-#include "init.h"
-#include "ec.h"
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,15))
+#include <linux/platform_device.h>
+#else
+#include <linux/device.h>
+#endif
 
+
+#include "ec.h"
+#include "init.h"
 
 static struct proc_dir_entry *omnibook_proc_root = NULL;
 
 int omnibook_ectype = NONE;
 static int omnibook_userset = 0;
+
+/*
+ * The platform_driver interface was added in linux 2.6.15
+ */
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,15))
 
 static struct platform_device *omnibook_device;
 
@@ -49,6 +60,26 @@ static struct platform_driver omnibook_driver = {
 		   .owner  = THIS_MODULE,
 		   },
 };
+
+#else /* 2.6.15 */
+
+static struct device_driver omnibook_driver = {
+	.name   = OMNIBOOK_MODULE_NAME,
+	.bus    = &platform_bus_type,
+	.probe = compat_omnibook_probe,
+	.remove = compat_omnibook_remove,
+#ifdef CONFIG_PM
+	.suspend = compat_omnibook_suspend,
+	.resume = compat_omnibook_resume,
+#endif
+};
+ 
+static struct platform_device omnibook_device = {
+	.name   = OMNIBOOK_MODULE_NAME,
+};
+
+#endif /* 2.6.15 */
+
 
 /* Linked list of all enabled features */
 static struct omnibook_feature *omnibook_available_feature;
@@ -576,15 +607,21 @@ static int __init omnibook_module_init(void)
 		return -ENOENT;
 	}
 
+/*
+ * The platform_driver interface was added in linux 2.6.15
+ */
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,15))
+
 	retval = platform_driver_register(&omnibook_driver);
-	if (retval < 0)
-		return retval;
+	if (retval < 0) return retval;
 
 	omnibook_device = platform_device_alloc(OMNIBOOK_MODULE_NAME, -1);
 	if (!omnibook_device) {
 		platform_driver_unregister(&omnibook_driver);
 		return -ENOMEM;
 	}
+	
 	retval = platform_device_add(omnibook_device);
 	if (retval) {
 		platform_device_put(omnibook_device);
@@ -592,13 +629,36 @@ static int __init omnibook_module_init(void)
 		return retval;
 	}
 
+#else /* 2.6.15 */
+
+	retval = driver_register(&omnibook_driver);
+	if (retval < 0) return retval;
+        
+        retval = platform_device_register(&omnibook_device);
+        
+        if (retval) {
+        	driver_unregister(&omnibook_driver);	
+		return retval;
+	}
+
+#endif
 	return 0;
 }
 
 static void __exit omnibook_module_cleanup(void)
 {
+
+/*
+ * The platform_driver interface was added in linux 2.6.15
+ */
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,15))
 	platform_device_unregister(omnibook_device);
 	platform_driver_unregister(&omnibook_driver);
+#else
+	platform_device_unregister(&omnibook_device);
+	driver_unregister(&omnibook_driver);
+#endif
 
 	if (omnibook_proc_root)
 		remove_proc_entry("omnibook", NULL);

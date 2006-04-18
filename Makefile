@@ -32,8 +32,6 @@ BDIR	= $(shell pwd)
 TODAY	= $(shell date +%Y%m%d)
 KERNEL	= $(shell uname -r | cut -c 1-3)
 
-CC	= gcc
-LD	= ld
 DEPMOD	= depmod -a
 RMMOD	= modprobe -r
 INSMOD	= modprobe

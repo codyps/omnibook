@@ -21,6 +21,7 @@
 #endif
 
 #include <linux/dmi.h>
+#include <linux/version.h>
 
 static int omnibook_version_read(char *buffer)
 {
@@ -53,9 +54,11 @@ static int omnibook_dmi_read(char *buffer)
 	len +=
 	    sprintf(buffer + len, "Version:       %s\n",
 		    dmi_get_system_info(DMI_PRODUCT_VERSION));
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,15))	
 	len +=
 	    sprintf(buffer + len, "Serial Number: %s\n",
 		    dmi_get_system_info(DMI_PRODUCT_SERIAL));
+#endif
 	len +=
 	    sprintf(buffer + len, "Board Vendor:  %s\n",
 		    dmi_get_system_info(DMI_BOARD_VENDOR));

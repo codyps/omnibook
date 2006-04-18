@@ -21,14 +21,34 @@
 #include <linux/config.h>
 #include <linux/spinlock.h>
 #include <linux/acpi.h>
+#include <linux/version.h>
 
 #include <asm/io.h>
-
 #include "ec.h"
+
+/*
+ * For (dumb) compatibility with kernel older than 2.6.9
+ */
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,9))
+#define ioread8(addr)		readb(addr)
+#define iowrite8(val,addr)	writeb(val,addr)
+#endif
+
+/*
+ * For compatibility with kernel older than 2.6.11
+ */
+
+#ifndef DEFINE_SPINLOCK
+#define DEFINE_SPINLOCK(s)              spinlock_t s = SPIN_LOCK_UNLOCKED
+#endif
+
 
 /*
  *	Interrupt control
  */
+
+
 
 static DEFINE_SPINLOCK(omnibook_ec_lock);
 
