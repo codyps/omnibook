@@ -12,8 +12,9 @@ Step 1
   between the used kernel and omnibook code. Partly installed kernels
   (for example from distributor makers) can be unuseable for this action.
 
-  You need same C compiler to kernel was compiled with (eg. gcc3 for gcc3 
-  compiled kernels) and GNU make.
+  You need GNU make and C compiler (gcc).
+  gcc version needs to be the same as the one the kernel was compiled with 
+  (eg. gcc-4.0 for gcc-4.0 compiled kernel).
 
 Step 2
 
