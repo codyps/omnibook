@@ -281,7 +281,7 @@ static int omnibook_fan_write(char *buffer)
 
 struct omnibook_feature fan_feature;
 
-static int __init omnibook_fan_init(void)
+static int omnibook_fan_init(void)
 {
 	/*
 	 * OB4150

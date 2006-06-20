@@ -136,7 +136,7 @@ static int omnibook_apmemu_read(char *buffer)
 	return len;
 }
 
-static int __init omnibook_apmemu_init(void)
+static int omnibook_apmemu_init(void)
 {
 #ifdef CONFIG_APM
 	if (!apm_info.disabled) {

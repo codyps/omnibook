@@ -169,7 +169,7 @@ static int omnibook_brightness_write(char *buffer)
 	return 0;
 }
 
-static int __init omnibook_brightness_init(void)
+static int omnibook_brightness_init(void)
 {
 	/*
 	 * FIXME: What is exactly de max value for each model ?
@@ -201,7 +201,7 @@ static int __init omnibook_brightness_init(void)
 	return 0;
 }
 
-static void __exit omnibook_brightness_cleanup(void)
+static void omnibook_brightness_cleanup(void)
 {
 #ifdef CONFIG_OMNIBOOK_BACKLIGHT
 	backlight_device_unregister(omnibook_backlight_device);

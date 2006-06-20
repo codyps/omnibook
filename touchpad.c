@@ -146,7 +146,7 @@ static int omnibook_touchpad_write(char *buffer)
 	return 0;
 }
 
-static void __exit omnibook_touchpad_cleanup(void)
+static void omnibook_touchpad_cleanup(void)
 {
 	omnibook_touchpad_enable();
 }

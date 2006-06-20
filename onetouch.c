@@ -151,7 +151,7 @@ static int omnibook_onetouch_write(char *buffer)
 	return 0;
 }
 
-static int __init omnibook_onetouch_init(void)
+static int omnibook_onetouch_init(void)
 {
 	int retval;
 
@@ -160,7 +160,7 @@ static int __init omnibook_onetouch_init(void)
 	return 0;
 }
 
-static void __exit omnibook_onetouch_cleanup(void)
+static void omnibook_onetouch_cleanup(void)
 {
 	omnibook_onetouch_disable();
 }

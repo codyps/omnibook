@@ -146,7 +146,7 @@ static int omnibook_console_blank_write(char *buffer)
 	return 0;
 }
 
-static int __init omnibook_console_blank_init(void)
+static int omnibook_console_blank_init(void)
 {
 
 	int retval;
@@ -157,7 +157,7 @@ static int __init omnibook_console_blank_init(void)
 	return 0;
 }
 
-static void __exit omnibook_console_blank_cleanup(void)
+static void omnibook_console_blank_cleanup(void)
 {
 	omnibook_console_blank_disable();
 }
