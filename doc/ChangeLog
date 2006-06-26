@@ -5,9 +5,9 @@ Changelog file for omnibook package:
 
 2006-XX-XX Mathieu Bérard <math_b@users.sourceforge.net>
 * Make the module linux 2.6 only
-  kernel versions from 2.6.8 to a least 2.6.17-rc1 are supported
+  kernel versions from 2.6.8 to a least 2.6.17 are supported
 * Integrate with Driver Model: register as a platform device and optional
-  registration as a backlight device
+  registration as a backlight device (2.6.17+ required here)
 * Get rid of deprecated pm_legacy functions
 * Use kernel-provided DMI information
 * MODULE_PARAM -> 2.6-style module_parm_*
@@ -17,8 +17,9 @@ Changelog file for omnibook package:
   This eliminate util.c
   Rationale: Reduce code duplication and create a standard template for features
 * Move dmi and version display into their own file: info.c
-* Remove all unneeded EXPORT_SYMBOL
+* Remove all (as unneeded) EXPORT_SYMBOL
 * Misc fixes in Makefile
+  Make more use of Kbuild
 * Use sscanf and simple_stro{u}l for strings parsing instead of custom code
 * Run lindent for better conformance with kernel coding style
 * Add very limited support for Toshiba M40
@@ -32,12 +33,9 @@ Changelog file for omnibook package:
 * Spinlock protect omnibook_mem_* and use ioread8 and iowrite8
 * Fix: Custom EC access function are also used if ACPI is compiled but disabled
 * Cleanup: remove lots of unneeded #ifdef
-* Add two features for developers: dump and watch
+* Add a new feature for testers: dump
   Dump was stolen from the ibm_acpi driver
-  Watch is just an hack I made because using "obtest" to poll the registers of 
-  my embedded controlled _badly_ confuse the kernel ACPI EC driver due to races 
-  conditions
-  They are both disabled by default
+  It is disabled by default
 
 2006-05-15 Thomas Perl <thp@perli.net>
 * Added support for xe4500's "audio mute" led
