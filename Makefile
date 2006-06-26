@@ -109,9 +109,8 @@ deb:		clean
 
 release:	clean
 		mkdir -p ../$(MODULE_NAME)-$(TODAY)
-		cp -a *.h *.c Makefile debian doc misc ../$(MODULE_NAME)-$(TODAY)
+		cp -a *.h *.c *.lds Makefile debian doc misc ../$(MODULE_NAME)-$(TODAY)
 		sed -i "s|^\(#define OMNIBOOK_MODULE_VERSION.*\)\".*\"|\1\"$(TODAY)\"|" ../$(MODULE_NAME)-$(TODAY)/omnibook.h
-		sed -i "s|^\(omnibook \)(current.*)|\1($(TODAY)-0)|" ../$(MODULE_NAME)-$(TODAY)/debian/changelog
 		rm -f ../$(MODULE_NAME)-$(TODAY).tar ../$(MODULE_NAME)-$(TODAY).tar.gz
 		(cd ..; tar cvf $(MODULE_NAME)-$(TODAY).tar $(MODULE_NAME)-$(TODAY); gzip -9 $(MODULE_NAME)-$(TODAY).tar)
 
