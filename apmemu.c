@@ -147,7 +147,7 @@ static int omnibook_apmemu_init(void)
 	return 0;
 }
 
-struct omnibook_feature apmemu_feature = {
+static struct omnibook_feature __declared_feature apmemu_feature = {
 	 .name = "apmemu",
 	 .proc_entry = "apm", /* create /proc/apm */
 #ifdef CONFIG_OMNIBOOK_APMEMU

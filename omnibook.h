@@ -17,6 +17,8 @@
 
 #include <linux/module.h>
 #include <linux/moduleparam.h>
+#include <linux/config.h>
+#include <linux/version.h>
 
 /*
  * Module informations
@@ -52,7 +54,6 @@ extern int omnibook_ectype;
  */
 
 struct omnibook_feature {
-	struct list_head list;
 	char *name;		/* Name */
 	char *proc_entry; 	/* Specify proc entry relative to /proc (will be omnibook/name otherwise) */
 	int enabled;		/* Set from module parameter */
@@ -63,6 +64,7 @@ struct omnibook_feature {
 	int (*suspend) (void);  /* PM Suspend function */
 	int (*resume) (void);   /* PM Resume function */
 	int ectypes;		/* Type(s) of EC we support for this feature (bitmask) */
+	struct list_head list;
 };
 
 struct omnibook_battery_info {
@@ -92,14 +94,18 @@ extern int omnibook_get_ac(void);
 extern int omnibook_get_battery_status(int num, struct omnibook_battery_state *battstat);
 extern int set_omnibook_param(const char *val, struct kernel_param *kp);
 
+
+#define __declared_feature __attribute__ (( __section__(".features"),  __aligned__(__alignof__ (struct omnibook_feature)))) __attribute_used__
+
+
 /* 
  * Configuration for standalone compilation: 
- * -Register as backlight depends on kernel config
+ * -Register as backlight depends on kernel config (requires 2.6.17+ interface)
  * -APM emulation is disabled by default
  */
 
 #ifdef  OMNIBOOK_STANDALONE
-#ifdef  CONFIG_BACKLIGHT_CLASS_DEVICE
+#if     defined(CONFIG_BACKLIGHT_DEVICE) && (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,16))
 #define CONFIG_OMNIBOOK_BACKLIGHT
 #else
 #undef  CONFIG_OMNIBOOK_BACKLIGHT

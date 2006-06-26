@@ -94,7 +94,7 @@ static int omnibook_ac_read(char *buffer)
 	return len;
 }
 
-struct omnibook_feature ac_feature = {
+static struct omnibook_feature __declared_feature ac_feature = {
 	 .name = "ac",
 	 .enabled = 1,
 	 .read = omnibook_ac_read,

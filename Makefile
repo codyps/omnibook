@@ -41,35 +41,35 @@ RM	= rm -f
 FIND	= find
 endif
 
-DEBUG	=  # -D OMNIBOOK_DEBUG  -g -O0
-# Used by 2.6 stuff, so let's be consistant.
+DEBUG	=  #-D DEBUG  -g -O0
 EXTRA_CFLAGS += -D OMNIBOOK_STANDALONE $(DEBUG)
+EXTRA_LDFLAGS += $(src)/sections.lds
+
 
 OBJS	= ac.o battery.o blank.o display.o dock.o \
 	  ec.o fan.o fan_policy.o init.o lcd.o onetouch.o \
-	  temperature.o touchpad.o dump.o info.o watch.o \
-	  apmemu.o
+	  temperature.o touchpad.o dump.o info.o \
+	  apmemu.o muteled.o
 
 # All extra flags delt with automagically
+
 obj-m         += $(MODULE_NAME).o
 omnibook-objs := $(OBJS)
 
 all:		 $(MODULE_NAME).ko
 
 clean:
-		$(RM) .*.cmd *.map *.mod.c *.o *.ko *~ "#*#"
-		$(RM) -r .tmp_versions
+		make -C $(KSRC) M=$(PWD) clean
+		$(RM) *~ "#*#" .swp
 		$(RM) -r debian/omnibook-source *-stamp
 		$(RM) -r Modules.symvers
 		(cd misc/obtest; $(RM) obtest *.o)
 
+
 install:	all
 		# Removing module from old location
-		$(RM) $(MODDIR)/char/$(MODULE_NAME).ko
-		$(RM) $(MODDIR)/misc/$(MODULE_NAME).ko
-		$(MKDIR) $(INSTDIR)
-		$(INSTALL) $(MODULE_NAME).ko $(INSTDIR)
-		$(DEPMOD)
+		$(RM) $(VMODDIR)/kernel/drivers/char/$(MODULE_NAME).ko
+		make -C $(KSRC) M=$(PWD) modules_install		
 
 unload:
 		$(RMMOD) $(MODULE_NAME) || :

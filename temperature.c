@@ -88,7 +88,7 @@ int omnibook_temperature_read(char *buffer)
 	return len;
 }
 
-struct omnibook_feature temperature_feature = {
+static struct omnibook_feature __declared_feature temperature_feature = {
 	 .name = "temperature",
 	 .enabled = 1,
 	 .read = omnibook_temperature_read,

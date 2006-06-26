@@ -268,6 +268,8 @@ extern int omnibook_mem_write(u32 addr, u8 data);
 #define OMNIBOOK_KBC_CMD_TOUCHPAD_DISABLE	0xA9	/* Disables touchpad */
 #define OMNIBOOK_KBC_CMD_LCD_ON			0xE1	/* Turns LCD display on */
 #define OMNIBOOK_KBC_CMD_LCD_OFF		0xE2	/* Turns LCD display off */
+#define OMNIBOOK_KBC_CMD_MUTELED_ON     	0x94	/* Turns (xe4500) Mute LED on */
+#define OMNIBOOK_KBC_CMD_MUTELED_OFF    	0x95	/* Turns (xe4500) Mute LED off */
 #define OMNIBOOK_KBC_CMD_AC_POWER_ENABLE	0xC2	/* Enable AC power */
 #define OMNIBOOK_KBC_CMD_AC_POWER_DISABLE	0xC1	/* Disable AC power */
 

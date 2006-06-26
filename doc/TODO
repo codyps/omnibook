@@ -7,3 +7,4 @@ TODO
 * Adding more features of embedded controller
 * Support more machines
 * See if/how key polling can be ported to 2.6
+* LED API support

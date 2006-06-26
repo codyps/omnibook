@@ -69,13 +69,13 @@ static int omnibook_dmi_read(char *buffer)
 	return len;
 }
 
-struct omnibook_feature version_feature = {
+static struct omnibook_feature __declared_feature version_feature = {
 	 .name = "version",
 	 .enabled = 1,
 	 .read = omnibook_version_read,
 };
 
-struct omnibook_feature dmi_feature = {
+static struct omnibook_feature __declared_feature dmi_feature = {
 	 .name = "dmi",
 	 .enabled = 1,
 	 .read = omnibook_dmi_read,

@@ -23,7 +23,7 @@
 #include "ec.h"
 
 /* There is no information about reading OneTouch status */
-int omnibook_onetouch_enabled = 0;
+static int omnibook_onetouch_enabled = 0;
 
 static int omnibook_onetouch_on(void)
 {
@@ -165,7 +165,7 @@ static void omnibook_onetouch_cleanup(void)
 	omnibook_onetouch_disable();
 }
 
-struct omnibook_feature onetouch_feature = {
+static struct omnibook_feature __declared_feature onetouch_feature = {
 	 .name = "onetouch",
 	 .enabled = 1,
 	 .read = omnibook_onetouch_read,

@@ -1,6 +1,8 @@
 Changelog file for omnibook package:
 ------------------------------------
 
+
+
 2006-XX-XX Mathieu Bérard <math_b@users.sourceforge.net>
 * Make the module linux 2.6 only
   kernel versions from 2.6.8 to a least 2.6.17-rc1 are supported
@@ -36,6 +38,9 @@ Changelog file for omnibook package:
   my embedded controlled _badly_ confuse the kernel ACPI EC driver due to races 
   conditions
   They are both disabled by default
+
+2006-05-15 Thomas Perl <thp@perli.net>
+* Added support for xe4500's "audio mute" led
 
 2006-01-26 Soós Péter <sp@osb.hu>
 * Added support for kernels >= 2.6.15 (pm_legacy.h)

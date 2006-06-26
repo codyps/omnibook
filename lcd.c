@@ -36,12 +36,12 @@ static int omnibook_max_brightness;
 static struct backlight_device *omnibook_backlight_device;
 
 int omnibook_get_backlight(struct backlight_device *bd);
-int omnibook_set_backlight(struct backlight_device *bd, int brgt);
+int omnibook_set_backlight(struct backlight_device *bd);
 
 static struct backlight_properties omnibookbl_data = {
 	.owner = THIS_MODULE,
 	.get_brightness = omnibook_get_backlight,
-	.set_brightness = omnibook_set_backlight,
+	.update_status = omnibook_set_backlight,
 };
 
 #endif
@@ -130,9 +130,10 @@ int omnibook_get_backlight(struct backlight_device *bd)
 	return omnibook_get_lcd_brightness();
 }
 
-int omnibook_set_backlight(struct backlight_device *bd, int brgt)
+int omnibook_set_backlight(struct backlight_device *bd)
 {
-	return omnibook_set_lcd_brightness(brgt);
+	int intensity = bd->props->brightness;
+	return omnibook_set_lcd_brightness(intensity);
 }
 #endif
 
@@ -208,7 +209,7 @@ static void omnibook_brightness_cleanup(void)
 #endif
 }
 
-struct omnibook_feature lcd_feature = {
+static struct omnibook_feature __declared_feature lcd_feature = {
 	 .name = "lcd",
 	 .enabled = 1,
 	 .read = omnibook_brightness_read,

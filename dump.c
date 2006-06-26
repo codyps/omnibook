@@ -84,7 +84,7 @@ static int ecdump_write(char *buffer)
 	return 0;
 }
 
-struct omnibook_feature dump_feature = {
+static struct omnibook_feature __declared_feature dump_feature = {
 	 .name = "dump",
 	 .enabled = 0,
 	 .read = ecdump_read,

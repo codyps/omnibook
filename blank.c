@@ -162,7 +162,7 @@ static void omnibook_console_blank_cleanup(void)
 	omnibook_console_blank_disable();
 }
 
-struct omnibook_feature blank_feature = {
+static struct omnibook_feature __declared_feature blank_feature = {
 	 .name = "blank",
 	 .enabled = 1,
 	 .read = omnibook_console_blank_read,

@@ -76,7 +76,7 @@ static int omnibook_dock_read(char *buffer)
 	return len;
 }
 
-struct omnibook_feature dock_feature = {
+static struct omnibook_feature __declared_feature dock_feature = {
 	 .name = "dock",
 	 .enabled = 0,
 	 .read = omnibook_dock_read,

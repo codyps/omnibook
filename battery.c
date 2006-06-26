@@ -552,7 +552,7 @@ static int omnibook_battery_read(char *buffer)
 	return len;
 }
 
-struct omnibook_feature battery_feature  = {
+static struct omnibook_feature __declared_feature battery_feature  = {
 	 .name = "battery",
 	 .enabled = 1,
 	 .read = omnibook_battery_read,

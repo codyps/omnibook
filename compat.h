@@ -1,5 +1,5 @@
 /*
- * init.h -- Interfaces functions with omnibook features
+ * compat.h -- Older kernel (=> 2.6.8) support 
  * 
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -11,7 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
  *
- * Written by Soós Péter <sp@osb.hu>, 2002-2004
+ * Written by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
 /*
@@ -75,26 +75,5 @@ void inline *kzalloc(size_t size, int flags)
 	return ret;
 }
 #endif
-
-struct omnibook_feature;
-
-static int __init omnibook_init(struct omnibook_feature *feature);
-
-extern struct omnibook_feature ac_feature;
-extern struct omnibook_feature apmemu_feature;
-extern struct omnibook_feature battery_feature;
-extern struct omnibook_feature blank_feature;
-extern struct omnibook_feature display_feature;
-extern struct omnibook_feature dock_feature;
-extern struct omnibook_feature dump_feature;
-extern struct omnibook_feature fan_feature;
-extern struct omnibook_feature fan_policy_feature;
-extern struct omnibook_feature dmi_feature;
-extern struct omnibook_feature lcd_feature;
-extern struct omnibook_feature onetouch_feature;
-extern struct omnibook_feature temperature_feature;
-extern struct omnibook_feature touchpad_feature;
-extern struct omnibook_feature version_feature;
-extern struct omnibook_feature watch_feature;
 
 /* End of file */

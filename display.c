@@ -90,7 +90,7 @@ static int omnibook_display_read(char *buffer)
 	return len;
 }
 
-struct omnibook_feature display_feature = {
+static struct omnibook_feature __declared_feature display_feature = {
 	 .name = "display",
 	 .enabled = 1,
 	 .read = omnibook_display_read,

@@ -285,13 +285,9 @@ int omnibook_kbc_command(u8 cmd, u8 data)
  * Read a value from a system I/O address
  */
 
-int omnibook_io_read(u32 addr, u8 * data)
+int inline omnibook_io_read(u32 addr, u8 * data)
 {
-	unsigned long flags;
-
-	spin_lock_irqsave(&omnibook_ec_lock, flags);
 	*data = inb(addr);
-	spin_unlock_irqrestore(&omnibook_ec_lock, flags);
 	return 0;
 }
 
@@ -299,13 +295,9 @@ int omnibook_io_read(u32 addr, u8 * data)
  * Write a value to a system I/O address
  */
 
-int omnibook_io_write(u32 addr, u8 data)
+int inline omnibook_io_write(u32 addr, u8 data)
 {
-	unsigned long flags;
-
-	spin_lock_irqsave(&omnibook_ec_lock, flags);
 	outb(data, addr);
-	spin_unlock_irqrestore(&omnibook_ec_lock, flags);
 	return 0;
 }
 

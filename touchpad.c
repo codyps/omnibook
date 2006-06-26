@@ -151,7 +151,7 @@ static void omnibook_touchpad_cleanup(void)
 	omnibook_touchpad_enable();
 }
 
-struct omnibook_feature touchpad_feature = {
+static struct omnibook_feature __declared_feature touchpad_feature = {
 	 .name = "touchpad",
 	 .enabled = 1,
 	 .read = omnibook_touchpad_read,

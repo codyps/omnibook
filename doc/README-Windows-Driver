@@ -1,0 +1,10 @@
+hp's onetouch windows utility
+-----------------------------
+
+When installing hp's onetouch utility in Windows, you can find a ONETOUCH.CFG 
+file in the installation folder which seems to contain EC Controller commands 
+for some special features of the embedded controller (like mute led, etc..).
+
+It looks like the Windows DLL that sends commands to the EC controller is 
+LgKCUtl.DLL, also found in the onetouch installation folder. Maybe this is 
+useful to somebody someday :)

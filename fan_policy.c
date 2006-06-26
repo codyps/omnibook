@@ -187,9 +187,9 @@ static int omnibook_fan_policy_write(char *buffer)
 
 	b = buffer;
 	do {
-#ifdef OMNIBOOK_DEBUG
-		printk("n=[%i] b=[%s]\n", n, b);
-#endif
+
+		pr_debug("n=[%i] b=[%s]\n", n, b);
+
 		if (n > OMNIBOOK_FAN_LEVELS)
 			return -EINVAL;
 		if (!isspace(*b)) {
@@ -212,7 +212,7 @@ static int omnibook_fan_policy_write(char *buffer)
 	return 0;
 }
 
-struct omnibook_feature fan_policy_feature = {
+static struct omnibook_feature __declared_feature fan_policy_feature = {
 	 .name = "fan_policy",
 	 .enabled = 1,
 	 .read = omnibook_fan_policy_read,
