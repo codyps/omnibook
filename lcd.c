@@ -35,8 +35,8 @@ static int omnibook_max_brightness;
 
 static struct backlight_device *omnibook_backlight_device;
 
-int omnibook_get_backlight(struct backlight_device *bd);
-int omnibook_set_backlight(struct backlight_device *bd);
+static int omnibook_get_backlight(struct backlight_device *bd);
+static int omnibook_set_backlight(struct backlight_device *bd);
 
 static struct backlight_properties omnibookbl_data = {
 	.owner = THIS_MODULE,
@@ -125,12 +125,12 @@ static int omnibook_set_lcd_brightness(int brgt)
 }
 
 #ifdef CONFIG_OMNIBOOK_BACKLIGHT
-int omnibook_get_backlight(struct backlight_device *bd)
+static int omnibook_get_backlight(struct backlight_device *bd)
 {
 	return omnibook_get_lcd_brightness();
 }
 
-int omnibook_set_backlight(struct backlight_device *bd)
+static int omnibook_set_backlight(struct backlight_device *bd)
 {
 	int intensity = bd->props->brightness;
 	return omnibook_set_lcd_brightness(intensity);

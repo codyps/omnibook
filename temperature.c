@@ -72,7 +72,7 @@ static int omnibook_get_cpu_temp(void)
 	return retval;
 }
 
-int omnibook_temperature_read(char *buffer)
+static int omnibook_temperature_read(char *buffer)
 {
 	int len = 0;
 	int cpu_temp;

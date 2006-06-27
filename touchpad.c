@@ -23,7 +23,7 @@
 #include "ec.h"
 
 /* Touchpad is enabled by default */
-int omnibook_touchpad_enabled = 1;
+static int omnibook_touchpad_enabled = 1;
 
 static int omnibook_touchpad_on(void)
 {

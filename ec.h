@@ -13,6 +13,7 @@
  * General Public License for more details.
  *
  * Written by Soós Péter <sp@osb.hu>, 2002-2004
+ * Written by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
 extern int omnibook_ec_read(u8 addr, u8 *data);

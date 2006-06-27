@@ -22,7 +22,7 @@
 
 #include "ec.h"
 
-int omnibook_console_blank_enabled = 0;
+static int omnibook_console_blank_enabled = 0;
 
 extern int (*console_blank_hook) (int);
 

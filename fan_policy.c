@@ -42,7 +42,7 @@
 #define OMNIBOOK_FAN6_DEFAULT			95	/* Default value of fan level 6 temperature */
 #define OMNIBOOK_FAN7_DEFAULT			95	/* Default value of fan level 7 temperature */
 
-u8 omnibook_fan_policy[OMNIBOOK_FAN_LEVELS];
+static u8 omnibook_fan_policy[OMNIBOOK_FAN_LEVELS];
 
 static int omnibook_get_fan_policy(void)
 {

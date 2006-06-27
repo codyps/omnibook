@@ -12,6 +12,7 @@
  * General Public License for more details.
  *
  * Written by Soós Péter <sp@osb.hu>, 2002-2004
+ * Written by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
 #ifdef OMNIBOOK_STANDALONE
@@ -38,6 +39,8 @@
 static struct proc_dir_entry *omnibook_proc_root = NULL;
 
 int omnibook_ectype = NONE;
+static char* laptop_model __initdata;
+
 static int omnibook_userset = 0;
 
 /*
@@ -89,68 +92,14 @@ static struct omnibook_feature *omnibook_available_feature;
 extern struct omnibook_feature _features_start[];
 extern struct omnibook_feature _features_end[];
 
-
-/*
- * Compare the saved DMI info at "index" with a string.
- * A '*' at the end of the string will match anything.
- * Returns 0 for a match.
- * 
- * This preserves the semantics of the old omnibook_features[]
- * table.  I don't know if its generally useful or not.
- */
-static int __init cmp_with_glob(int index, char *str)
+static int __init dmi_matched(struct dmi_system_id *dmi)
 {
-	int retval = 0;
-	char *glob;
-	unsigned int len;
-
-	if (str) {
-		glob = strchr(str, '*');
-		len = glob ? glob - str : strlen(str);
-		retval = strncmp(dmi_get_system_info(index), str, len);
-	}
-
-	return retval;
-}
-
-static int __init omnibook_ident(void)
-{
-	struct omnibook_models_t *mp;
-
-	for (mp = omnibook_models; mp->ectype != NONE; ++mp) {
-		/* Check all fields for a match */
-		if (cmp_with_glob(DMI_SYS_VENDOR, mp->sys_vendor))
-			continue;
-		if (cmp_with_glob(DMI_PRODUCT_NAME, mp->product_name))
-			continue;
-		if (cmp_with_glob(DMI_PRODUCT_VERSION, mp->product_version))
-			continue;
-		if (cmp_with_glob(DMI_BOARD_NAME, mp->board_name))
-			continue;
-
-		/* All required fields matched */
-		break;
-	}
-
-	return (mp - omnibook_models);
-}
-
-static int __init omnibook_get_tc(void)
-{
-	struct omnibook_tc_t *tc;
-
-	for (tc = omnibook_tc; tc->ectype != NONE; ++tc) {
-		/*
-		 * Technology code appears in the first two chracters of BIOS version string
-		 * ended by a dot, but it prefixed a space character on some models and BIOS
-		 * versions.
-		 * New HP/Compaq models use more characters (eg. KF_KH.).
-		 */
-		if (strstr(dmi_get_system_info(DMI_BIOS_VERSION), tc->tc))
-			break;
-	}
-
-	return (tc - omnibook_tc);
+	omnibook_ectype = (int) dmi->driver_data;
+	if (dmi->ident)
+		laptop_model = (char*) dmi->ident;
+	else
+		laptop_model = dmi_get_system_info(DMI_PRODUCT_VERSION);
+	return 0;
 }
 
 /* 
@@ -296,15 +245,8 @@ static int __init omnibook_probe(struct platform_device *dev)
 		if (!feature->enabled)	
 			continue;
 		
-		if ((omnibook_ectype & feature->ectypes) || (!feature->ectypes)) {
-/*		        printk("cursor is at: %p\n", (void*) feature);
-			if(feature->name)
-				printk("trying to init:%s\n",feature->name);
-			else
-				printk("trying to init nameless feature\n"); */
-
+		if ((omnibook_ectype & feature->ectypes) || (!feature->ectypes))
 			omnibook_init(feature);
-		}
 	}
 	
 	printk(KERN_INFO "%s: Enabled features:",OMNIBOOK_MODULE_NAME);
@@ -409,10 +351,6 @@ static int get_ectype_param(char *buffer, struct kernel_param *kp)
 
 static int __init omnibook_module_init(void)
 {
-	int model = 0;
-	int tc = 0;
-	char *syslog_name;
-	char *glob;
 	int retval;
 
 	printk(KERN_INFO "%s: Driver version %s.\n", OMNIBOOK_MODULE_NAME,
@@ -422,40 +360,12 @@ static int __init omnibook_module_init(void)
 		printk(KERN_WARNING
 		       "%s: Forced load with EC firmware type %i.\n",
 		       OMNIBOOK_MODULE_NAME, ffs(omnibook_ectype));
-
-	else {
-		model = omnibook_ident();
-		if (omnibook_models[model].ectype != NONE) {
-			omnibook_ectype = omnibook_models[model].ectype;
-			syslog_name = omnibook_models[model].syslog_name;
-			if (!syslog_name) {
-				syslog_name =
-				    omnibook_models[model].product_version;
-				glob = strchr(syslog_name, '*');
-				if (glob)
-					*glob = '\0';
-			}
-			printk(KERN_INFO "%s: %s detected.\n",
-			       OMNIBOOK_MODULE_NAME, syslog_name);
-		} else {
-			/* Without explicit informations try chechking for technology code of HP laptops */
-			tc = omnibook_get_tc();
-			if ((strncmp
-			     (dmi_get_system_info(DMI_SYS_VENDOR), HP_SIGNATURE,
-			      strlen(HP_SIGNATURE)) == 0)
-			    && (omnibook_tc[tc].ectype != NONE)) {
-				omnibook_ectype = omnibook_tc[tc].ectype;
-				printk(KERN_INFO
-				       "%s: HP tecnology code %s detected.\n",
-				       OMNIBOOK_MODULE_NAME,
-				       omnibook_tc[tc].tc);
-			} else {
-				printk(KERN_INFO
-				       "%s: Unknown model detected.\n",
-				       OMNIBOOK_MODULE_NAME);
-			}
-		}
-	}
+	else if ( dmi_check_system(omnibook_ids) ) 
+		printk(KERN_INFO "%s: %s detected.\n", 
+		        OMNIBOOK_MODULE_NAME, laptop_model);
+	else
+		printk(KERN_INFO "%s: Unknown model detected.\n",
+			OMNIBOOK_MODULE_NAME);
 
 	omnibook_proc_root = proc_mkdir(OMNIBOOK_MODULE_NAME, NULL);
 	if (!omnibook_proc_root) {
@@ -525,7 +435,7 @@ static void __exit omnibook_module_cleanup(void)
 module_init(omnibook_module_init);
 module_exit(omnibook_module_cleanup);
 
-MODULE_AUTHOR("Soós Péter <sp@osb.hu>");
+MODULE_AUTHOR("Soós Péter, Mathieu Bérard");
 MODULE_DESCRIPTION("Kernel interface for HP OmniBook, HP Pavilion, Toshiba Satellite, Acer Aspire and Compal ACL00 laptops");
 MODULE_LICENSE("GPL");
 module_param_call(ectype, set_ectype_param, get_ectype_param, NULL, S_IRUGO);

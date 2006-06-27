@@ -18,138 +18,823 @@
 
 #define HP_SIGNATURE	"Hewlett-Packard"
 
-struct omnibook_models_t {
-	/* DMI field matchers (table inputs) */
-	char *sys_vendor;
-	char *product_name;
-	char *product_version;
-	char *board_name;
-	/* Table outputs */
-	char *syslog_name;	/* Name which will appear in the syslog */
-	int ectype;	/* Type of the embedded controller firmware, see omnibook.h and README */
-};
+static int __init dmi_matched(struct dmi_system_id *dmi);
 
-static struct omnibook_models_t omnibook_models[] __initdata = {
-  /* sys_vendor product_name                 product_version                   board_name syslog_name                  ectype */
-  { NULL,       "HP OmniBook PC*",           "HP OmniBook XE3 GF*",            NULL,    NULL,                          XE3GF },
-  { NULL,       "HP OmniBook PC*",           "HP OmniBook XT1000*",            NULL,    NULL,                          XE3GF },
-  { NULL,       "HP OmniBook PC*",           "HP OmniBook XE2 DC*",            NULL,    NULL,                          XE2 },
-  { NULL,       "HP OmniBook PC*",           "HP OmniBook XE3 GC*",            NULL,    NULL,                          XE3GC },
-  /* HP Pavilion N5430 */
-  { NULL,       "HP OmniBook PC*",           "HP OmniBook XE3 GD*",            NULL,    NULL,                          XE3GC },
-  /* HP Pavilion N5415 */
-  { NULL,       "HP OmniBook PC*",           "HP OmniBook XE3 GE*",            NULL,    NULL,                          XE3GC },
-  { NULL,       "HP OmniBook PC*",           "HP OmniBook 500 FA*",            NULL,    NULL,                          OB500 },
-  { NULL,       "HP OmniBook PC*",           "HP OmniBook 510 FB*",            NULL,    NULL,                          OB510 },
-  { NULL,       "HP OmniBook PC*",           "HP OmniBook 4150*",              NULL,    NULL,                          OB4150 },
-  { NULL,       "HP OmniBook PC*",           "HP OmniBook 900 B*",             NULL,    NULL,                          OB4150 },
-  { NULL,       "HP OmniBook PC*",           "HP OmniBook 6000 EA*",           NULL,    NULL,                          OB6000 },
-  { NULL,       "HP OmniBook PC*",           "HP OmniBook 6100 EB*",           NULL,    NULL,                          OB6100 },
-  /* HP OmniBook xe4100 */
-  { NULL,       "HP OmniBook PC*",           "HP OmniBook xe4000*",            NULL,    NULL,                          XE4500 },
-  { NULL,       "HP OmniBook PC*",           "HP OmniBook xe4400*",            NULL,    NULL,                          XE4500 },
-  { NULL,       "HP OmniBook PC*",           "HP OmniBook xe4500*",            NULL,    NULL,                          XE4500 },
-  /* HP OmniBook vt6200 and xt6200 */
-  { NULL,       "HP OmniBook PC*",           "HP OmniBook 6200 EG*",           NULL,    NULL,                          XE4500 },
-  /* There are no model specific strings of some HP OmniBook XT1500 */
-  { NULL,       "HP OmniBook PC*",           "HP OmniBook*",                   NULL,    NULL,                          XE3GF },
-  /* HP Pavilion ze4125 */
-  { NULL,       "HP NoteBook PC*",           "HP NoteBook ze4000*",            NULL,    NULL,                          XE4500 },
-  /* There are no model specific strings of some HP Pavilion xt155 and some HP Pavilion ze4100 */
-  { NULL,       "HP NoteBook PC*",           "HP NoteBook PC*",                NULL,    NULL,                          XE4500 },
-  /* There are no model specific strings of some HP nx9000 */
-  { NULL,       "HP Notebook PC*",           "HP Notebook PC*",                NULL,    NULL,                          XE4500 },
-  /* HP Pavilion ZU1155 and ZU1175 */
-  { NULL,       "HP Pavilion Notebook PC*",  "HP Pavilion ZU1000 FA*",         NULL,    NULL,                          OB500 },
-  /* HP Pavilion N5290 */
-  { NULL,       "HP Pavilion Notebook PC*",  "HP Pavilion Notebook XE3 GC*",   NULL,    NULL,                          XE3GC },
-  /* HP Pavilion N5441 */
-  { NULL,       "HP Pavilion Notebook PC*",  "HP Pavilion Notebook Model GD*", NULL,    NULL,                          XE3GC },
-  /* HP Pavilion XH545 */
-  { NULL,       "HP Pavilion Notebook PC*",  "HP Pavilion Notebook Model GE*", NULL,    NULL,                          XE3GC },
-  /* HP Pavilion ZT1141 */
-  { NULL,       "HP Pavilion Notebook PC*",  "HP Pavilion Notebook ZT1000*",   NULL,    NULL,                          XE3GF },
-  /* There are no model specific strings of some HP Pavilion ZT1175 and ZT1195 notebooks */
-  { NULL,       "HP Pavilion Notebook PC*",  "HP Pavilion Notebook*",          NULL,    NULL,                          XE3GF },
-  { NULL,       "Pavilion ze4200*",          NULL,                             NULL,    "HP Pavilion ze4200 series",   XE4500 },
-  { NULL,       "Pavilion ze4300*",          NULL,                             NULL,    "HP Pavilion ze4300 series",   XE4500 },
-  { NULL,       "Pavilion ze8500*",          NULL,                             NULL,    "HP Pavilion ze8500 series",   XE4500 },
-  /* Compaq nx9000 */
-  { NULL,       "HP nx9000*",                NULL,                             NULL,    "HP Compaq nx9000",            XE4500 },
-  /* Compaq nx9005 */
-  { NULL,       "HP nx9005*",                NULL,                             NULL,    "HP Compaq nx9005",            XE4500 },
-  /* Compaq nx9010 */
-  { NULL,       "HP nx9010*",                NULL,                             NULL,    "HP Compaq nx9010",            XE4500 },
-  { "TOSHIBA",  "S1000*",                    NULL,                             NULL,    "Toshiba Satellite 1000",      XE3GF },
-  { "TOSHIBA",  "S1005*",                    NULL,                             NULL,    "Toshiba Satellite 1005",      XE3GF },
-  { "TOSHIBA",  "S1110*",                    NULL,                             NULL,    "Toshiba Satellite 1110",      XE3GF },
-  { "TOSHIBA",  "S1115*",                    NULL,                             NULL,    "Toshiba Satellite 1115",      XE3GF },
-  { "TOSHIBA",  "S1900*",                    NULL,                             NULL,    "Toshiba Satellite 1900",      XE3GF },
-  { "TOSHIBA",  "S1905*",                    NULL,                             NULL,    "Toshiba Satellite 1905",      XE3GF },
-  { "TOSHIBA",  "S1950*",                    NULL,                             NULL,    "Toshiba Satellite 1950",      XE3GF },
-  { "TOSHIBA",  "S1955*",                    NULL,                             NULL,    "Toshiba Satellite 1955",      XE3GF },
-  { "TOSHIBA",  "S2430*",                    NULL,                             NULL,    "Toshiba Satellite 2430",      XE3GF },
-  { "TOSHIBA",  "S2435*",                    NULL,                             NULL,    "Toshiba Satellite 2435",      XE3GF },
-  { "TOSHIBA",  "S3000*",                    NULL,                             NULL,    "Toshiba Satellite 3000",      XE3GF },
-  { "TOSHIBA",  "S3005*",                    NULL,                             NULL,    "Toshiba Satellite 3005",      XE3GF },
-  { "TOSHIBA",  "Satellite 1000*",           NULL,                             NULL,    "Toshiba Satellite 1000",      XE3GF },
-  { "TOSHIBA",  "Satellite 1005*",           NULL,                             NULL,    "Toshiba Satellite 1005",      XE3GF },
-  { "TOSHIBA",  "Satellite 1110*",           NULL,                             NULL,    "Toshiba Satellite 1110",      XE3GF },
-  { "TOSHIBA",  "Satellite 1115*",           NULL,                             NULL,    "Toshiba Satellite 1115",      XE3GF },
-  { "TOSHIBA",  "Toshiba 1115*",             NULL,                             NULL,    "Toshiba Satellite 1115",      XE3GF },
-  { "TOSHIBA",  "Satellite 1900*",           NULL,                             NULL,    "Toshiba Satellite 1900",      XE3GF },
-  { "TOSHIBA",  "Satellite 1905*",           NULL,                             NULL,    "Toshiba Satellite 1905",      XE3GF },
-  { "TOSHIBA",  "Satellite 1950*",           NULL,                             NULL,    "Toshiba Satellite 1950",      XE3GF },
-  { "TOSHIBA",  "Satellite 1955*",           NULL,                             NULL,    "Toshiba Satellite 1955",      XE3GF },
-  { "TOSHIBA",  "Satellite 2430*",           NULL,                             NULL,    "Toshiba Satellite 2430",      XE3GF },
-  { "TOSHIBA",  "Satellite 2435*",           NULL,                             NULL,    "Toshiba Satellite 2435",      XE3GF },
-  { "TOSHIBA",  "Satellite 3000*",           NULL,                             NULL,    "Toshiba Satellite 3000",      XE3GF },
-  { "TOSHIBA",  "Satellite 3005*",           NULL,                             NULL,    "Toshiba Satellite 3005",      XE3GF },
-  { "TOSHIBA",  "Satellite P10*",            NULL,                             NULL,    "Toshiba Satellite P10",       TSP10 },
-  { "TOSHIBA",  "Satellite P15*",            NULL,                             NULL,    "Toshiba Satellite P15",       TSP10 },
-  { "TOSHIBA",  "Satellite P20*",            NULL,                             NULL,    "Toshiba Satellite P20",       TSP10 },
-  { "TOSHIBA",  "Satellite M30X*",           NULL,                             NULL,    "Toshiba Satellite M30X",      TSM30X },
-  { "TOSHIBA",  "Satellite M35X*",           NULL,                             NULL,    "Toshiba Satellite M35X",      TSM30X },
-  { "TOSHIBA",  "Satellite M70*",            NULL,                             NULL,    "Toshiba Satellite M70",       TSM30X },
-  { "TOSHIBA",  "Satellite M40*",            NULL,                             NULL,    "Toshiba Satellite M40",       TSM40 },
-  { "COMPAL",   NULL,                        NULL,                             "ACL00", "Compal ACL00",                XE3GF },
-  { "COMPAL",   NULL,                        NULL,                             "ACL10", "Compal ACL10",                XE3GF },
-  { "Acer",     "Aspire 1400 series*",       NULL,                             NULL,    "Acer Aspire 1400 series",     XE3GF },
-  { "Acer",     "Aspire 1350*",              NULL,                             NULL,    "Acer Aspire 1350",            XE4500 },
-  { "FUJITSU SIEMENS", "Amilo D-Series*",    NULL,                             NULL,    "Fujitsu-Siemens Amilo D series", AMILOD },
-  /* This sentinel at the end catches all unsupported models */
-  { NULL, NULL, NULL, NULL, NULL, NONE }
-};
-
-struct omnibook_tc_t {
-	char *tc;
-	int ectype;
-};
-
-/* HP technology codes */
-static struct omnibook_tc_t omnibook_tc[] __initdata = {
-	/* technology code      ectype */
-	{"CI.", OB4150},
-	{"CL.", OB4150},
-	{"DC.", XE2},
-	{"EA.", OB6000},
-	{"EB.", OB6100},
-	{"EG.", XE4500},
-	{"FA.", OB500},
-	{"FB.", OB510},
-	{"GC.", XE3GC},
-	{"GD.", XE3GC},
-	{"GE.", XE3GC},
-	{"GF.", XE3GF},
-	{"IB.", XE3GF},
-	{"IC.", XE3GF},
-	{"ID.", XE3GF},
-	{"KA.", XE4500},
-	{"KB.", XE4500},
-	{"KC.", XE4500},
-	{"KD.", XE4500},
-	{"KE.", XE4500},
-	{"KE_KG.", XE4500},
-	{"KF_KH.", XE4500},
-	{NULL, NONE}
+static struct  dmi_system_id omnibook_ids[] __initdata = {
+	{
+		.callback = dmi_matched,
+		.ident = "HP OmniBook XE3 GF",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP OmniBook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP OmniBook XE3 GF"),
+		},
+		.driver_data = (void *) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP OmniBook XT1000",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP OmniBook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP OmniBook XT1000"),
+		},
+		.driver_data = (void *) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP OmniBook XE2 DC",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP OmniBook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP OmniBook XE2 DC"),
+		},
+		.driver_data = (void *) XE2
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP OmniBook XE3 GC",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP OmniBook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP OmniBook XE3 GC"),
+		},
+		.driver_data = (void*) XE3GC
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP OmniBook XE3 GD / Pavilion N5430",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP OmniBook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP OmniBook XE3 GD"),
+		},
+		.driver_data = (void*) XE3GC
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP OmniBook XE3 GE / Pavilion N5415",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP OmniBook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP OmniBook XE3 GE"),
+		},
+		.driver_data = (void*) XE3GC
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP OmniBook 500 FA",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP OmniBook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP OmniBook 500 FA"),
+		},
+		.driver_data = (void*) OB500
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP OmniBook 510 FB",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP OmniBook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP OmniBook 510 FB"),
+		},
+		.driver_data = (void*) OB510
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP OmniBook 4150",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP OmniBook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP OmniBook 4150"),
+		},
+		.driver_data = (void*) OB4150
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP OmniBook 900 B",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP OmniBook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP OmniBook 900 B"),
+		},
+		.driver_data = (void*) OB4150
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP OmniBook 6000 EA",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP OmniBook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP OmniBook 6000 EA"),
+		},
+		.driver_data = (void*) OB6000
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP OmniBook 6100 EB",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP OmniBook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP OmniBook 6100 EB"),
+		},
+		.driver_data = (void*) OB6100
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP OmniBook xe4000/xe4100",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP OmniBook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP OmniBook xe4000"),
+		},
+		.driver_data = (void*) XE4500
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP OmniBook xe4400",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP OmniBook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP OmniBook xe4400"),
+		},
+		.driver_data = (void*) XE4500
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP OmniBook xe4500",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP OmniBook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP OmniBook xe4500"),
+		},
+		.driver_data = (void*) XE4500
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP OmniBook 6200 EG / vt6200 / xt 6200",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP OmniBook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP OmniBook 6200 EG"),
+		},
+		.driver_data = (void*) XE4500
+	},
+	/* There are no model specific strings of some HP OmniBook XT1500 */
+	{
+		.callback = dmi_matched,
+		.ident = "HP OmniBook XT1500",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP OmniBook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP OmniBook"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP Pavilion ze4000 / ze4125",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP NoteBook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP NoteBook ze4000"),
+		},
+		.driver_data = (void*) XE4500
+	},
+	/* There are no model specific strings of some HP Pavilion xt155 and some HP Pavilion ze4100 
+	 * There are no model specific strings of some HP nx9000 */
+	{
+		.callback = dmi_matched,
+		.ident = "HP Pavilion xt155 / ze4100 / nx9000",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP NoteBook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP NoteBook PC"),
+		},
+		.driver_data = (void*) XE4500
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP Pavilion ZU1000 FA / ZU1000 FA / ZU1175",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP Pavilion Notebook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP Pavilion ZU1000 FA"),
+		},
+		.driver_data = (void*) OB500
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP Pavilion Notebook XE3 GC / N5290",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP Pavilion Notebook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP Pavilion Notebook XE3 GC"),
+		},
+		.driver_data = (void*) XE3GC
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP Pavilion Notebook GD / N5441",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP Pavilion Notebook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP Pavilion Notebook Model GD"),
+		},
+		.driver_data = (void*) XE3GC
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP Pavilion Notebook GE / XH545",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP Pavilion Notebook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP Pavilion Notebook Model GE"),
+		},
+		.driver_data = (void*) XE3GC
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP Pavilion Notebook ZT1000 / ZT1141",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP Pavilion Notebook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP Pavilion Notebook ZT1000"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	/* There are no model specific strings of some HP Pavilion ZT1175 and ZT1195 notebooks */
+	{
+		.callback = dmi_matched,
+		.ident = "HP Pavilion ZT1175 / ZT1195",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP Pavilion Notebook PC"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "HP Pavilion Notebook"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP Pavilion ze4200 series",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "Pavilion ze4200"),
+		},
+		.driver_data = (void*) XE4500
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP Pavilion ze4300 series",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "Pavilion ze4300"),
+		},
+		.driver_data = (void*) XE4500
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP Pavilion ze8500 series",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "Pavilion ze8500"),
+		},
+		.driver_data = (void*) XE4500
+	},
+	/* Compaq nx9000 */
+	{
+		.callback = dmi_matched,
+		.ident = "HP Compaq nx9000",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP nx9000"),
+		},
+		.driver_data = (void*) XE4500
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP Compaq nx9005",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP nx9005"),
+		},
+		.driver_data = (void*) XE4500
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP Compaq nx9010",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "HP nx9010"),
+		},
+		.driver_data = (void*) XE4500
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1000",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "S1000"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1005",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "S1005"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1110",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "S1110"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1115",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "S1115"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1900",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "S1900"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1905",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "S1905"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1950",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "S1950"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1955",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "S1955"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 2430",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "S2430"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 2435",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "S2435"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 3000",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "S3000"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 3005",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "S3005"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1000",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite 1000"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1005",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite 1005"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1110",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite 1110"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1115",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite 1115"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1115",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Toshiba 1115"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1900",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite 1900"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1905",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite 1905"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1950",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite 1950"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1955",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite 1955"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite 2430"),
+		},
+		.ident = "Toshiba Satellite 2430",
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 2435",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite 2435"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 3000",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite 3000"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 3005",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite 3005"),
+		},
+		.driver_data = (void*) XE3GF,
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite P10",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite P10"),
+		},
+		.driver_data = (void*) TSP10
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite P15",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite P15"),
+		},
+		.driver_data = (void*) TSP10
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite P20",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite P20"),
+		},
+		.driver_data = (void*) TSP10
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite M30X",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite M30X"),
+		},
+		.driver_data = (void*) TSM30X
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite M35X",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite M35X"),
+		},
+		.driver_data = (void*) TSM30X
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite M70",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite M70"),
+		},
+		.driver_data = (void*) TSM30X
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite M40",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite M40"),
+		},
+		.driver_data = (void*) TSM40
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Compal ACL00",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "COMPAL"),
+			DMI_MATCH(DMI_BOARD_NAME, "ACL00"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Compal ACL10",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "COMPAL"),
+			DMI_MATCH(DMI_BOARD_NAME, "ACL10"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Acer Aspire 1400 series",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Aspire 1400 series"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Acer Aspire 1350",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Aspire 1350"),
+		},
+		.driver_data = (void*) XE4500
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Fujitsu-Siemens Amilo D series",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "FUJITSU SIEMENS"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Amilo D-Series"),
+		},
+		.driver_data = (void*) AMILOD
+	},
+/* HP Technology code Matching:
+ * Technology code appears in the first two chracters of BIOS version string
+ * ended by a dot, but it prefixed a space character on some models and BIOS
+ * versions.
+ * New HP/Compaq models use more characters (eg. KF_KH.).
+ */
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code CI",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "CI."),
+		},
+		.driver_data = (void*) OB4150
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code CL",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "CL."),
+		},
+		.driver_data = (void*) OB4150
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code DC",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "DC."),
+		},
+		.driver_data = (void*) XE2
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code EA",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "EA."),
+		},
+		.driver_data = (void*) OB6000
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code EB",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "EB."),
+		},
+		.driver_data = (void*) OB6100
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code EG",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "EG."),
+		},
+		.driver_data = (void*) XE4500
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code FA",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "FA."),
+		},
+		.driver_data = (void*) OB500
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code FB",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "FB."),
+		},
+		.driver_data = (void*) OB510
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code GC",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "GC."),
+		},
+		.driver_data = (void*) XE3GC
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code GD",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "GD."),
+		},
+		.driver_data = (void*) XE3GC
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code GE",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "GE."),
+		},
+		.driver_data = (void*) XE3GC
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code GF",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "GF."),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code IB",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "IB."),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code IC",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "IC."),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code ID",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "ID."),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code KA",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "KA."),
+		},
+		.driver_data = (void*) XE4500
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code KB",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "KB."),
+		},
+		.driver_data = (void*) XE4500
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code KC",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "KC."),
+		},
+		.driver_data = (void*) XE4500
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code KD",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "KD."),
+		},
+		.driver_data = (void*) XE4500
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code KE",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "KE."),
+		},
+		.driver_data = (void*) XE4500
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code KE_KG",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "KE_KG."),
+		},
+		.driver_data = (void*) XE4500
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "HP model with technology code KF_KH",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, HP_SIGNATURE),
+			DMI_MATCH(DMI_BIOS_VERSION, "KF_KH."),
+		},
+		.driver_data = (void*) XE4500
+	},
+	{ NULL, }
 };
