@@ -1,15 +1,19 @@
 Changelog file for omnibook package:
 ------------------------------------
 
-
-
 2006-XX-XX Mathieu Bérard <math_b@users.sourceforge.net>
 * Make the module linux 2.6 only
-  kernel versions from 2.6.8 to a least 2.6.17 are supported
-* Integrate with Driver Model: register as a platform device and optional
+  Kernel versions from 2.6.8 to a least 2.6.17 are supported
+  Code for compatibility with kernels older than 2.6.17 is 
+  mostly implemented in compat.h
+* Integrate with Driver Model:
+  register as a platform device and optional
   registration as a backlight device (2.6.17+ required here)
 * Get rid of deprecated pm_legacy functions
-* Use kernel-provided DMI information
+* Use kernel-provided DMI information:
+  Use kernel-provided dmi_check_system for system identification
+  omnibook_tc_t and omnibook_models_t are merged and converted into a
+  dmi_system_id struct and moved from init.c to laptop.h
 * MODULE_PARAM -> 2.6-style module_parm_*
 * Move some code from "feature".c files back to init.c
   Interface is provided by the new omnibook_feature struct
@@ -19,14 +23,14 @@ Changelog file for omnibook package:
 * Move dmi and version display into their own file: info.c
 * Remove all (as unneeded) EXPORT_SYMBOL
 * Misc fixes in Makefile
-  Make more use of Kbuild
+  Also make more use of Kbuild
 * Use sscanf and simple_stro{u}l for strings parsing instead of custom code
 * Run lindent for better conformance with kernel coding style
-* Add very limited support for Toshiba M40
+* Add very limited support for Toshiba M40 (more info needed)
 * Use bitmasks for EC types matching, this change is transparent for the user
   (e.g. one can still use ectype=num module parameter)
   Rationale: Reduce the size of the omnibook_feature struct
-* Polish Debian support: Recommend module-assistant and fix all Lintian warning
+* Polish Debian support: Use module-assistant and fix all Lintian warning
 * Update documentation and omnibook-integration.patch
 * Fix spinlock usage: they can be used unconditionally as they are automatically
   optimized out at build-time on UP. This should improve PREEMPT safety

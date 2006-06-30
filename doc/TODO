@@ -8,3 +8,4 @@ TODO
 * Support more machines
 * See if/how key polling can be ported to 2.6
 * LED API support
+* Implement IndexMode access to EC for TSM70
