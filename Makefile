@@ -104,19 +104,19 @@ kpatch:		kinstall
 		(cd $(KSRC); patch -p1 < $(BDIR)/misc/omnibook-integration.patch)
 
 deb:		clean
-		dch -v $(TODAY)
+		dch -v 2-$(TODAY)
 		fakeroot dpkg-buildpackage
 		
 
 release:	clean
-		mkdir -p ../$(MODULE_NAME)-$(TODAY)
-		cp -a *.h *.c *.lds Makefile debian doc misc ../$(MODULE_NAME)-$(TODAY)
-		sed -i "s|^\(#define OMNIBOOK_MODULE_VERSION.*\)\".*\"|\1\"$(TODAY)\"|" ../$(MODULE_NAME)-$(TODAY)/omnibook.h
-		rm -f ../$(MODULE_NAME)-$(TODAY).tar ../$(MODULE_NAME)-$(TODAY).tar.gz
-		(cd ..; tar cvf $(MODULE_NAME)-$(TODAY).tar $(MODULE_NAME)-$(TODAY); gzip -9 $(MODULE_NAME)-$(TODAY).tar)
+		mkdir -p ../$(MODULE_NAME)-2-$(TODAY)
+		cp -a *.h *.c *.lds Makefile debian doc misc ../$(MODULE_NAME)-2-$(TODAY)
+		sed -i "s|^\(#define OMNIBOOK_MODULE_VERSION.*\)\".*\"|\1\"2-$(TODAY)\"|" ../$(MODULE_NAME)-2-$(TODAY)/omnibook.h
+		rm -f ../$(MODULE_NAME)-2-$(TODAY).tar ../$(MODULE_NAME)-2-$(TODAY).tar.gz
+		(cd ..; tar cvf $(MODULE_NAME)-2-$(TODAY).tar $(MODULE_NAME)-2-$(TODAY); gzip -9 $(MODULE_NAME)-2-$(TODAY).tar)
 
 current:	clean
-		rm -f ../$(MODULE_NAME)-current.tar ../$(MODULE_NAME)-current.tar.gz
-		(cd ..; tar cvf $(MODULE_NAME)-current.tar $(MODULE_NAME)-current; gzip -9 $(MODULE_NAME)-current.tar)
+		rm -f ../$(MODULE_NAME)-2-current.tar ../$(MODULE_NAME)-2-current.tar.gz
+		(cd ..; tar cvf $(MODULE_NAME)-2-current.tar $(MODULE_NAME)-current; gzip -9 $(MODULE_NAME)-2-current.tar)
 
 # End of file
