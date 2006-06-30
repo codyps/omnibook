@@ -20,7 +20,8 @@ ifeq ($(KERNELRELEASE),)
 
 DESTDIR	= 
 MODDIR	= $(DESTDIR)/lib/modules
-KVER	= $(shell uname -r)
+KVERS	= $(shell uname -r)
+KVER	= $(KVERS)
 VMODDIR = $(MODDIR)/$(KVER)
 INSTDIR	= $(VMODDIR)/kernel/drivers/misc/omnibook
 #KSRC	= /usr/src/linux
@@ -30,7 +31,7 @@ KINCDIR	= $(KSRC)/include/linux
 KDOCDIR	= $(KSRC)/Documentation/omnibook
 BDIR	= $(shell pwd)
 TODAY	= $(shell date +%Y%m%d)
-KERNEL	= $(shell uname -r | cut -c 1-3)
+KERNEL	= $(shell echo $(KVER) | cut -d . -f 1-2)
 
 DEPMOD	= depmod -a
 RMMOD	= modprobe -r

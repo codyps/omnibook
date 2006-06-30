@@ -11,7 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
  *
- * Written by Soós Péter <sp@osb.hu>, 2002-2004
+ * Written by SoÃ³s PÃ©ter <sp@osb.hu>, 2002-2004
  */
 
 #ifdef OMNIBOOK_STANDALONE

@@ -34,20 +34,20 @@
 extern int omnibook_ectype;
 
 
-#define	NONE	0	/* Default/unknown EC type */
-#define	XE3GF	1	/* HP OmniBook XE3 GF, most Toshiba Satellites and more */
-#define	XE3GC	2	/* HP OmniBook XE3 GC, GD, GE and compatible */
-#define	OB500	4	/* HP OmniBook 500 and compatible */
-#define	OB510	8	/* HP OmniBook 510 */
-#define	OB6000	16	/* HP OmniBook 6000 */
-#define	OB6100	32	/* HP OmniBook 6100 */
-#define	XE4500	64	/* HP OmniBook xe4500 and compatible */
-#define	OB4150	128	/* HP OmniBook 4150 */
-#define	XE2	256	/* HP OmniBook XE2 */
-#define	AMILOD	512	/* Fujitsu Amilo D */
-#define	TSP10	1024	/* Toshiba Satellite P10, P15, P20 and compatible */
-#define	TSM30X	2048	/* Toshiba Satellite M30X, M35X, M70 and compatible */
-#define	TSM40	4096	/* Toshiba Satellite M40 */
+#define	NONE	0	/* 0  Default/unknown EC type */ 
+#define	XE3GF	1	/* 1  HP OmniBook XE3 GF, most Toshiba Satellites and more */
+#define	XE3GC	2	/* 2  HP OmniBook XE3 GC, GD, GE and compatible */
+#define	OB500	4	/* 3  HP OmniBook 500 and compatible */
+#define	OB510	8	/* 4  HP OmniBook 510 */
+#define	OB6000	16	/* 5  HP OmniBook 6000 */
+#define	OB6100	32	/* 6  HP OmniBook 6100 */
+#define	XE4500	64	/* 7  HP OmniBook xe4500 and compatible */
+#define	OB4150	128	/* 8  HP OmniBook 4150 */
+#define	XE2	256	/* 9  HP OmniBook XE2 */
+#define	AMILOD	512	/* 10 Fujitsu Amilo D */
+#define	TSP10	1024	/* 11 Toshiba Satellite P10, P15, P20 and compatible */
+#define	TSM30X	2048	/* 12 Toshiba Satellite M30X, M35X, M70 and compatible */
+#define	TSM40	4096	/* 13 Toshiba Satellite M40 */
 
 /*
  * This represent a feature provided by this module
