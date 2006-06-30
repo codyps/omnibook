@@ -2,11 +2,12 @@ Source: omnibook
 Section: misc
 Priority: optional
 Maintainer: Peter Soos <sp@osb.hu>
-Build-Depends: debhelper (>> 4.0.0)
+Build-Depends: debhelper (>> 4.0.0), build-essential, module-assistant, kernel-package
 Standards-Version: 3.6.2
 
 Package: omnibook-module-_KVERS_
 Architecture: i386
+Depends: kernel-image-_KVERS_
 Provides: omnibook-module
 Description: omnibook module for Linux (kernel _KVERS_)
  This package contains the loadable kernel modules for the HP OmniBooks,

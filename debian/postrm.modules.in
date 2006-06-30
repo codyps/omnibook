@@ -23,6 +23,9 @@ case "$1" in
 
 	if [ "`uname -r`" = "_KVERS_" ] ; then
 	    depmod -a > /dev/null 2>&1 || true
+       else
+	    depmod "_KVERS_" &> /dev/null || true
+
 	fi
 
         ;;

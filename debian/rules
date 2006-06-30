@@ -85,7 +85,7 @@ build-arch-stamp:
 binary-modules: prep-deb-files
 	dh_testroot
 	dh_clean -k
-	dh_installdirs lib/modules/$(KVERS)/drivers/misc/omnibook
+	dh_installdirs lib/modules/$(KVERS)/kernel/drivers/misc/omnibook
 
 	# Build the module
 	#$(MAKE) -C drivers KERNEL_DIR=$(KSRC) KVERS=$(KVERS)
@@ -134,7 +134,7 @@ install: build
 		debian/$(psource)/usr/src/modules/$(sname)/debian
 	cp debian/*.modules.in debian/$(psource)/usr/src/modules/$(sname)/debian
 
-	cp Makefile *.c *.h debian/$(psource)/usr/src/modules/$(sname)/
+	cp Makefile *.c *.h *.lds debian/$(psource)/usr/src/modules/$(sname)/
 	
 	cd debian/$(psource)/usr/src && tar c modules | gzip -9 > $(sname).tar.gz && rm -rf modules
 
