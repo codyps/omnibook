@@ -20,8 +20,7 @@ Step 2
 
   Run `make install' as the super-user. This will install omnibook.ko kernel
   module into modules directory of your currently running kernel
-  (usually in /lib/modules/version_of_your_kernel) and runs `depmod -a' to
-  rebuild module dependency database.
+  (usually in /lib/modules/version_of_your_kernel).
   You may install and load the module with `make load' command. In this case
   you may skip Step 3.
 

@@ -63,7 +63,7 @@ clean:
 		make -C $(KSRC) M=$(PWD) clean
 		$(RM) *~ "#*#" .swp
 		$(RM) -r debian/omnibook-source *-stamp
-		$(RM) -r Modules.symvers
+		$(RM) -r Module.symvers
 		(cd misc/obtest; $(RM) obtest *.o)
 
 
@@ -94,8 +94,8 @@ kinstall:
 		$(RM) -r $(KMODDIR)
 		$(RM) $(KINCDIR)/omnibook.h
 		$(MKDIR) $(KMODDIR)
-		$(INSTALL) *.c $(KMODDIR)
-		$(INSTALL) apmemu.h ec.h init.h $(KMODDIR)
+		$(INSTALL) *.c sections.lds $(KMODDIR)
+		$(INSTALL) apmemu.h compat.h ec.h laptop.h $(KMODDIR)
 		$(INSTALL) omnibook.h $(KINCDIR)
 		$(MKDIR) $(KDOCDIR)
 		$(INSTALL) doc/README doc/README-OneTouch $(KDOCDIR)
@@ -104,7 +104,7 @@ kpatch:		kinstall
 		(cd $(KSRC); patch -p1 < $(BDIR)/misc/omnibook-integration.patch)
 
 deb:		clean
-		dch -v 2-$(TODAY)
+		dch -v 1:2-$(TODAY)
 		fakeroot dpkg-buildpackage
 		
 
