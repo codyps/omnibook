@@ -95,7 +95,7 @@ binary-modules: prep-deb-files
 	$(MAKE) install KSRC=$(KSRC) DESTDIR=$(CURDIR)/debian/$(PKGNAME) DEPMOD=""
 
 	dh_installdocs
-	dh_installchangelogs
+	dh_installchangelogs doc/ChangeLog
 	dh_compress
 	dh_fixperms
 	dh_installdeb
@@ -145,7 +145,7 @@ install: build
 binary-indep: build install
 	dh_testdir -i
 	dh_testroot -i
-	dh_installchangelogs -i
+	dh_installchangelogs -i doc/ChangeLog
 	dh_installdocs -i
 	dh_installexamples -i
 #	dh_install -i

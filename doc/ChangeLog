@@ -1,7 +1,7 @@
 Changelog file for omnibook package:
 ------------------------------------
 
-2-20060806 Mathieu Bérard <math_b@users.sourceforge.net>
+2.20060806 Mathieu Bérard <math_b@users.sourceforge.net>
 * Make the module linux 2.6 only
   Kernel versions from 2.6.8 to a least 2.6.17 are supported
   Code for compatibility with kernels older than 2.6.17 is 
@@ -41,7 +41,7 @@ Changelog file for omnibook package:
 * Add a new feature for testers: dump
   Dump was stolen from the ibm_acpi driver
   It is disabled by default
-* Bump version to 2-YYYYMMDD
+* Bump version to 2.YYYYMMDD
 
 2006-05-15 Thomas Perl <thp@perli.net>
 * Added support for xe4500's "audio mute" led
