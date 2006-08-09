@@ -1,7 +1,7 @@
 Changelog file for omnibook package:
 ------------------------------------
 
-2.XXXXXXXX Mathieu Bérard <math_b@users.sourceforge.net>
+2.20060809 Mathieu Bérard <math_b@users.sourceforge.net>
 * Add dmi info for Toshiba Satellite M40X (Thanks Julien Valroff) 
 * Fix two brown paper bag bugs in Debian/Ubuntu support 
 
