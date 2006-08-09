@@ -207,6 +207,19 @@ Board Name:    SB400
 Board Version: Rev0.4b
 
 ---------------------------------------------
+Toshiba Satellite M40X (-131)----------------
+BIOS Vendor:   TOSHIBA
+BIOS Version:  V1.60
+BIOS Release:  06/09/2005
+System Vendor: TOSHIBA
+Product Name:  Satellite M40X
+Version:       PSM4XE-01400GFR
+Serial Number: 55224184K
+Board Vendor:  TOSHIBA
+Board Name:    EAL30
+Board Version: Null
+
+---------------------------------------------
 Toshiba Satellite M70 -----------------------
 
 BIOS Vendor:	TOSHIBA
