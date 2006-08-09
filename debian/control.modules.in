@@ -7,7 +7,7 @@ Standards-Version: 3.7.2
 
 Package: omnibook-module-_KVERS_
 Architecture: i386
-Depends: kernel-image-_KVERS_
+Depends: kernel-image-_KVERS_ | linux-image-_KVERS_
 Provides: omnibook-module
 Description: omnibook module for Linux (kernel _KVERS_)
  This package contains the loadable kernel modules for the HP OmniBooks,

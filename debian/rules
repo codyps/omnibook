@@ -95,7 +95,7 @@ binary-modules: prep-deb-files
 	$(MAKE) install KSRC=$(KSRC) DESTDIR=$(CURDIR)/debian/$(PKGNAME) DEPMOD=""
 
 	dh_installdocs
-	dh_installchangelogs doc/ChangeLog
+	dh_installchangelogs
 	dh_compress
 	dh_fixperms
 	dh_installdeb
