@@ -46,7 +46,7 @@ extern int omnibook_ectype;
 #define	XE2	256	/* 9  HP OmniBook XE2 */
 #define	AMILOD	512	/* 10 Fujitsu Amilo D */
 #define	TSP10	1024	/* 11 Toshiba Satellite P10, P15, P20 and compatible */
-#define	TSM30X	2048	/* 12 Toshiba Satellite M30X, M35X, M70 and compatible */
+#define	TSM30X	2048	/* 12 Toshiba Satellite M30X, M35X, M40X, M70 and compatible */
 #define	TSM40	4096	/* 13 Toshiba Satellite M40 */
 
 /*
@@ -105,7 +105,7 @@ extern int set_omnibook_param(const char *val, struct kernel_param *kp);
  */
 
 #ifdef  OMNIBOOK_STANDALONE
-#if     defined(CONFIG_BACKLIGHT_DEVICE) && (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,16))
+#if     defined(CONFIG_BACKLIGHT_DEVICE) && defined(BACKLIGHT_CLASS_DEVICE) && (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,16))
 #define CONFIG_OMNIBOOK_BACKLIGHT
 #else
 #undef  CONFIG_OMNIBOOK_BACKLIGHT

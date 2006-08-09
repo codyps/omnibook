@@ -234,6 +234,20 @@ Board Name:	HTW00
 Board Version:	Null
 
 ---------------------------------------------
+Toshiba Satellite M100 ----------------------
+
+BIOS Vendor:    TOSHIBA
+BIOS Version:   V1.90
+BIOS Release:   07/20/2006
+System Vendor:  TOSHIBA
+Product Name:   Satellite M100
+Version:        PSMA0E-030019TE
+Serial Number:  46795329G
+Board Vendor:   TOSHIBA
+Board Name:     HAQAA
+Board Version:  Null
+
+---------------------------------------------
 Compal ACL00 --------------------------------
 
 BIOS Vendor:   COMPAL
