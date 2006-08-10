@@ -23,7 +23,7 @@ MODDIR	= $(DESTDIR)/lib/modules
 KVERS	= $(shell uname -r)
 KVER	= $(KVERS)
 VMODDIR = $(MODDIR)/$(KVER)
-INSTDIR	= $(VMODDIR)/kernel/drivers/misc/omnibook
+INSTDIR	= extra
 #KSRC	= /usr/src/linux
 KSRC	= $(VMODDIR)/build
 KMODDIR	= $(KSRC)/drivers/misc/omnibook
@@ -68,9 +68,10 @@ clean:
 
 
 install:	all
-		# Removing module from old location
+		# Removing module from old possible locations
 		$(RM) $(VMODDIR)/kernel/drivers/char/$(MODULE_NAME).ko
-		make -C $(KSRC) M=$(PWD) modules_install
+		$(RM) $(VMODDIR)/kernel/drivers/misc/$(MODULE_NAME).ko
+		make INSTALL_MOD_PATH=$(DESTDIR) INSTALL_MOD_DIR=$(INSTDIR) -C $(KSRC) M=$(PWD) modules_install
 
 unload:
 		$(RMMOD) $(MODULE_NAME) || :

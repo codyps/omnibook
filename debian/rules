@@ -85,15 +85,15 @@ build-arch-stamp:
 binary-modules: prep-deb-files
 	dh_testroot
 	dh_clean -k
-	dh_installdirs lib/modules/$(KVERS)/kernel/drivers/misc/omnibook
+	dh_installdirs lib/modules/$(KVERS)/extra
 
 	# Build the module
 	#$(MAKE) -C drivers KERNEL_DIR=$(KSRC) KVERS=$(KVERS)
 	$(MAKE) KSRC=$(KSRC) KVERS=$(KVERS)
 
 	# Install the module
-	$(MAKE) install KSRC=$(KSRC) DESTDIR=$(CURDIR)/debian/$(PKGNAME) DEPMOD=""
-
+	$(MAKE) install KSRC=$(KSRC) DESTDIR=$(CURDIR)/debian/$(PKGNAME) INSTDIR=extra DEPMOD=""
+	
 	dh_installdocs
 	dh_installchangelogs
 	dh_compress
