@@ -7,7 +7,7 @@ Changelog file for omnibook package:
 * Add dmi info for Toshiba Satellite A105 (Thanks Mikkel L. Ellertson)
   the support is pretty minimalistic (LCD brigtness only) this
   also inaugurate ectype 14
-* Cleanup in Makefile
+* Cleanup/Fix in Makefile
 
 2.20060809 Mathieu Bérard <math_b@users.sourceforge.net>
 * Add dmi info for Toshiba Satellite M40X (Thanks Julien Valroff) 

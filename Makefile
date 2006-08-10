@@ -29,13 +29,13 @@ KSRC	= $(VMODDIR)/build
 KMODDIR	= $(KSRC)/drivers/misc/omnibook
 KINCDIR	= $(KSRC)/include/linux
 KDOCDIR	= $(KSRC)/Documentation/omnibook
-BDIR	= $(shell pwd)
+PWD	= $(shell pwd)
 TODAY	= $(shell date +%Y%m%d)
 KERNEL	= $(shell echo $(KVER) | cut -d . -f 1-2)
 
-DEPMOD	= depmod -a
-RMMOD	= modprobe -r
-INSMOD	= modprobe
+DEPMOD	= /sbin/depmod -a
+RMMOD	= /sbin/modprobe -r
+INSMOD	= /sbin/modprobe
 INSTALL	= install -m 644
 MKDIR	= mkdir -p
 RM	= rm -f
@@ -70,7 +70,7 @@ clean:
 install:	all
 		# Removing module from old location
 		$(RM) $(VMODDIR)/kernel/drivers/char/$(MODULE_NAME).ko
-		make -C $(KSRC) M=$(PWD) modules_install		
+		make -C $(KSRC) M=$(PWD) modules_install
 
 unload:
 		$(RMMOD) $(MODULE_NAME) || :
@@ -87,7 +87,6 @@ uninstall-all:	unload
 		$(DEPMOD)
 
 $(MODULE_NAME).ko:
-		PWD=$(shell pwd)
 		$(MAKE) -C $(KSRC) SUBDIRS=$(PWD) modules
 
 kinstall:
@@ -101,7 +100,7 @@ kinstall:
 		$(INSTALL) doc/README doc/README-OneTouch $(KDOCDIR)
 		
 kpatch:		kinstall
-		(cd $(KSRC); patch -p1 < $(BDIR)/misc/omnibook-integration.patch)
+		(cd $(KSRC); patch -p1 < $(PWD)/misc/omnibook-integration.patch)
 
 version:	
 		sed -i "s|^\(#define OMNIBOOK_MODULE_VERSION.*\)\".*\"|\1\"2.$(TODAY)\"|" omnibook.h
