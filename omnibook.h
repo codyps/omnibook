@@ -48,6 +48,7 @@ extern int omnibook_ectype;
 #define	TSP10	1024	/* 11 Toshiba Satellite P10, P15, P20 and compatible */
 #define	TSM30X	2048	/* 12 Toshiba Satellite M30X, M35X, M40X, M70 and compatible */
 #define	TSM40	4096	/* 13 Toshiba Satellite M40 */
+#define	TSA105	8192	/* 14 Toshiba Satellite A105 */
 
 /*
  * This represent a feature provided by this module

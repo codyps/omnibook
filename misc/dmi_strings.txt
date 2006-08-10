@@ -165,6 +165,19 @@ Board Name:    BTR80
 Board Version: Null
 
 ---------------------------------------------
+Toshiba Satellite A105 ----------------------
+
+BIOS Vendor:   Phoenix Technologies LTD
+BIOS Version:  1.30
+BIOS Release:  02/09/2006
+System Vendor: TOSHIBA
+Product Name:  Satellite A105
+Version:       PSAA8U-02000U
+Serial Number: 36244466Q
+Board Vendor:  Intel Corporation
+Board Name:    Not Applicable
+
+---------------------------------------------
 Toshiba Satellite P10 -----------------------
 
 BIOS Vendor:   TOSHIBA
@@ -240,7 +253,7 @@ BIOS Vendor:    TOSHIBA
 BIOS Version:   V1.90
 BIOS Release:   07/20/2006
 System Vendor:  TOSHIBA
-Product Name:   Satellite M100
+Product Name:   SATELLITE M100
 Version:        PSMA0E-030019TE
 Serial Number:  46795329G
 Board Vendor:   TOSHIBA

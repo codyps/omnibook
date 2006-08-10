@@ -115,6 +115,12 @@ static int omnibook_set_lcd_brightness(int brgt)
 	} else if (omnibook_ectype & (AMILOD) ) {
 		if ((retval = omnibook_ec_write(AMILOD_CBRG, brgt)))
 			return retval;
+	/*
+ 	 * TSA105
+ 	 */
+	} else if (omnibook_ectype & (TSA105) ) {
+                if ((retval = omnibook_ec_write(A105_BNDT, brgt)))
+                        return retval;
 	} else {
 		printk(KERN_INFO
 		       "%s: LCD brightness handling is unsupported on this machine.\n",
@@ -174,14 +180,15 @@ static int omnibook_brightness_init(void)
 {
 	/*
 	 * FIXME: What is exactly de max value for each model ?
-	 * I know that it's 7 for the TSM30X and the TSM40
+	 * I know that it's 7 for the TSM30X, TSM40 and TSA105
 	 * and previous versions of this driver assumed it was 10 for
 	 * all models.
 	 * 
 	 * TSM30X
 	 * TSM40
+	 * TSA105
 	 */
-	if (omnibook_ectype & (TSM30X|TSM40) )
+	if (omnibook_ectype & (TSM30X|TSM40|TSA105) )
 		omnibook_max_brightness = 7;
 	else
 		omnibook_max_brightness = 10;
@@ -216,7 +223,7 @@ static struct omnibook_feature __declared_feature lcd_feature = {
 	 .write = omnibook_brightness_write,
 	 .init = omnibook_brightness_init,
 	 .exit = omnibook_brightness_cleanup,
-	 .ectypes = XE3GF|XE3GC|AMILOD|TSP10|TSM30X|TSM40,
+	 .ectypes = XE3GF|XE3GC|AMILOD|TSP10|TSM30X|TSM40|TSA105,
 };
 
 module_param_named(lcd, lcd_feature.enabled, int, S_IRUGO);

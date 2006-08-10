@@ -103,20 +103,14 @@ kinstall:
 kpatch:		kinstall
 		(cd $(KSRC); patch -p1 < $(BDIR)/misc/omnibook-integration.patch)
 
-deb:		clean
-		dch -v 1:2.$(TODAY)
-		fakeroot dpkg-buildpackage
-		
+version:	
+		sed -i "s|^\(#define OMNIBOOK_MODULE_VERSION.*\)\".*\"|\1\"2.$(TODAY)\"|" omnibook.h
+		sed -i "s|^\(2\.\)[[:alnum:]]\{8\}|\1$(TODAY)|" doc/ChangeLog
 
-release:	clean
+release:	clean version
 		mkdir -p ../$(MODULE_NAME)-2.$(TODAY)
-		cp -a *.h *.c *.lds Makefile debian doc misc ../$(MODULE_NAME)-2.$(TODAY)
-		sed -i "s|^\(#define OMNIBOOK_MODULE_VERSION.*\)\".*\"|\1\"2.$(TODAY)\"|" ../$(MODULE_NAME)-2.$(TODAY)/omnibook.h
+		cp -a *.h *.c *.lds Makefile doc misc ../$(MODULE_NAME)-2.$(TODAY)
 		rm -f ../$(MODULE_NAME)-2.$(TODAY).tar ../$(MODULE_NAME)-2.$(TODAY).tar.gz
 		(cd ..; tar cvf $(MODULE_NAME)-2.$(TODAY).tar $(MODULE_NAME)-2.$(TODAY); gzip -9 $(MODULE_NAME)-2.$(TODAY).tar)
-
-current:	clean
-		rm -f ../$(MODULE_NAME)-2.current.tar ../$(MODULE_NAME)-2.current.tar.gz
-		(cd ..; tar cvf $(MODULE_NAME)-2.current.tar $(MODULE_NAME)-current; gzip -9 $(MODULE_NAME)-2.current.tar)
 
 # End of file

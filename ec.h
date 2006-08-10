@@ -157,6 +157,12 @@ extern int omnibook_mem_write(u32 addr, u8 data);
 #define XE3GC_MUTE_SCAN				0x20	/* Volume up button scancode */
 
 /*
+ * Toshiba Satellite A105 values
+ */
+
+#define A105_BNDT				0xA3	/* LCD brightness */
+
+/*
  * Fujitsu Amilo D values
  */
 
