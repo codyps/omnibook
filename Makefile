@@ -68,7 +68,7 @@ clean:
 
 
 install:	all
-		# Removing module from old possible locations
+		# Removing module from locations used by previous versions
 		$(RM) $(VMODDIR)/kernel/drivers/char/$(MODULE_NAME).ko
 		$(RM) $(VMODDIR)/kernel/drivers/misc/$(MODULE_NAME).ko
 		make INSTALL_MOD_PATH=$(DESTDIR) INSTALL_MOD_DIR=$(INSTDIR) -C $(KSRC) M=$(PWD) modules_install

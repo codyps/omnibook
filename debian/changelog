@@ -1,14 +1,30 @@
-omnibook (1:2.20060809) unstable; urgency=low
+omnibook (2:2.20060809-2) unstable; urgency=low
 
-  * New bugfix version 
+  * Include copyright and Debian changelog in omnibook-module
+  * Fix Makefile issue in a more elegant way
 
- -- Mathieu Bérard <math_b@users.sourceforge.net>  Wed,  9 Aug 2006 18:54:17 +0200
+ -- Julien Valroff <julien@kirya.net>  Thu, 10 Aug 2006 10:16:47 +0200
 
-omnibook (1:2.20060806) unstable; urgency=low
+omnibook (2:2.20060809-1) unstable; urgency=low
 
-  * New major version (see changelog.gz for details).
+  * New upstream release:
+    + Addeed autodetection of the Toshiba Satellite M40X laptop
 
- -- Mathieu Bérard <math_b@users.sourceforge.net>  Sun,  6 Aug 2006 23:26:00 +0200
+ -- Julien Valroff <julien@kirya.net>  Thu, 10 Aug 2006 09:40:45 +0200
+
+omnibook (2:2.20060806-1) unstable; urgency=low
+
+  * New upstream branch - Mathieu Bérard launched new project
+  * Added myself as co-maintainer
+  * Bumped upstream version and use epoch to ensure upgrades
+  * [debian/rules]:
+    + Clean-ups
+    + Recommends linux-image or kernel-image
+  * [debian/control] Improved long description
+  * [debian/post*.modules.in] Fixed bashisms
+  * Added patch to fix install target in Makefile
+
+ -- Julien Valroff <julien@kirya.net>  Thu, 10 Aug 2006 01:35:38 +0200
 
 omnibook (20060126-1) unstable; urgency=low
 

@@ -2,12 +2,20 @@ Source: omnibook
 Section: misc
 Priority: optional
 Maintainer: Mathieu Bérard <math_b@users.sourceforge.net>
-Build-Depends: debhelper (>> 4.0.0)
+Uploaders: Julien Valroff <julien@kirya.net>
+Build-Depends: debhelper (>> 4.0.0), dpatch
 Standards-Version: 3.7.2
 
 Package: omnibook-source
 Architecture: all
-Depends: build-essential, debhelper, module-assistant, kernel-package 
+Depends: debhelper (>= 4.0.0), make, module-assistant, kernel-package 
 Description: Source for the omnibook driver
- This package provides the source code for the omnibook kernel module.
+ This package contains the loadable kernel modules for the HP OmniBooks,
+ Pavilions, Toshiba Satellites and some other laptops manufactured by
+ Compal Electronics, Inc as ODM.
+ .
+ This module is only compatible with Linux kernels >= 2.6.8
+ .
  Kernel source is required to compile this module.
+ .
+  Homepage: http://sourceforge.net/projects/omnibook/
