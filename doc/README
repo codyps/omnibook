@@ -478,18 +478,13 @@ things:
    Please send me the AML file. Note: it is binary file.
 
 5. Developers or advanced users who want to help the developement of this driver
-   can enable two experimental features of the omnibook kernel module:
+   can enable an experimental features of the omnibook kernel module:
+   /proc/omnibook/dump, which dump the content of the embedded 
+   controller memory.
 
-	-/proc/omnibook/dump  which dump the content of the embedded 
-                              controller memory.
-
-	-/proc/omnibook/watch which allow you to follow the content of
-			      a specific EC, PIO or MMIO address.
-   
-   They can be manually enabled using the dump=1 and watch=1 kernel
-   module parameters respectivly.
-   These can be used in conjunction with a carefull examination of a 
-   decompiled DSDT to spot where your laptop stores interesting informations
+   It have to be manually enabled using the dump=1 kernel module parameters 
+   and can be used in conjunction with a carefull examination 
+   of a decompiled DSDT to spot where your laptop stores interesting informations
    such as FAN speed or CPU temperature.
 
 This code was written without any documentation from HP or Compal so it
