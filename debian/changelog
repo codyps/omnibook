@@ -1,3 +1,14 @@
+omnibook (2:2.20060809-3) UNRELEASED; urgency=low
+
+  * UNRELEASED
+  * New upstream release:
+    + Changed default location to extra/
+    + Support for new Toshiba Satellite models (M100, A105)
+  * [01_makfefile.dpatch] Removed - fixed upstream
+  * Changed defaut STEM value to linux (follows kernel-package)
+
+ -- Julien Valroff <julien@kirya.net>  Fri, 11 Aug 2006 09:15:27 +0200
+
 omnibook (2:2.20060809-2) unstable; urgency=low
 
   * Include copyright and Debian changelog in omnibook-module
