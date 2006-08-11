@@ -106,7 +106,7 @@ extern int set_omnibook_param(const char *val, struct kernel_param *kp);
  */
 
 #ifdef  OMNIBOOK_STANDALONE
-#if     defined(CONFIG_BACKLIGHT_DEVICE) && defined(BACKLIGHT_CLASS_DEVICE) && (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,16))
+#if     (defined (CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE) || defined(CONFIG_BACKLIGHT_CLASS_DEVICE)) && (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,16))
 #define CONFIG_OMNIBOOK_BACKLIGHT
 #else
 #undef  CONFIG_OMNIBOOK_BACKLIGHT

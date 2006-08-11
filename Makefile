@@ -63,7 +63,7 @@ clean:
 		make -C $(KSRC) M=$(PWD) clean
 		$(RM) *~ "#*#" .swp
 		$(RM) -r debian/omnibook-source *-stamp
-		$(RM) -r Module.symvers
+		$(RM) -r Module.symvers Modules.symvers
 		(cd misc/obtest; $(RM) obtest *.o)
 
 
@@ -77,6 +77,7 @@ unload:
 		$(RMMOD) $(MODULE_NAME) || :
 
 load:		install unload
+		$(DEPMOD)
 		$(INSMOD) $(MODULE_NAME)
 
 uninstall:	unload
