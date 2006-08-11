@@ -97,7 +97,7 @@ MA_DIR ?= /usr/share/modass
 -include $(MA_DIR)/include/common-rules.make
 
 ifndef KPKG_STEM
-STEM:=kernel
+STEM:=linux
 else
 STEM:=${KPKG_STEM}
 endif
