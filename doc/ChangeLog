@@ -11,6 +11,7 @@ Changelog file for omnibook package:
   Include explicit depmod in the 'load' target
 * Improvements in the Debian packages by Julien Valroff
 * Fix backlight support conditional compilation
+* Fix Toshiba Satellite M40X detection string
 
 2.20060809 Mathieu Bérard <math_b@users.sourceforge.net>
 * Add dmi info for Toshiba Satellite M40X (Thanks Julien Valroff) 
