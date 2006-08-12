@@ -7,6 +7,7 @@ omnibook (2:2.20060809-3) unstable; urgency=low
     + Fixed Toshiba Satellite M40X detection string
   * [01_makfefile.dpatch] Removed - fixed upstream
   * Changed defaut STEM value to linux (follows kernel-package)
+  * Uses dh_installmodules for maintainance scripts
 
  -- Julien Valroff <julien@kirya.net>  Sat, 12 Aug 2006 11:56:39 +0200
 

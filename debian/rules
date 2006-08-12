@@ -122,6 +122,7 @@ binary-modules: kdist_config prep-deb-files
 
 	dh_installdocs
 	dh_compress
+	dh_installmodules
 	dh_installchangelogs
 	dh_fixperms
 	dh_installdeb
