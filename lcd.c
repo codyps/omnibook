@@ -77,6 +77,13 @@ static int omnibook_get_lcd_brightness(void)
 		if ((retval = omnibook_ec_read(AMILOD_CBRG, &brgt)))
 			return retval;
 		retval = brgt &= AMILOD_CBRG_MASK;
+	/*
+         * TSA105
+         */
+        } else if (omnibook_ectype & (TSA105) ) {
+                if ((retval = omnibook_ec_read(A105_BNDT, &brgt)))
+                        return retval;
+		retval = brgt &= A105_BNDT_MASK;
 	} else {
 		printk(KERN_INFO
 		       "%s: LCD brightness handling is unsupported on this machine.\n",
