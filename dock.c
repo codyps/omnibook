@@ -12,6 +12,7 @@
  * General Public License for more details.
  *
  * Written by Soós Péter <sp@osb.hu>, 2002-2004
+ * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
 #ifdef OMNIBOOK_STANDALONE
@@ -22,53 +23,24 @@
 
 #include "ec.h"
 
-static int omnibook_get_dock(void)
-{
-	u8 dock;
-	int retval;
-	/*
-	 * XE3GF  
-	 */
-	if (omnibook_ectype & (XE3GF) ) {
-		if ((retval = omnibook_ec_read(XE3GF_CSPR, &dock)))
-			return retval;
-		retval = (dock & XE3GF_CSPR_MASK) ? 1 : 0;
-	/*
-	 * OB500
-	 * OB510
-	 * OB6000
-	 * OB6100 
-	 */
-	} else if (omnibook_ectype & (OB500|OB510|OB6000|OB6100) ) {	
-		if ((retval = omnibook_ec_read(OB500_STA1, &dock)))
-			return retval;
-		retval = (dock & OB500_DCKS_MASK) ? 1 : 0;
-	/*
-	 * OB4150 
-	 */
-	} else if (omnibook_ectype & (OB4150) ) {
-		if ((retval = omnibook_ec_read(OB4150_DCID, &dock)))
-			return retval;
-		retval = (dock) ? 1 : 0;
-	} else {
-		printk(KERN_INFO
-		       "%s: Docking station handling is unsupported on this machine.\n",
-		       OMNIBOOK_MODULE_NAME);
-		retval = -ENODEV;
-	}
+static const struct omnibook_io_operation dock_io_table[] = {
+	{ XE3GF,		     EC, XE3GF_CSPR, 0, XE3GF_CSPR_MASK},
+	{ OB500|OB510|OB6000|OB6100, EC, OB500_STA1, 0, OB500_DCKS_MASK},
+	{ OB4150,		     EC, OB4150_DCID, 0, 0},	
+	{ 0,}
+};
 
-	return retval;
-}
+static struct omnibook_io_operation *dock_io;
 
 static int omnibook_dock_read(char *buffer)
 {
 	int len = 0;
-	int dock;
-
-	dock = omnibook_get_dock();
-	if (dock < 0)
-		return dock;
-
+	u8 dock;
+	int retval;
+	
+	if ((retval = omnibook_io_read(dock_io, &dock)))
+		return retval;
+	
 	len +=
 	    sprintf(buffer + len, "Laptop is %s\n",
 		    (dock) ? "docked" : "undocked");
@@ -76,10 +48,17 @@ static int omnibook_dock_read(char *buffer)
 	return len;
 }
 
+static int omnibook_dock_init(void)
+{
+	dock_io = omnibook_io_match(dock_io_table);
+	return dock_io ? 0 : -ENODEV;
+}
+
 static struct omnibook_feature __declared_feature dock_feature = {
 	 .name = "dock",
 	 .enabled = 0,
 	 .read = omnibook_dock_read,
+	 .init = omnibook_dock_init,
 	 .ectypes = XE3GF|OB500|OB510|OB6000|OB6100|OB4150,
 };
 

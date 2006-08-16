@@ -13,17 +13,38 @@
  * General Public License for more details.
  *
  * Written by Soós Péter <sp@osb.hu>, 2002-2004
- * Written by Mathieu Bérard <mathieu.berard@crans.org>, 2006
+ * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
 extern int omnibook_ec_read(u8 addr, u8 *data);
 extern int omnibook_ec_write(u8 addr, u8 data);
 extern int omnibook_kbc_command(u8 cmd, u8 data);
-extern int omnibook_io_read(u32 addr, u8 * data);
-extern int omnibook_io_write(u32 addr, u8 data);
-extern int omnibook_mem_read(u32 addr, u8 * data);
-extern int omnibook_mem_write(u32 addr, u8 data);
 
+struct omnibook_io_operation;
+
+extern int omnibook_io_read(struct omnibook_io_operation *io_op, u8 *value);
+extern int omnibook_io_write(struct omnibook_io_operation *io_op, u8 value);
+void *omnibook_io_match(const struct omnibook_io_operation *io_op);
+
+extern int omnibook_cdimode_read(unsigned int index, u8 *value);
+extern int omnibook_cdimode_write(unsigned int index, u8 value);
+extern void omnibook_cdimode_exit(void);
+extern int omnibook_cdimode_init(void);
+
+
+/*
+ *  Storage of generic (EC,PIO,...) addresses, read masks, and corresponding ectypes
+ *  This is for use with the omnibook_io_{read/write} and omnibook_io_match 
+ *  helper functions
+ */
+
+struct omnibook_io_operation {
+	int ectypes;				/* ectype */
+	enum { BAD, EC, PIO, MMIO, CDI} type;	/* address space */
+	u8 read;				/* read address */
+	u8 write;				/* write address */
+	u8 mask;				/* read mask */
+};
 
 /*
  *	Embedded controller adresses
@@ -314,4 +335,18 @@ extern int omnibook_mem_write(u32 addr, u8 data);
 
 #define XE3GC_BCMD				0xFFFFEBC
 
-/* End of file */
+/*
+ * Toshiba Satellite A105 values and mask
+ */
+
+#define A105_BNDT				0xA3	/* LCD brightness */
+#define A105_BNDT_MASK				0x0F
+
+/*
+ * Index and values for Command/Data/Index interface
+ */
+
+#define TSM70_FN_INDEX			0x45
+#define TSM70_FN_ENABLE			0x75
+#define TSM70_LCD_READ			0x5C
+#define TSM70_LCD_WRITE			0x5D

@@ -42,15 +42,17 @@ RM	= rm -f
 FIND	= find
 endif
 
-DEBUG	=  #-D DEBUG  -g -O0
+DEBUG	= # -D OMNIBOOK_DEBUG  -g -O0
+
 EXTRA_CFLAGS += -D OMNIBOOK_STANDALONE $(DEBUG)
 EXTRA_LDFLAGS += $(src)/sections.lds
 
 
 OBJS	= ac.o battery.o blank.o display.o dock.o \
-	  ec.o fan.o fan_policy.o init.o lcd.o onetouch.o \
+	  ec.o fan.o fan_policy.o init.o lcd.o hotkeys.o \
 	  temperature.o touchpad.o dump.o info.o \
-	  apmemu.o muteled.o
+	  apmemu.o muteled.o compal.o
+
 
 # All extra flags delt with automagically
 

@@ -12,6 +12,7 @@
  * General Public License for more details.
  *
  * Written by Soós Péter <sp@osb.hu>, 2002-2004
+ * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
 #ifdef OMNIBOOK_STANDALONE
@@ -21,6 +22,7 @@
 #endif
 
 #include <linux/delay.h>
+#include <asm/io.h>
 #include "ec.h"
 
 static int omnibook_get_fan(void)
@@ -40,15 +42,13 @@ static int omnibook_get_fan(void)
 	 * OB500 
 	 */
 	} else if (omnibook_ectype & (OB500) ) {
-		if ((retval = omnibook_io_read(OB500_GPO1, &fan)))
-			return retval;
+		fan = inb(OB500_GPO1);
 		retval = (fan & OB500_FAN_OFF_MASK) ? 0 : 1;
 	/*
 	 * OB510 
 	 */
 	} else if (omnibook_ectype & (OB510) ) {
-		if ((retval = omnibook_io_read(OB510_GPIO, &fan)))
-			return retval;
+		fan = inb(OB510_GPIO);
 		retval = (fan & OB510_FAN_OFF_MASK) ? 0 : 1;
 	/*
 	 * OB6000
@@ -70,13 +70,10 @@ static int omnibook_get_fan(void)
 	 * XE2 
 	 */
 	} else if (omnibook_ectype & (XE2) ) {
-		if ((retval = omnibook_io_read(OB500_GPO1, &fan)))
-			return retval;
+		fan = inb(OB500_GPO1);
 		retval = (fan & XE2_FAN_MASK) ? 0 : 1;
 	} else {
-		printk(KERN_INFO
-		       "%s: Fan status monitoring is unsupported on this machie.\n",
-		       OMNIBOOK_MODULE_NAME);
+		printk(O_INFO "Fan status monitoring is unsupported on this machie.\n");
 		retval = -ENODEV;
 	}
 
@@ -86,7 +83,7 @@ static int omnibook_get_fan(void)
 static int omnibook_fan_on(void)
 {
 	u8 fan;
-	int retval;
+	int retval = 0;
 
 	/*
 	 * XE3GF
@@ -101,22 +98,15 @@ static int omnibook_fan_on(void)
 	 * OB500 
 	 */
 	} else if (omnibook_ectype & (OB500) ) {
-	
-		if ((retval = omnibook_io_read(OB500_GPO1, &fan)))
-			return retval;
-		if ((retval =
-		     omnibook_io_write(OB500_GPO1, fan & ~OB500_FAN_ON_MASK)))
-			return retval;
+		fan = inb(OB500_GPO1);
+		outb(fan & ~OB500_FAN_ON_MASK, OB500_GPO1);
+			
 	/*
 	 * OB510 
 	 */
 	} else if (omnibook_ectype & (OB510) ) {
-	
-		if ((retval = omnibook_io_read(OB510_GPIO, &fan)))
-			return retval;
-		if ((retval =
-		     omnibook_io_write(OB510_GPIO, fan & ~OB510_FAN_ON_MASK)))
-			return retval;
+		fan = inb(OB510_GPIO);
+		outb(fan & ~OB510_FAN_ON_MASK, OB510_GPIO);
 	/*
 	 * OB6000
 	 * OB6100 
@@ -140,16 +130,10 @@ static int omnibook_fan_on(void)
 	 * XE2 
 	 */
 	} else if (omnibook_ectype & (XE2) ) {
-	
-		if ((retval = omnibook_io_read(OB500_GPO1, &fan)))
-			return retval;
-		if ((retval =
-		     omnibook_io_write(OB500_GPO1, fan & ~XE2_FAN_MASK)))
-			return retval;
+		fan = inb(OB500_GPO1);
+		outb(fan & ~XE2_FAN_MASK, OB500_GPO1);
 	} else {
-		printk(KERN_INFO
-		       "%s: Direct fan control is unsupported on this machie.\n",
-		       OMNIBOOK_MODULE_NAME);
+		printk(O_INFO "Direct fan control is unsupported on this machie.\n");
 		retval = -ENODEV;
 	}
 
@@ -159,7 +143,7 @@ static int omnibook_fan_on(void)
 static int omnibook_fan_off(void)
 {
 	u8 fan;
-	int retval;
+	int retval = 0;
 
 	/*
 	 * XE3GF
@@ -190,20 +174,14 @@ static int omnibook_fan_off(void)
 	 * OB500 
 	 */
 	} else if (omnibook_ectype & (OB500) ) {
-		if ((retval = omnibook_io_read(OB500_GPO1, &fan)))
-			return retval;
-		if ((retval =
-		     omnibook_io_write(OB500_GPO1, fan | OB500_FAN_OFF_MASK)))
-			return retval;
+		fan = inb(OB500_GPO1);
+		outb(fan | OB500_FAN_OFF_MASK, OB500_GPO1);
 	/*
 	 * OB510 
 	 */
 	} else if (omnibook_ectype & (OB510) ) {
-		if ((retval = omnibook_io_read(OB510_GPIO, &fan)))
-			return retval;
-		if ((retval =
-		     omnibook_io_write(OB510_GPIO, fan | OB510_FAN_OFF_MASK)))
-			return retval;
+		fan = inb(OB510_GPIO);
+		outb(fan | OB510_FAN_OFF_MASK, OB510_GPIO);
 	/*
 	 * OB6000
 	 * OB6100 
@@ -226,15 +204,10 @@ static int omnibook_fan_off(void)
 	 * XE2 
 	 */
 	} else if (omnibook_ectype & (XE2) ) {
-		if ((retval = omnibook_io_read(OB500_GPO1, &fan)))
-			return retval;
-		if ((retval =
-		     omnibook_io_write(OB500_GPO1, fan | XE2_FAN_MASK)))
-			return retval;
+		fan = inb(OB500_GPO1);
+		outb(fan | XE2_FAN_MASK, OB500_GPO1);
 	} else {
-		printk(KERN_INFO
-		       "%s: Direct fan control is unsupported on this machie.\n",
-		       OMNIBOOK_MODULE_NAME);
+		printk(O_INFO "Direct fan control is unsupported on this machie.\n");
 		retval = -ENODEV;
 	}
 

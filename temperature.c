@@ -12,6 +12,7 @@
  * General Public License for more details.
  *
  * Written by Soós Péter <sp@osb.hu>, 2002-2004
+ * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
 #ifdef OMNIBOOK_STANDALONE
@@ -64,9 +65,8 @@ static int omnibook_get_cpu_temp(void)
 			return retval;
 		retval = temp;
 	} else {
-		printk(KERN_INFO
-		       "%s: Temperature monitoring is unsupported on this machine.\n",
-		       OMNIBOOK_MODULE_NAME);
+		printk(O_INFO
+		       "Temperature monitoring is unsupported on this machine.\n");
 		retval = -ENODEV;
 	}
 	return retval;

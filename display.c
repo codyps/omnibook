@@ -12,6 +12,7 @@
  * General Public License for more details.
  *
  * Written by Soós Péter <sp@osb.hu>, 2002-2004
+ * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
 #ifdef OMNIBOOK_STANDALONE
@@ -22,78 +23,43 @@
 
 #include "ec.h"
 
-static int omnibook_get_display(void)
-{
-	int retval = 0;
-	u8 sta;
-	
-	/*
-	 * XE3GF
-	 * TSP10
-	 * TSM30X
-	 * TSM40
-	 */
-	if (omnibook_ectype & (XE3GF|TSP10|TSM30X|TSM40) ) {
-		if ((retval = omnibook_ec_read(XE3GF_STA1, &sta)))
-			return retval;
-		retval = (sta & XE3GF_SHDD_MASK) ? 1 : 0;
-	/*
-	 * XE3GC
-	 */
-	} else if (omnibook_ectype & XE3GC ) {
-		if ((retval = omnibook_ec_read(XE3GC_STA1, &sta)))
-			return retval;
-		retval = (sta & XE3GC_CRTI_MASK) ? 1 : 0;
-	/*
-	 * OB500
-	 * OB510
-	 * OB6000
-	 * OB6100
-	 * XE4500
-	 */
-	 } else if (omnibook_ectype & (OB500|OB510|OB6000|OB6100|XE4500) ) {
-		if ((retval = omnibook_ec_read(OB500_STA1, &sta)))
-			return retval;
-		retval = (sta & OB500_CRTS_MASK) ? 1 : 0;
-	/*
-	 * OB4150
-	 */
-	} else if (omnibook_ectype & OB4150 ) {
-		if ((retval = omnibook_ec_read(OB4150_STA2, &sta)))
-			return retval;
-		retval = (sta & OB4150_CRST_MASK) ? 1 : 0;
-	/*
-	 * UNKNOWN
-	 */
-	} else {
-		printk(KERN_INFO
-		       "%s: External display status monitoring is unsupported on this machine.\n",
-		       OMNIBOOK_MODULE_NAME);
-		retval = -ENODEV;
-	}
-	return retval;
-}
+static const struct omnibook_io_operation display_io_table[] = {
+	{ XE3GF|TSP10|TSM30X|TSM40,	    EC, XE3GF_STA1, 0, XE3GF_SHDD_MASK},
+	{ XE3GC,			    EC, XE3GC_STA1, 0, XE3GC_CRTI_MASK},
+	{ OB500|OB510|OB6000|OB6100|XE4500, EC, OB500_STA1, 0, OB500_CRTS_MASK},
+	{ OB4150,			    EC, OB4150_STA2, 0, OB4150_CRST_MASK},
+	{ 0,}
+};
+
+static struct omnibook_io_operation *display_io;
 
 static int omnibook_display_read(char *buffer)
 {
 	int len = 0;
-	int display;
-
-	display = omnibook_get_display();
-	if (display < 0)
-		return display;
-
+	int retval;
+	u8 sta;
+	
+	if ((retval = omnibook_io_read(display_io, &sta)))
+		return retval;
 	len +=
 	    sprintf(buffer + len, "External display is %s\n",
-		    (display) ? "present" : "not present");
+		    (sta) ? "present" : "not present");
 
 	return len;
 }
+
+static int omnibook_display_init(void)
+{
+	display_io = omnibook_io_match(display_io_table);
+	return display_io ? 0 : -ENODEV;
+}
+	
 
 static struct omnibook_feature __declared_feature display_feature = {
 	 .name = "display",
 	 .enabled = 1,
 	 .read = omnibook_display_read,
+	 .init = omnibook_display_init,
 	 .ectypes = XE3GF|XE3GC|OB500|OB510|OB6000|OB6100|XE4500|OB4150|TSP10|TSM30X|TSM40,
 };
 

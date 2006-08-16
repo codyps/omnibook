@@ -12,6 +12,7 @@
  * General Public License for more details.
  *
  * Written by Soós Péter <sp@osb.hu>, 2002-2004
+ * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
 #ifdef OMNIBOOK_STANDALONE
@@ -140,7 +141,7 @@ static int omnibook_apmemu_init(void)
 {
 #ifdef CONFIG_APM
 	if (!apm_info.disabled) {
-		printk(KERN_INFO "%s: Real APM support is present, emulation is not necessary.\n", OMNIBOOK_MODULE_NAME);
+		printk(O_INFO "Real APM support is present, emulation is not necessary.\n");
 		return -ENODEV;
 	}
 #endif

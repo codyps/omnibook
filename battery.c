@@ -12,6 +12,7 @@
  * General Public License for more details.
  *
  * Written by Soós Péter <sp@osb.hu>, 2002-2004
+ * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
 #ifdef OMNIBOOK_STANDALONE
@@ -556,7 +557,7 @@ static struct omnibook_feature __declared_feature battery_feature  = {
 	 .name = "battery",
 	 .enabled = 1,
 	 .read = omnibook_battery_read,
-	 .ectypes = XE3GF|XE3GC|AMILOD|TSP10|TSM30X, /* FIXME: OB500|OB6000|OB6100|XE4500 */
+	 .ectypes = XE3GF|XE3GC|AMILOD|TSP10, /* FIXME: OB500|OB6000|OB6100|XE4500 */
 };
 
 

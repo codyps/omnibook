@@ -1,16 +1,12 @@
-Kernel Support for OneTouch buttons of HP OmniBooks
-===================================================
+Kernel Support for Special hotkey buttons
+=========================================
 
-Some HP OmniBook (and other) laptops have special multimedia keys
-(aka OneTouch buttons). These or some of them are disabled by default
-and need to be enabled.
+Some laptops have special multimedia keys, their branding name varies
+on laptop manufacturer (OneTouch for HP omnibook, one can also encounter the
+names E-Keys, EasyAcess, you name it).
+They may be disabled by default and need to be enabled.
 
-Note: these buttons may be enabled by kernel series 2.5/2.6 at startup without
-      this module, but sometimes it is useful to disable them e.g. if you
-      travel with your laptop, and want to prevent accidental pressing
-      buttons on front/side of your laptop.
-
-This module try to detect your HP OmniBook and enable OneTouch buttons
+This module try to detect your laptop model and enable those hotkey buttons
 to generate scancodes.
 Look in syslog messages for "keyboard: unknown scancode e0 xx" messages to
 identify the scancode assigned to button. Use setkeycodes from console-tools
@@ -162,8 +158,8 @@ Bluetooth			e058
 Wifi				e056
 
 
-Toshiba Satellite M70
----------------------
+Toshiba Satellite M70 or M40X
+-----------------------------
 
 Lock (Fn + F1)			e06e
 Light Bubble (Fn + F2)		e062
@@ -174,8 +170,8 @@ Brightness Down (Fn + F6)	e06f
 Brightness Up (Fn + F7)		e059
 Toggle Wifi (Fn + F8)		e016
 Touchpad On/Off (Fn + F9)	e01e/e01f
-Zoom - (Fn + 1)		e01a
-Zoom + (Fn + 2)		e01b
+Zoom - (Fn + 1)			e01a
+Zoom + (Fn + 2)			e01b
 Zoom (Fn + Space)		e043
 Internet			e013
 Media Player			e014
@@ -186,18 +182,15 @@ Prev				e074
 Wifi Kill Switch		e015
 
 
-There are programs specifically designed for such application keys (e.g.
-hotkeys: http://ypwong.org/hotkeys/) or kernel level support for such
-keys at http://rick.vanrein.org/linux/funkey/.
+There are programs specifically designed for such application keys as 
+gnome-keybinding-properties for Gnome Desktop.
 
-XE3L machines are same as XE3 models but they have application launcher
-buttons only but do not have multimedia (CD and volume control) buttons.
+HP omnibook XE3L machines are same as XE3 models but they have application 
+launcher buttons only but do not have multimedia (CD and volume control) buttons.
 
 The extra buttons near the touchpad are not OneTouch buttons. You need
 driver for touchpad to use them. If you have Synaptics touchpad you may
-try the driver can be found at http://www.mobilix.org/touchpad_driver.html.
-Newer version can be found at
-http://w1.894.telia.com/~u89404340/touchpad/index.html
+try the driver can be found at http://web.telia.com/~u89404340/touchpad/
 
 The ("Big Blue") Sleep button also not a OneTouch button, it usually
 handled by APM or ACPI stuff depending on your BIOS implementation.

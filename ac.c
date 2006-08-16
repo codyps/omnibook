@@ -12,6 +12,7 @@
  * General Public License for more details.
  *
  * Written by Soós Péter <sp@osb.hu>, 2002-2004
+ * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
 #ifdef OMNIBOOK_STANDALONE
@@ -22,61 +23,25 @@
 
 #include "ec.h"
 
+static const struct omnibook_io_operation ac_io_table[] = {
+	{ XE3GF|TSP10|TSM30X, 		    EC,	XE3GF_ADP,  0, XE3GF_ADP_MASK},
+	{ XE3GC|AMILOD,			    EC,	XE3GC_STA1, 0, XE3GC_ADP_MASK},
+	{ OB500|OB510|OB6000|OB6100|XE4500, EC,	OB500_STA2, 0, OB500_ADP_MASK},
+	{ OB4150, 			    EC,	OB4150_ADP, 0, OB4150_ADP_MASK},
+	{ XE2, 				    EC,	XE2_STA1,   0, XE2_ADP_MASK},
+	{ 0,}
+};
+
+static struct omnibook_io_operation *ac_io;
+	
 int omnibook_get_ac(void)
 {
 	u8 ac;
 	int retval;
-	/*
- 	 * XE3GF
- 	 * TSP10
-	 * TSM30X
-	 */
-	if (omnibook_ectype & (XE3GF|TSP10|TSM30X) ) {
-		if ((retval = omnibook_ec_read(XE3GF_ADP, &ac)))
-			return retval;
-		retval = (ac & XE3GF_ADP_MASK) ? 1 : 0;
-	/*
-	 * XE3GC
-	 * AMILOD
-	 */
-	} else if (omnibook_ectype & (XE3GC|AMILOD) ) {	
-		if ((retval = omnibook_ec_read(XE3GC_STA1, &ac)))
-			return retval;
-		retval = (ac & XE3GC_ADP_MASK) ? 1 : 0;
-	/*
-	 * OB500
-	 * OB510
-	 * 0B6000
-	 * 0B61000
-	 * XE4500
-	 */
-	} else if (omnibook_ectype & (OB500|OB510|OB6000|OB6100|XE4500) ) {
-		if ((retval = omnibook_ec_read(OB500_STA2, &ac)))
-			return retval;
-		retval = (ac & OB500_ADP_MASK) ? 1 : 0;
-	/*
-	 * OB4150
-	 */
-	} else if (omnibook_ectype & OB4150 ) {
-		if ((retval = omnibook_ec_read(OB4150_ADP, &ac)))
-			return retval;
-		retval = (ac & OB4150_ADP_MASK) ? 1 : 0;
-	/*
-	 * XE2
-	 */
-	} else if (omnibook_ectype & XE2) {
-		if ((retval = omnibook_ec_read(XE2_STA1, &ac)))
-			return retval;
-		retval = (ac & XE2_ADP_MASK) ? 1 : 0;
-	/*
-	 * UNKNOWN
-	 */
-	} else {
-		printk(KERN_INFO
-		       "%s: AC adapter status monitoring is unsupported on this machine.\n",
-		       OMNIBOOK_MODULE_NAME);
-		retval = -ENODEV;
-	}
+
+	retval = omnibook_io_read( ac_io, &ac);
+	if (!retval)
+		retval = ac ? 1 : 0;
 	return retval;
 }
 
@@ -94,10 +59,17 @@ static int omnibook_ac_read(char *buffer)
 	return len;
 }
 
+static int omnibook_ac_init(void)
+{
+	ac_io = omnibook_io_match(ac_io_table);
+	return ac_io ? 0 : -ENODEV;
+}
+
 static struct omnibook_feature __declared_feature ac_feature = {
 	 .name = "ac",
 	 .enabled = 1,
 	 .read = omnibook_ac_read,
+	 .init = omnibook_ac_init,
 	 .ectypes = XE3GF|XE3GC|OB500|OB510|OB6000|OB6100|XE4500|OB4150|XE2|AMILOD|TSP10|TSM30X,
 };
 

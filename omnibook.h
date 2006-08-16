@@ -13,6 +13,7 @@
  * General Public License for more details.
  *
  * Written by Soós Péter <sp@osb.hu>, 2002-2004
+ * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
 #include <linux/module.h>
@@ -33,23 +34,22 @@
 
 extern int omnibook_ectype;
 
-
 #define	NONE	0	/* 0  Default/unknown EC type */ 
-#define	XE3GF	1	/* 1  HP OmniBook XE3 GF, most Toshiba Satellites and more */
-#define	XE3GC	2	/* 2  HP OmniBook XE3 GC, GD, GE and compatible */
-#define	OB500	4	/* 3  HP OmniBook 500 and compatible */
-#define	OB510	8	/* 4  HP OmniBook 510 */
-#define	OB6000	16	/* 5  HP OmniBook 6000 */
-#define	OB6100	32	/* 6  HP OmniBook 6100 */
-#define	XE4500	64	/* 7  HP OmniBook xe4500 and compatible */
-#define	OB4150	128	/* 8  HP OmniBook 4150 */
-#define	XE2	256	/* 9  HP OmniBook XE2 */
-#define	AMILOD	512	/* 10 Fujitsu Amilo D */
-#define	TSP10	1024	/* 11 Toshiba Satellite P10, P15, P20 and compatible */
-#define	TSM30X	2048	/* 12 Toshiba Satellite M30X, M35X, M40X, M70 and compatible */
-#define	TSM40	4096	/* 13 Toshiba Satellite M40 */
-#define	TSA105	8192	/* 14 Toshiba Satellite A105 */
-
+#define	XE3GF	(1<<0)	/* 1  HP OmniBook XE3 GF, most Toshiba Satellites and more */
+#define	XE3GC	(1<<1)	/* 2  HP OmniBook XE3 GC, GD, GE and compatible */
+#define	OB500	(1<<2)	/* 3  HP OmniBook 500 and compatible */
+#define	OB510	(1<<3)	/* 4  HP OmniBook 510 */
+#define	OB6000	(1<<4)	/* 5  HP OmniBook 6000 */
+#define	OB6100	(1<<5)	/* 6  HP OmniBook 6100 */
+#define	XE4500	(1<<6)	/* 7  HP OmniBook xe4500 and compatible */
+#define	OB4150	(1<<7)	/* 8  HP OmniBook 4150 */
+#define	XE2	(1<<8)	/* 9  HP OmniBook XE2 */
+#define	AMILOD	(1<<9)  /* 10 Fujitsu Amilo D */
+#define	TSP10	(1<<10)	/* 11 Toshiba Satellite P10, P15, P20 and compatible */
+#define	TSM30X	(1<<11)	/* 12 Toshiba Satellite M30X, M35X, M40X, M70 and compatible */
+#define	TSM40	(1<<12)	/* 13 Toshiba Satellite M40 */
+#define	TSA105	(1<<13)	/* 14 Toshiba Satellite A105 */
+ 
 /*
  * This represent a feature provided by this module
  */
@@ -81,6 +81,7 @@ struct omnibook_battery_state {
 	u8 gauge;		/* Gauge in % */
 	u8 status;		/* 0 - unknown, 1 - charged, 2 - discharging, 3 - charging, 4 - critical) */
 };
+
 enum {
 	OMNIBOOK_BATTSTAT_UNKNOWN,
 	OMNIBOOK_BATTSTAT_CHARGED,
@@ -95,9 +96,22 @@ extern int omnibook_get_ac(void);
 extern int omnibook_get_battery_status(int num, struct omnibook_battery_state *battstat);
 extern int set_omnibook_param(const char *val, struct kernel_param *kp);
 
-
 #define __declared_feature __attribute__ (( __section__(".features"),  __aligned__(__alignof__ (struct omnibook_feature)))) __attribute_used__
 
+/*
+ * yet another printk wrapper
+ */
+#define O_INFO	KERN_INFO OMNIBOOK_MODULE_NAME ": "
+#define O_WARN	KERN_WARNING OMNIBOOK_MODULE_NAME ": "
+#define O_ERR	KERN_ERR OMNIBOOK_MODULE_NAME ": "
+
+#ifdef OMNIBOOK_DEBUG
+#define dprintk(fmt, args...) printk(KERN_INFO "%s: " fmt, OMNIBOOK_MODULE_NAME, ## args)
+#define dprintk_simple(fmt, args...) printk(fmt, ## args)
+#else
+#define dprintk(fmt, args...)	do { } while(0)
+#define dprintk_simple(fmt, args...) do { } while(0)
+#endif
 
 /* 
  * Configuration for standalone compilation: 

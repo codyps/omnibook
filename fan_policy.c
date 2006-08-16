@@ -12,6 +12,7 @@
  * General Public License for more details.
  *
  * Written by Soós Péter <sp@osb.hu>, 2002-2004
+ * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
 #ifdef OMNIBOOK_STANDALONE
@@ -60,9 +61,7 @@ static int omnibook_get_fan_policy(void)
 			omnibook_fan_policy[i] = tmp;
 		}
 	} else {
-		printk(KERN_INFO
-		       "%s: Fan policy is unsupported on this machine.\n",
-		       OMNIBOOK_MODULE_NAME);
+		printk(O_INFO "Fan policy is unsupported on this machine.\n");
 		retval = -ENODEV;
 	}
 
@@ -95,9 +94,7 @@ static int omnibook_set_fan_policy(void)
 				return retval;
 		}
 	} else {
-		printk(KERN_INFO
-		       "%s: Fan policy is unsupported on this machine.\n",
-		       OMNIBOOK_MODULE_NAME);
+		printk(O_INFO "Fan policy is unsupported on this machine.\n");
 		retval = -ENODEV;
 	}
 
@@ -128,9 +125,7 @@ static int omnibook_set_fan_policy_defaults(void)
 				return retval;
 		}
 	} else {
-		printk(KERN_INFO
-		       "%s: Fan policy is unsupported on this machine.\n",
-		       OMNIBOOK_MODULE_NAME);
+		printk(O_INFO "Fan policy is unsupported on this machine.\n");
 		retval = -ENODEV;
 	}
 
@@ -187,9 +182,7 @@ static int omnibook_fan_policy_write(char *buffer)
 
 	b = buffer;
 	do {
-
-		pr_debug("n=[%i] b=[%s]\n", n, b);
-
+		dprintk("n=[%i] b=[%s]\n", n, b);
 		if (n > OMNIBOOK_FAN_LEVELS)
 			return -EINVAL;
 		if (!isspace(*b)) {

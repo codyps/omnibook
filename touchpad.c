@@ -12,6 +12,7 @@
  * General Public License for more details.
  *
  * Written by Soós Péter <sp@osb.hu>, 2002-2004
+ * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
 #ifdef OMNIBOOK_STANDALONE
@@ -29,8 +30,7 @@ static int omnibook_touchpad_on(void)
 {
 	if (omnibook_kbc_command
 	    (OMNIBOOK_KBC_CONTROL_CMD, OMNIBOOK_KBC_CMD_TOUCHPAD_ENABLE)) {
-		printk(KERN_ERR "%s: failed touchpad enable command.\n",
-		       OMNIBOOK_MODULE_NAME);
+		printk(O_ERR "Failed touchpad enable command.\n");
 		return -EIO;
 	}
 	return 0;
@@ -40,8 +40,7 @@ static int omnibook_touchpad_off(void)
 {
 	if (omnibook_kbc_command
 	    (OMNIBOOK_KBC_CONTROL_CMD, OMNIBOOK_KBC_CMD_TOUCHPAD_DISABLE)) {
-		printk(KERN_ERR "%s: failed touchpad disable command.\n",
-		       OMNIBOOK_MODULE_NAME);
+		printk(O_ERR "Failed touchpad disable command.\n");
 		return -EIO;
 	}
 	return 0;
@@ -70,8 +69,7 @@ static int omnibook_touchpad_enable(void)
 			if (omnibook_touchpad_on())
 				return -EIO;
 			omnibook_touchpad_enabled = 1;
-			printk(KERN_INFO "%s: Touchpad is enabled.\n",
-			       OMNIBOOK_MODULE_NAME);
+			printk(O_INFO "Touchpad is enabled.\n");
 		}
 	/*
 	 * These models have stickpointer, not touchpad:
@@ -102,8 +100,7 @@ static int omnibook_touchpad_disable(void)
 				return -EIO;
 			}
 			omnibook_touchpad_enabled = 0;
-			printk(KERN_INFO "%s: Touchpad is disabled.\n",
-			       OMNIBOOK_MODULE_NAME);
+			printk(O_INFO "Touchpad is disabled.\n");
 		}
 	/*
 	 * These models have stickpointer, not touchpad:

@@ -2,11 +2,21 @@ Changelog file for omnibook package:
 ------------------------------------
 
 2.XXXXXXXX Mathieu Bérard <math_b@users.sourceforge.net>
+* Merge from the new-backend branch: Add new backend code 
+  (in compal.c) used with TSM30X class laptops:
+  Used for lcd access
+  Used for hotkeys support: now most Fn+key generate a scancode,
+  as well as the wifi kill switch.
+  Warning: tested only on TSM40X an TSM70 laptops.
+* Create omnibook_io_operation struct and omnibook_io_{read/write}
+  funtions to simplify implementation of some simple features.
+  Used with ac display dock and led features.
+* Rename onetouch feature to "hotkeys" which is a vendor neutral name.
 * Add dmi info for Toshiba Satellite M100 (Thanks Sertaç Ö. Yıldız)
   And fix it
 * Add dmi info for Toshiba Satellite A105 (Thanks Mikkel L. Ellertson)
   the support is pretty minimalistic (LCD brigtness only) this
-  also inaugurate ectype 14
+  also ingurate ectype 14
 * Cleanup/Fix in Makefile
   Include explicit depmod in the 'load' target
 * Improvements in the Debian packages by Julien Valroff

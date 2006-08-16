@@ -13,7 +13,7 @@
  * General Public License for more details.
  *
  * Written by Soós Péter <sp@osb.hu>, 2002-2004
- * Written by Mathieu Bérard <mathieu.berard@crans.org>, 2006
+ * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
 #include <linux/types.h>
@@ -28,15 +28,6 @@
 #include "ec.h"
 
 /*
- * For (dumb) compatibility with kernel older than 2.6.9
- */
-
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,9))
-#define ioread8(addr)		readb(addr)
-#define iowrite8(val,addr)	writeb(val,addr)
-#endif
-
-/*
  * For compatibility with kernel older than 2.6.11
  */
 
@@ -44,6 +35,7 @@
 #define DEFINE_SPINLOCK(s)              spinlock_t s = SPIN_LOCK_UNLOCKED
 #endif
 
+extern int omnibook_ectype;
 
 /*
  *	Interrupt control
@@ -121,14 +113,9 @@ int omnibook_ec_read(u8 addr, u8 *data)
 	int retval;
 
 #ifdef CONFIG_ACPI_EC
-	if (!acpi_disabled)
-	{
-		retval = ec_read(addr, data);
-		if (!retval)
-			return retval;
-	}
+	if (likely(!acpi_disabled))
+		return ec_read(addr, data);
 #endif
-
 	spin_lock_irqsave(&omnibook_ec_lock, flags);
 	retval = omnibook_ec_wait(OMNIBOOK_EC_STAT_IBF);
 	if (retval)
@@ -161,12 +148,8 @@ int omnibook_ec_write(u8 addr, u8 data)
 	int retval;
 	
 #ifdef CONFIG_ACPI_EC
-	if (!acpi_disabled)
-	{
-		retval = ec_write(addr, data);
-		if (!retval)
-			return retval;
-	}
+	if (likely(!acpi_disabled))
+		return ec_write(addr, data);		
 #endif
 	
 	spin_lock_irqsave(&omnibook_ec_lock, flags);
@@ -283,59 +266,71 @@ int omnibook_kbc_command(u8 cmd, u8 data)
 }
 
 /*
- * Read a value from a system I/O address
+ * Common pattern selector:
+ * Match an ectype and return pointer to corresponding io_operation.
+ * Also make corresponding backend initialisation if necessary
  */
-
-int inline omnibook_io_read(u32 addr, u8 * data)
+void *omnibook_io_match(const struct omnibook_io_operation *io_op)
 {
-	*data = inb(addr);
-	return 0;
+	int i;
+	void *matched = NULL;
+	for (i = 0; io_op[i].ectypes ; i++) {
+		if (omnibook_ectype & io_op[i].ectypes)
+			if (io_op[i].type == CDI && omnibook_cdimode_init())
+				continue;
+			matched = (void *) &io_op[i];
+			break;
+	}
+	return matched;
 }
 
 /*
- * Write a value to a system I/O address
+ * Simple read function for common pattern
+ * Given an io_operation they read an address and apply a mask on the result
  */
 
-int inline omnibook_io_write(u32 addr, u8 data)
+int omnibook_io_read(struct omnibook_io_operation *io_op, u8 *value)
 {
-	outb(data, addr);
-	return 0;
+	int retval = 0;
+	
+	switch(io_op->type) {
+	case EC:
+		retval = omnibook_ec_read( io_op->read, value);
+		break;
+	case CDI:
+		retval = omnibook_cdimode_read( io_op->read, value);
+		break;
+	default:
+		BUG();
+	}
+	
+	if (io_op->mask)
+		*value = *value & io_op->mask;
+	
+	return retval;		
 }
 
 /*
- * Read a value from a system memory address
+ * Simple write function for common pattern
+ * Given an io_operation they write value at an given address
  */
 
-int omnibook_mem_read(u32 addr, u8 * data)
+int omnibook_io_write(struct omnibook_io_operation *io_op, u8 value)
 {
-	unsigned long flags;
-	char *base;
+	int retval = 0;
 	
-	spin_lock_irqsave(&omnibook_ec_lock, flags);
-	base = ioremap(addr, 1);
-	*data = ioread8(base);
-	iounmap(base);
-	spin_unlock_irqrestore(&omnibook_ec_lock, flags);
+	switch(io_op->type) {
+	case EC:
+		retval = omnibook_ec_write( io_op->write, value);
+		break;
+	case CDI:
+		retval = omnibook_cdimode_write( io_op->write, value);
+		break;
+	default:
+		BUG();
+	}
 	
-	return 0;
-}
-
-/*
- * Write a value to a system memory address
- */
-
-int omnibook_mem_write(u32 addr, u8 data)
-{
-	unsigned long flags;
-	char *base;
-	
-	spin_lock_irqsave(&omnibook_ec_lock, flags);
-	base = ioremap(addr, 1);
-	iowrite8(data, base);
-	iounmap(base);
-	spin_unlock_irqrestore(&omnibook_ec_lock, flags);
-	
-	return 0;
+	return retval;		
 }
 
 /* End of file */

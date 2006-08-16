@@ -12,7 +12,7 @@
  * General Public License for more details.
  *
  * Written by Soós Péter <sp@osb.hu>, 2002-2004
- * Written by Mathieu Bérard <mathieu.berard@crans.org>, 2006
+ * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
 #ifdef OMNIBOOK_STANDALONE
@@ -86,7 +86,6 @@ static struct platform_device omnibook_device = {
 
 /* Linked list of all enabled features */
 static struct omnibook_feature *omnibook_available_feature;
-
 
 /* Delimiters of the .features section wich holds all the omnibook_feature structs */
 extern struct omnibook_feature _features_start[];
@@ -182,39 +181,35 @@ static int __init omnibook_init(struct omnibook_feature *feature)
 		if (retval)
 			return -ENODEV;
 	}
-	if (feature->name) {
-		if (feature->read) {
-			pmode = S_IFREG | S_IRUGO;
-			if (feature->write) {
-				pmode |= S_IWUSR;
-				if (omnibook_userset)
-					pmode |= S_IWUGO;
-			}
-			/*
-			 * Special case for apmemu
-			 */
-			if (feature->proc_entry) {
-				proc_entry =
-				    create_proc_entry(feature->proc_entry, pmode,
-						     NULL);
-			} else {
-			proc_entry =
-			    create_proc_entry(feature->name, pmode,
-					      omnibook_proc_root);
-			}
-			if (!proc_entry) {
-				printk(KERN_ERR
-				       "%s: unable to create proc entry %s\n",
-				       OMNIBOOK_MODULE_NAME, feature->name);
-				return -ENOENT;
-			}
-			proc_entry->data = feature;
-			proc_entry->read_proc = &procfile_read_dispatch;
-			if (feature->write)
-				proc_entry->write_proc =
-				    &procfile_write_dispatch;
-			proc_entry->owner = THIS_MODULE;
+	if (feature->name && feature->read) {
+		pmode = S_IFREG | S_IRUGO;
+		if (feature->write) {
+			pmode |= S_IWUSR;
+			if (omnibook_userset)
+				pmode |= S_IWUGO;
 		}
+		/*
+		 * Special case for apmemu
+		 */
+		if (feature->proc_entry) {
+			proc_entry = create_proc_entry(feature->proc_entry, pmode,
+						      NULL);
+		} else {
+		proc_entry = create_proc_entry(feature->name, pmode,
+					       omnibook_proc_root);
+		}
+		if (!proc_entry) {
+			printk(O_ERR
+			       "Unable to create proc entry %s\n",feature->name);
+			if (feature->exit)
+				feature->exit();
+			return -ENOENT;
+		}
+		proc_entry->data = feature;
+		proc_entry->read_proc = &procfile_read_dispatch;
+		if (feature->write)
+			proc_entry->write_proc = &procfile_write_dispatch;
+		proc_entry->owner = THIS_MODULE;
 	}
 	list_add_tail(&feature->list, &omnibook_available_feature->list);
 	return 0;
@@ -249,7 +244,7 @@ static int __init omnibook_probe(struct platform_device *dev)
 			omnibook_init(feature);
 	}
 	
-	printk(KERN_INFO "%s: Enabled features:",OMNIBOOK_MODULE_NAME);
+	printk(O_INFO "Enabled features:");
 	list_for_each(p, &omnibook_available_feature->list) {
 		feature = list_entry(p, struct omnibook_feature, list);
 		if (feature->name)
@@ -279,6 +274,7 @@ static int __exit omnibook_remove(struct platform_device *dev)
 			remove_proc_entry(feature->name, omnibook_proc_root);
 	}
 	kfree(omnibook_available_feature);
+	
 	return 0;
 }
 
@@ -296,9 +292,9 @@ static int omnibook_suspend(struct platform_device *dev, pm_message_t state)
 		if (feature->suspend) {
 			retval = feature->suspend();
 			if (!retval)
-				printk(KERN_ERR
-				       "%s: unable to suspend the %s feature",
-				       OMNIBOOK_MODULE_NAME, feature->name);
+				printk(O_ERR
+				        "Unable to suspend the %s feature",
+				        feature->name);
 		}
 	}
 	return 0;
@@ -318,9 +314,9 @@ static int omnibook_resume(struct platform_device *dev)
 		if (feature->resume) {
 			retval = feature->resume();
 			if (!retval)
-				printk(KERN_ERR
-				       "%s: unable to resume the %s feature",
-				       OMNIBOOK_MODULE_NAME, feature->name);
+				printk(O_ERR
+				       "Unable to resume the %s feature",
+				       feature->name);
 		}
 	}
 	return 0;
@@ -353,24 +349,19 @@ static int __init omnibook_module_init(void)
 {
 	int retval;
 
-	printk(KERN_INFO "%s: Driver version %s.\n", OMNIBOOK_MODULE_NAME,
-	       OMNIBOOK_MODULE_VERSION);
+	printk(O_INFO "Driver version %s.\n", OMNIBOOK_MODULE_VERSION);
 	    
 	if (omnibook_ectype != NONE)
-		printk(KERN_WARNING
-		       "%s: Forced load with EC firmware type %i.\n",
-		       OMNIBOOK_MODULE_NAME, ffs(omnibook_ectype));
+		printk(O_WARN
+		       "Forced load with EC firmware type %i.\n", ffs(omnibook_ectype));
 	else if ( dmi_check_system(omnibook_ids) ) 
-		printk(KERN_INFO "%s: %s detected.\n", 
-		        OMNIBOOK_MODULE_NAME, laptop_model);
+		printk(O_INFO "%s detected.\n", laptop_model);
 	else
-		printk(KERN_INFO "%s: Unknown model detected.\n",
-			OMNIBOOK_MODULE_NAME);
+		printk(O_INFO "Unknown model.\n");
 
 	omnibook_proc_root = proc_mkdir(OMNIBOOK_MODULE_NAME, NULL);
 	if (!omnibook_proc_root) {
-		printk(KERN_ERR "%s: Unable to create /proc/%s.\n",
-		       OMNIBOOK_MODULE_NAME, OMNIBOOK_MODULE_NAME);
+		printk(O_ERR "Unable to create /proc/%s.\n", OMNIBOOK_MODULE_NAME);
 		return -ENOENT;
 	}
 
@@ -429,7 +420,7 @@ static void __exit omnibook_module_cleanup(void)
 
 	if (omnibook_proc_root)
 		remove_proc_entry("omnibook", NULL);
-	printk(KERN_INFO "%s: module is unloaded.\n", OMNIBOOK_MODULE_NAME);
+	printk(O_INFO "Module is unloaded.\n");
 }
 
 module_init(omnibook_module_init);

@@ -97,8 +97,8 @@ How does it work?
 
 What is working?
 ----------------
- 1. Enabling OneTouch buttons. See README-OneTouch for details.
-    You may enable or disable it via /proc/omnibook/onetouch.
+ 1. Enabling hotkey buttons. See README-Hotkeys for details.
+    You may enable or disable it via /proc/omnibook/hotkeys.
     There is a power management handler for reenabling the buttons at resume
     if they were enabled previously.
 
@@ -116,10 +116,9 @@ What is working?
     There is a power management handler for redisabling the touchpad
     at resume if it was disabled previously.
 
- 6. Emulate /proc/apm battery status monitoring. On my HP OmniBook XE3 GF the
+ 6. Emulate /proc/apm battery status monitoring. On the HP OmniBook XE3 GF the
     APM subsystem unable to monitor the battery but there are many status
-    monitoring application using /proc/apm to get info. So I disable APM and
-    use this module and I'm happy :).
+    monitoring application using /proc/apm to get info.
     Note: this is working only if you have AC adapter and battery status
     monitoring enabled (see ac and battery module parameters).
 
@@ -133,16 +132,16 @@ What is working?
 
 How to use?
 -----------
- 1. The OneTouch buttons are enabled by default by this module.
+ 1. The hotkeys are enabled by default by this module.
     To disable it use the command:
 
-	echo 0 > /proc/omnibook/onetouch
+	echo 0 > /proc/omnibook/hotkeys
 
     The command
 
-	echo 1 > /proc/omnibook/onetouch
+	echo 1 > /proc/omnibook/hotkeys
 
-    enables OneTouch buttons.
+    enables hotkeys buttons.
 
  2. Console (LCD display) blanking is enabled by this module on machines that
     support it. It only enabled if another blanking solution

@@ -12,6 +12,7 @@
  * General Public License for more details.
  *
  * Written by Soós Péter <sp@osb.hu>, 2002-2004
+ * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
 #ifdef OMNIBOOK_STANDALONE
@@ -20,6 +21,7 @@
 #include <linux/omnibook.h>
 #endif
 
+#include <asm/io.h>
 #include "ec.h"
 
 static int omnibook_console_blank_enabled = 0;
@@ -39,8 +41,7 @@ int omnibook_lcd_blank(int blank)
 	 * TSM40
 	 */
 	if (omnibook_ectype & (XE3GF|XE3GC|AMILOD|TSP10|TSM30X|TSM40) ) {
-		cmd =
-		    blank ? OMNIBOOK_KBC_CMD_LCD_OFF : OMNIBOOK_KBC_CMD_LCD_ON;
+		cmd = blank ? OMNIBOOK_KBC_CMD_LCD_OFF : OMNIBOOK_KBC_CMD_LCD_ON;
 		if ((retval =
 		     omnibook_kbc_command(OMNIBOOK_KBC_CONTROL_CMD, cmd)))
 			return retval;
@@ -50,28 +51,23 @@ int omnibook_lcd_blank(int blank)
 	 * XE2
 	 */
 	} else if (omnibook_ectype & (OB500|OB6000|XE2) ) {
-		if ((retval = omnibook_io_read(OB500_GPO1, &cmd)))
-			return retval;
+		cmd = inb(OB500_GPO1);
 		cmd = blank ? cmd & ~OB500_BKLT_MASK : cmd | OB500_BKLT_MASK;
-		if ((retval = omnibook_io_write(OB500_GPO1, cmd)))
-			return retval;
+		outb(cmd, OB500_GPO1);
 	/*
 	 * OB510
-	 * 0B61000
+	 * OB61000
 	 */
 	} else if (omnibook_ectype & (OB510|OB6100) ) {
-		if ((retval = omnibook_io_read(OB510_GPO2, &cmd)))
-			return retval;
+		cmd = inb(OB510_GPO2);
 		cmd = blank ? cmd & ~OB510_BKLT_MASK : cmd | OB510_BKLT_MASK;
-		if ((retval = omnibook_io_write(OB510_GPO2, cmd)))
-			return retval;
+		outb(cmd, OB510_GPO2);
 	/*
 	 * UNKNOWN
 	 */
 	} else {
-		printk(KERN_INFO
-		       "%s: LCD console blanking is unsupported on this machine.\n",
-		       OMNIBOOK_MODULE_NAME);
+		printk(O_INFO
+		       "LCD console blanking is unsupported on this machine.\n");
 		retval = -ENODEV;
 	}
 	return retval;
@@ -82,14 +78,13 @@ static int omnibook_console_blank_enable(void)
 	if (omnibook_console_blank_enabled == 0) {
 		if (console_blank_hook == NULL) {
 			console_blank_hook = omnibook_lcd_blank;
-			printk(KERN_INFO
-			       "%s: LCD backlight turn off at console blanking is enabled.\n",
-			       OMNIBOOK_MODULE_NAME);
+			printk(O_INFO
+			        "LCD backlight turn off at console blanking is enabled.\n");
+
 			omnibook_console_blank_enabled = 1;
 		} else {
-			printk(KERN_INFO
-			       "%s: There is a console blanking solution already registered.\n",
-			       OMNIBOOK_MODULE_NAME);
+			printk(O_INFO
+			        "There is a console blanking solution already registered.\n");
 		}
 	}
 	return 0;
@@ -99,18 +94,13 @@ static int omnibook_console_blank_disable(void)
 {
 	if (console_blank_hook == omnibook_lcd_blank) {
 		console_blank_hook = NULL;
-		printk(KERN_INFO
-		       "%s: LCD backlight turn off at console blanking is disabled.\n",
-		       OMNIBOOK_MODULE_NAME);
+		printk(O_INFO "LCD backlight turn off at console blanking is disabled.\n");
 		omnibook_console_blank_enabled = 0;
 	} else if (console_blank_hook) {
-		printk(KERN_WARNING
-		       "%s: You can not disable another console blanking solution.\n",
-		       OMNIBOOK_MODULE_NAME);
+		printk(O_WARN "You can not disable another console blanking solution.\n");
 		return -EBUSY;
 	} else {
-		printk(KERN_INFO "%s: Console blanking already disabled.\n",
-		       OMNIBOOK_MODULE_NAME);
+		printk(O_INFO "Console blanking already disabled.\n");
 		return 0;
 	}
 	return 0;
