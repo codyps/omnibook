@@ -1,7 +1,9 @@
 Changelog file for omnibook package:
 ------------------------------------
 
-2.XXXXXXXX Mathieu Bérard <math_b@users.sourceforge.net>
+2.XXXXXXXX
+
+2.20060816 Mathieu Bérard <math_b@users.sourceforge.net>
 * Merge from the new-backend branch: Add new backend code 
   (in compal.c) used with TSM30X class laptops:
   Used for lcd access
@@ -23,11 +25,11 @@ Changelog file for omnibook package:
 * Fix backlight support conditional compilation
 * Fix Toshiba Satellite M40X detection string
 
-2.20060809 Mathieu Bérard <math_b@users.sourceforge.net>
+2.20060816 Mathieu Bérard <math_b@users.sourceforge.net>
 * Add dmi info for Toshiba Satellite M40X (Thanks Julien Valroff) 
 * Fix two brown paper bag bugs in Debian/Ubuntu support 
 
-2.20060806 Mathieu Bérard <math_b@users.sourceforge.net>
+2.20060816 Mathieu Bérard <math_b@users.sourceforge.net>
 * Make the module linux 2.6 only
   Kernel versions from 2.6.8 to a least 2.6.17 are supported
   Code for compatibility with kernels older than 2.6.17 is 
