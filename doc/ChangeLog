@@ -1,7 +1,9 @@
 Changelog file for omnibook package:
 ------------------------------------
 
-2.XXXXXXXX Mathieu Bérard <math_b@users.sourceforge.net>
+2.XXXXXXXXX
+
+2.200608017 Mathieu Bérard <math_b@users.sourceforge.net>
 * Fix bug un omnibook_io_match
 * Fix DMI handling behaviour: we stop on the FIRST matched
   DMI entry. This is restoring pre-20060806 behaviour.
