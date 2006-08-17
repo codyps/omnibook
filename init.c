@@ -98,7 +98,7 @@ static int __init dmi_matched(struct dmi_system_id *dmi)
 		laptop_model = (char*) dmi->ident;
 	else
 		laptop_model = dmi_get_system_info(DMI_PRODUCT_VERSION);
-	return 0;
+	return 1; /* return non zero means we stop the parsing selecting this entry*/
 }
 
 /* 
