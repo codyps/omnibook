@@ -275,11 +275,12 @@ void *omnibook_io_match(const struct omnibook_io_operation *io_op)
 	int i;
 	void *matched = NULL;
 	for (i = 0; io_op[i].ectypes ; i++) {
-		if (omnibook_ectype & io_op[i].ectypes)
+		if (omnibook_ectype & io_op[i].ectypes) {
 			if (io_op[i].type == CDI && omnibook_cdimode_init())
 				continue;
 			matched = (void *) &io_op[i];
 			break;
+		}
 	}
 	return matched;
 }
