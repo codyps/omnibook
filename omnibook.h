@@ -26,7 +26,7 @@
  */
 
 #define OMNIBOOK_MODULE_NAME		"omnibook"
-#define OMNIBOOK_MODULE_VERSION		"2.20000000"
+#define OMNIBOOK_MODULE_VERSION		"2.20060816"
 
 /*
  * EC types
