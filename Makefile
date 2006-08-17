@@ -108,7 +108,7 @@ kpatch:		kinstall
 
 version:	
 		sed -i "s|^\(#define OMNIBOOK_MODULE_VERSION.*\)\".*\"|\1\"2.$(TODAY)\"|" omnibook.h
-		sed -i "s|^\(2\.\)[[:alnum:]]\{8\}|\1$(TODAY)|" doc/ChangeLog
+		sed -i "s|^\(2\.\)X\{8\}|\1$(TODAY)|" doc/ChangeLog
 
 release:	clean version
 		mkdir -p ../$(MODULE_NAME)-2.$(TODAY)
