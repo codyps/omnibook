@@ -261,6 +261,32 @@ Board Name:     HAQAA
 Board Version:  Null
 
 ---------------------------------------------
+Toshiba Satellite M100 ----------------------
+
+BIOS Vendor:   TOSHIBA
+BIOS Version:  V1.00
+BIOS Release:  03/30/2006
+System Vendor: TOSHIBA
+Product Name:  Satellite M100
+Version:       PSMA2U-00T00G
+Serial Number: 56150526K
+Board Vendor:  TOSHIBA
+Board Name:    HAWAA
+Board Version: None
+
+---------------------------------------------
+Toshiba Equium A110 ----------------------
+
+BIOS Vendor:   TOSHIBA
+BIOS Version:  V1.30
+BIOS Release:  07/20/2006
+System Vendor: TOSHIBA
+Product Name:  EQUIUM A110
+Version:       PSAB2E-002006AV
+Board Vendor:  TOSHIBA
+Board Name:    Null
+
+---------------------------------------------
 Compal ACL00 --------------------------------
 
 BIOS Vendor:   COMPAL

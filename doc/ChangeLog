@@ -1,7 +1,11 @@
 Changelog file for omnibook package:
 ------------------------------------
 
-2.XXXXXXXXX
+2.XXXXXXXXX Mathieu Bérard <math_b@users.sourceforge.net>
+* Add DMI Signature for Toshiba Equium A110, added with
+  ectype 1, until implementation of a better backend
+* Add DMI Signature for Toshiba _Satellite_ M100, added with
+  ectype 11, until implementation of a better backend
 
 2.200608017 Mathieu Bérard <math_b@users.sourceforge.net>
 * Fix bug un omnibook_io_match
