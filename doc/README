@@ -9,23 +9,20 @@ wants to be a framework to extend the Linux support for HP OmniBook
 and Pavilion, Toshiba Satellite, Acer Aspire and Compal ACL00 laptops
 manufactured by Compal Electronics, Inc as ODM.
 
-There is a similar project for Toshiba Satellite laptops wich supports
-some HP OmniBooks too at ftp://ftp.poupinou.org/tosh_3000/.
-
 How does it work?
 -----------------
-   Some features of HP OmniBooks can be controlled via the keyboard control
+   Some features of sup pored laptops can be controlled via the keyboard control
    and data registers. Commands and parameters were discovered by Pavel
    Mihaylov.
 
    Some other features available via /proc/omnibook/* provided by the
-   Embedded Controller or other I/O registers of your laptop. Informations
-   comes from DSDT ACPI table of HP OmniBook XE3 GF dissassembled by Ducrot
+   Embedded Controller or other I/O registers of your laptop. Information
+   comes from DSDT ACPI table of HP OmniBook XE3 GF disassembled by Ducrot
    Bruno and others or discovered by me.
 
    Note: You do not have to enable APM or ACPI to use this driver.
 
-   All supported models seems to have same keyboard and embedded controller:
+   Most supported models seems to have same keyboard and embedded controller:
    National Semiconductor PC87570 Keyboard and ACPI Embedded Controller or
    compatible, but with different types of firmware.
    See http://www.national.com/pf/PC/PC87570.html for more info.
@@ -85,18 +82,19 @@ How does it work?
        Toshiba Satellite M35X
        Toshiba Satellite M70
    13. Toshiba Satellite M40
+   14. Toshiba Satellite A105
    
    If your model is not listed above you may try to load the module. If it
-   have same DMI identification strigs as a supported machine it may works
+   have same DMI identification strings as a supported machine it may works
    out of the box. Please report it.
    Only the /proc/omnibook/dmi and /proc/omnibook/version are working when
    you load the module on an unsupported machine.
    In this case you may load the module with ectype parameter to force using
    a certain EC firmware type or see how became you machine supported at the
-   end of this documet.
+   end of this document.
 
-What is working?
-----------------
+What are the provided features?
+-------------------------------
  1. Enabling hotkey buttons. See README-Hotkeys for details.
     You may enable or disable it via /proc/omnibook/hotkeys.
     There is a power management handler for reenabling the buttons at resume
@@ -126,39 +124,74 @@ What is working?
 
  8. Display status monitoring /proc/omnibook/display.
 
- 9. LCD brightness setting and monitoring.
+ 9. LCD brightness setting and monitoring via /proc/omnibook/lcd.
 
-10. Docking station/port replicator support.
+10. Docking station/port replicator support via /proc/omnibook/dock.
+
+11. Wifi and Bluetooth adapters monitoring and control via
+    /proc/omnibook/bluetooth and /proc/omnibook/wifi
 
 How to use?
 -----------
  1. The hotkeys are enabled by default by this module.
     To disable it use the command:
 
-	echo 0 > /proc/omnibook/hotkeys
+	$ echo off > /proc/omnibook/hotkeys
 
     The command
 
-	echo 1 > /proc/omnibook/hotkeys
+	$ echo on > /proc/omnibook/hotkeys
 
     enables hotkeys buttons.
+    
+    Reading to that same file allow you to read the state of the hotkeys:
+
+	$ cat /proc/omnibook/hotkeys
+	Multimedia hotkeys are enabled.
+	Fn hotkeys are enabled.
+
+    The items displayed depends on your laptop model.
+    Some Toshiba models support advanced hotkeys control. Alternatively to and
+    on/off command you can fine-tune the behavior of your keyboard's hotkeys
+    writing an hexadecimal number to the hotkeys files.
+    To enable a specific hotkeys feature, add its code to this hexadecimal
+    number. The feature/code table follow:
+
+    	Onetouch buttons:		0x1
+	Multimedia hotkeys are:		0x2
+	Fn hotkeys are:			0x4
+	Stick key is:			0x8
+	Press Fn twice to lock:		0x10
+	Dock events:			0x20
+	Fn + F5 hotkey:			0x40
+
+    That is to enable multimedia hotkeys only do: 
+	$cat 0x2 > /proc/omnibook/hotkeys
+    To enable Fn hotkeys and Dock events only do:
+	$cat 0x24 > /proc/omnibook/hotkeys	(as 0x24 = 0x4 + 0x20)
+
+    Finally 'off' is equivalent to 0x0, and 'on' to 0x67 that is
+    Onetouch, Multimedia, Fn, Dock and Fn+F5.
+
+    Unsupported features won't be displayed in /proc/omnibook/hotkeys and writing
+    their corresponding codes won't have any effect.
 
  2. Console (LCD display) blanking is enabled by this module on machines that
     support it. It only enabled if another blanking solution
     (e.g. CONFIG_APM_DISPLAY_BLANK) is not used.
     To disable this behavior use command:
 
-	echo 0 > /proc/omnibook/blank
+	$ echo 0 > /proc/omnibook/blank
 
     To enable this behavior use command:
 
-	echo 1 > /proc/omnibook/blank
+	$ echo 1 > /proc/omnibook/blank
 
  3. To see the battery status use
 
-	cat /proc/omnibook/battery
+	$ cat /proc/omnibook/battery
 
-    command. It produce similar output to that you can see below.
+    It produce similar output to that you can see below.
 
 	Battery:                      0
 	Type:                    Li-Ion
@@ -175,10 +208,9 @@ How to use?
     apm is enabled, but via this file you can monitor your battery
     independently from apm code.
 
-    Current ACPI driver reports some bad value about battery at least on my
-    machine:
+    ACPI driver might reports some bad value about battery:
 
-	$cat /proc/acpi/battery/BAT1/info
+	$ cat /proc/acpi/battery/BAT1/info
 	present:                 yes
 	design capacity:         5400 mAh
 	last full capacity:      5400 mAh
@@ -194,10 +226,11 @@ How to use?
 	OEM info:                HP
 
 	This is because the methods used for batteries in the DSDT do
-	not give correct informations. If you want to fix it you may
+	not give correct information. If you want to fix it you may
 	have to change methods in the DSDT.
 	See http://www.intel.com/technology/iapc/acpi/bios_override.htm
 	for details.
+	ACPI support for battery should be good on recent laptops.
 
  4. The /proc/omnibook/fan file provides information about fan status:
 
@@ -211,11 +244,11 @@ How to use?
 
     On certain machines you may turn on the fan by
 
-	echo 1 > /proc/omnibook/fan
+	$ echo 1 > /proc/omnibook/fan
 
     command and turn off by issuing
 
-	echo 0 > /proc/omnibook/fan
+	$ echo 0 > /proc/omnibook/fan
 
     command.
 
@@ -255,11 +288,11 @@ How to use?
 
     To set the fan policy write the proper values into the
     /proc/omnibook/fan_policy file. Each value must be greater than or
-    equal to the prvious one. You do not have to write all values.
+    equal to the previous one. You do not have to write all values.
     For example you may set fan off temperature to 60 C, fan on temperature
     to 70 C and fan level 2 temperature to 80 C by
 
-	echo 60 70 80 > /proc/omnibook/fan_policy
+	$ echo 60 70 80 > /proc/omnibook/fan_policy
 
     command.
     A zero value (echo 0 > /proc/omnibook/fan_policy) sets the default
@@ -277,22 +310,22 @@ How to use?
  5. The touchpad is enabled by default by the BIOS.
     To disable it use the command:
 
-	echo 0 > /proc/omnibook/touchpad
+	$ echo 0 > /proc/omnibook/touchpad
 
     The command
 
-	echo 1 > /proc/omnibook/touchpad
+	$ echo 1 > /proc/omnibook/touchpad
 
     enables the touchpad.
 
  6. The /proc/apm emulation is disabled by default on all machines. You have
-    to enable it explicit way by module parameter apmemu. To enable it use:
+    to enable it explicit using the module parameter apmemu. To enable it use:
 
-	insmod omnibook apmemu=1
+	$ insmod omnibook apmemu=1
 
     You can enable it by /etc/modules.conf with the following entry:
 
-	options omnibook apmemu=1
+	$ options omnibook apmemu=1
 
     If your kernel have APM support, but the /proc/apm reports buggy values,
     you may boot your kernel without apm support, and try to load omnibook
@@ -303,7 +336,7 @@ How to use?
 
  7. To see the AC adapter status use
 
-	cat /proc/omnibook/ac
+	$ cat /proc/omnibook/ac
 
     command. It produce similar output to that you can see below.
 
@@ -317,46 +350,59 @@ How to use?
 
  8. To see the display status use
 
-	cat /proc/omnibook/display
+	$ cat /proc/omnibook/display
 
-    command. It produce similar output to that you can see below.
+    The displayed output depends on your laptop model, as an example:
 
 	$ cat /proc/omnibook/display
-	External display is not present
+	Internal LCD: display present port enabled
+	External VGA: display absent port disabled
+	External TV-OUT: display absent port disabled
 
-    Or if you have external monitor installed:
+    If you are adventuresome, and if your laptop model support it,
+    you can try to enable or disable a specific display port.
+    To do that, write an hexadecimal number to the display file, adding the
+    code of display ports you want to enable, the others will be disabled:
 
-	$ cat /proc/omnibook/display
-	External display is present
+	Internal LCD panel:	0x1
+	External VGA port:	0x2
+	External TV port:	0x4
+
+    For example to enable the LCD panel and the TV-OUT port only, you have to
+    write 0x1 + 0x4 = 0x5:
+
+	$ echo 0x5 > /proc/omnibook/display
+
+    It may or may not work, or even crash your X server. Proceed with caution.
 
  9. To see the LCD brightness use
 
-	cat /proc/omnibook/lcd
+	$ cat /proc/omnibook/lcd
 
-    command. It produce similar output to that you can see below.
+    It produce similar output to that you can see below.
 
 	$ cat /proc/omnibook/lcd
-	LCD brightness: 7
+	LCD brightness:  5 (max value: 7)
 
-    To set it use similar command to that you can see below.
+    To set it use similar command to that you can see below:
 
-	echo 10 > /proc/omnibook/lcd
+	$ echo 1 > /proc/omnibook/lcd
 
-    The value of LCD brightness must be betwenn 0 and 10.
+    The value of LCD brightness must be between 0 and the printed max boundary,
+    here you can see it's 7.
 
-    Note: Setting the LCD brightness on HP OmniBook XE3 GF via
+    Bug:  Setting the LCD brightness on HP OmniBook XE3 GF via
           /proc/omnibook/lcd is working if you press one of the
           brightness control keys once after writing the value
-          into /proc/omnibook/lcd. I'll try to fix it, but I have
-          no idea about reason yet.
+          into /proc/omnibook/lcd.
 
     To turn off the LCD backlight use
 
-	echo off > /proc/omnibook/lcd
+	$ echo off > /proc/omnibook/lcd
 
     To turn it back on use
 
-	echo on > /proc/omnibook/lcd
+	$ echo on > /proc/omnibook/lcd
 
     This is useful if you have an X server, such as the ATI Radeon,
     that does not know how to turn off the LCD backlight.  Use a
@@ -378,7 +424,7 @@ How to use?
 10. To check that your laptop is docked in a docking station or port
     replicator use
 
-	cat /proc/omnibook/dock
+	$ cat /proc/omnibook/dock
 
     command. It produce similar output to that you can see below.
 
@@ -394,16 +440,37 @@ How to use?
     You have to enable it explicit way by module parameter dock. To enable
     it use:
 
-        insmod omnibook dock=1
+        $ insmod omnibook dock=1
 
     You can enable it by /etc/modules.conf with the following entry:
 
 	options omnibook dock=1
 
+11. To read wifi and bluetooth adapters status reading the 
+    /proc/omnibook/wifi and /proc/omnibook/bluetooth files respectively:
+
+	$ cat /proc/omnibook/wifi
+	Wifi adapter is present and enabled.
+	Wifi Kill switch is on.
+
+	$ cat /proc/omnibook/bluetooth
+	Bluetooth adapter is absent.
+    
+    You can enable or disable a dectected adapters writing 1 or 0 respectibely
+    to the corresponding file:	
+
+	$ echo 0 >  /proc/omnibook/wifi
+	[ Wifi led shut down, connectivity is lost ]
+
+	$ cat /proc/omnibook/wifi
+	Wifi adapter is present and disabled.
+	Wifi Kill switch is on.
+
+
 You may enable features above via the proper module parameters. See the 
 output of
 
-	modinfo omnibook
+	$ modinfo omnibook
 
 command.
 
@@ -413,12 +480,12 @@ networked) users or you are the only user of the laptop you may load the
 module with the parameter user to enable non-root accounts to set omnibook
 paremeters as follows:
 
-	insmod omnibook user=1
+	$ insmod omnibook user=1
 
 You can enable users to set parameters by /etc/modules.conf with the
 following entry:
 
-	options omnibook user=1
+	$ options omnibook user=1
 
 Graphical frontends
 -------------------
@@ -441,12 +508,7 @@ How can your laptop be supported?
 If your model is unsupported and you want it to be supported I need four
 things:
 
-1. Test your machine with Pavel's omke.pl and report the result. You
-   should include that a feature works or not and details if any
-   (eg. OneTouch keycodes in hex as appears in syslog after enabling
-    them by omke.pl etc.).
-
-2. Force the module to load with an embedded controller firmware type
+1. Force the module to load with an embedded controller firmware type
    detailed above. For example if you want to test that your machine
    is an XE3GF style model, use the following command:
 
@@ -457,10 +519,10 @@ things:
    Warning!!! Forced load on an unsupported machine may cause
    unpredictable result. You have been warned...
 
-3. Send me DMI strings of your machine (/proc/omnibook/dmi after
+2. Send me DMI strings of your machine (/proc/omnibook/dmi after
    loading omnibook module on any machine).
 
-4. If possible send me the DSDT of your machine. If your kernel is 
+3. If possible send me the DSDT of your machine. If your kernel is 
    configured for ACPI you can found it at /proc/acpi/dsdt. Use the
    following command to get the DSDT AML file.
 
@@ -476,14 +538,14 @@ things:
 
    Please send me the AML file. Note: it is binary file.
 
-5. Developers or advanced users who want to help the developement of this driver
+4. Developers or advanced users who want to help the development of this driver
    can enable an experimental features of the omnibook kernel module:
    /proc/omnibook/dump, which dump the content of the embedded 
    controller memory.
 
    It have to be manually enabled using the dump=1 kernel module parameters 
-   and can be used in conjunction with a carefull examination 
-   of a decompiled DSDT to spot where your laptop stores interesting informations
+   and can be used in conjunction with a careful examination 
+   of a decompiled DSDT to spot where your laptop stores interesting information
    such as FAN speed or CPU temperature.
 
 This code was written without any documentation from HP or Compal so it
@@ -512,11 +574,50 @@ Compal Electronics, Inc. does not response to information requests at all.
 Meanwhile (in 2002) Compaq and HP merged and as I know Compaq will the
 supplier of the new laptop models in the merged company.
 
-Some new models of Toshiba Satellite notebooks (M70 and M40) seems to
+Some new models of Toshiba Satellite notebooks (M70 and M40X) seems to
 be made by Compal.
+
+The NbSmi backend code which implement support for some Toshiba Satellite
+was made using technical documentation provided by Toshiba.
+This code is contained in the nbsmi.c file
+Thanks Toshiba for this Linux-friendly behavior.
+This technical documentation was provided with the following disclaimer:
+
+----- Disclaimer Verbatim copy Begin -----
+ PLEASE READ THIS INTELLECTUAL PROPERTY DISCLAIMER CAREFULLY BEFORE 
+USING THE TOSHIBA TECHNICAL INFORMATION AS ATTACHED.
+    BY USING THE TOSHIBA TECHNICAL INFORMATION, YOU ARE AGREEING TO BE 
+BOUND BY ALL OF THE TERMS OF THIS INTELLECTUAL PROPERTY DISCLAIMER.
+    IF YOU DO NOT AGREE TO THE TERMS OF THIS INTELLECTUAL PROPERTY 
+DISCLAIMER, PROMPTLY RETURN THE ATTACHED TOSHIBA TECHNICAL INFORMATION.
+
+                 Copyright (C) 1999, Toshiba Corp. All rights reserved.
+
+
+                    INTELLECTUAL PROPERTY DISCLAIMER
+
+    NO LICENSE, EXPRESS OR IMPLIED, BY ESTOPPEL OR OTHERWISE, OF ANY 
+INTELLECTUAL PROPERTY RIGHTS OF TOSHIBA IS GRANTED OR INTENDED HEREBY.  
+NOTWITHSTANDING FORGOING, TOSHIBA WILL NOT MAKE ANY CLAIM BASED ON THE 
+INTELLECTUAL PROPERTY RIGHTS AGAINST SOFTWARE FOR LINUX DEVELOPED USING 
+TOSHIBA TECHNICAL INFORMATION, PROVIDED THAT SUCH SOFTWARE IS USED FOR 
+OR DISTRIBUTED WITH LINUX FOR EXECUTION ON TOSHIABA COMPUTER PRODUCTS.
+
+    TOSHIBA DISCLAIMS ALL LIABILITY, INCLUDING LIABILITY FOR INFRINGEMENT 
+OF PROPRIETARY RIGHTS RELATING TO IMPLEMENTATION OF TOSHIBA TECHNICAL 
+INFORMATION.  TOSHIBA DOES NOT WARRANT OR REPRESENT THAT SUCH 
+IMPLEMENTATION(S) WILL NOT INFRINGE SUCH RIGHTS.
+
+    TOSHIBA TECHNICAL INFORMATION IS PROVIDED "AS IS" WITH NO WARRNTIES 
+WHATSOEVER INCLUDING ANY WARRANTY OF MERCHANTABILITY, FITNESS FOR ANY 
+PARTICULAR PURPOSE.
+---- Disclaimer End ----
 
 For more information you can see the OmniBook mailing list at
 http://zurich.ai.mit.edu/mailman/listinfo/omnibook
 
+or the Toshiba linux mailing list at 
+http://linux.toshiba-dme.co.jp/linux/
+
 You can find actual version of this code at
-http://sourceforge.net/projects/omke
+http://sourceforge.net/projects/omnibook

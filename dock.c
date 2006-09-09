@@ -15,30 +15,17 @@
  * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
-#ifdef OMNIBOOK_STANDALONE
 #include "omnibook.h"
-#else
-#include <linux/omnibook.h>
-#endif
 
 #include "ec.h"
 
-static const struct omnibook_io_operation dock_io_table[] = {
-	{ XE3GF,		     EC, XE3GF_CSPR, 0, XE3GF_CSPR_MASK},
-	{ OB500|OB510|OB6000|OB6100, EC, OB500_STA1, 0, OB500_DCKS_MASK},
-	{ OB4150,		     EC, OB4150_DCID, 0, 0},	
-	{ 0,}
-};
-
-static struct omnibook_io_operation *dock_io;
-
-static int omnibook_dock_read(char *buffer)
+static int omnibook_dock_read(char *buffer,struct omnibook_operation *io_op)
 {
 	int len = 0;
 	u8 dock;
 	int retval;
 	
-	if ((retval = omnibook_io_read(dock_io, &dock)))
+	if ((retval = io_op->backend->byte_read(io_op,&dock)))
 		return retval;
 	
 	len +=
@@ -48,20 +35,22 @@ static int omnibook_dock_read(char *buffer)
 	return len;
 }
 
-static int omnibook_dock_init(void)
-{
-	dock_io = omnibook_io_match(dock_io_table);
-	return dock_io ? 0 : -ENODEV;
-}
+static struct omnibook_tbl dock_table[] __initdata = {
+	{ XE3GF,		     SIMPLE_BYTE(EC,XE3GF_CSPR,XE3GF_CSPR_MASK)},
+	{ OB500|OB510|OB6000|OB6100, SIMPLE_BYTE(EC,OB500_STA1,OB500_DCKS_MASK)},
+	{ OB4150,		     SIMPLE_BYTE(EC,OB4150_DCID,0)},	
+	{ 0,}
+};
 
-static struct omnibook_feature __declared_feature dock_feature = {
+
+static struct omnibook_feature __declared_feature dock_driver = {
 	 .name = "dock",
 	 .enabled = 0,
 	 .read = omnibook_dock_read,
-	 .init = omnibook_dock_init,
 	 .ectypes = XE3GF|OB500|OB510|OB6000|OB6100|OB4150,
+	 .tbl = dock_table,
 };
 
-module_param_named(dock, dock_feature.enabled, int, S_IRUGO);
+module_param_named(dock, dock_driver.enabled, int, S_IRUGO);
 MODULE_PARM_DESC(dock, "Use 0 to disable, 1 to enable docking station support");
 /* End of file */

@@ -27,7 +27,6 @@ INSTDIR	= extra
 #KSRC	= /usr/src/linux
 KSRC	= $(VMODDIR)/build
 KMODDIR	= $(KSRC)/drivers/misc/omnibook
-KINCDIR	= $(KSRC)/include/linux
 KDOCDIR	= $(KSRC)/Documentation/omnibook
 PWD	= $(shell pwd)
 TODAY	= $(shell date +%Y%m%d)
@@ -42,19 +41,16 @@ RM	= rm -f
 FIND	= find
 endif
 
-DEBUG	= # -D OMNIBOOK_DEBUG  -g -O0
+DEBUG	=  -D OMNIBOOK_DEBUG -g -O0
 
 EXTRA_CFLAGS += -D OMNIBOOK_STANDALONE $(DEBUG)
-EXTRA_LDFLAGS += $(src)/sections.lds
+EXTRA_LDFLAGS +=  $(src)/sections.lds
 
 
-OBJS	= ac.o battery.o blank.o display.o dock.o \
-	  ec.o fan.o fan_policy.o init.o lcd.o hotkeys.o \
-	  temperature.o touchpad.o dump.o info.o \
-	  apmemu.o muteled.o compal.o
-
-
-# All extra flags delt with automagically
+OBJS	= init.o ec.o compal.o acpi.o nbsmi.o \
+          ac.o apmemu.o battery.o blank.o bluetooth.o display.o dock.o dump.o \
+	  fan.o fan_policy.o hotkeys.o info.o lcd.o muteled.o temperature.o \
+          touchpad.o wireless.o
 
 obj-m         += $(MODULE_NAME).o
 omnibook-objs := $(OBJS)
@@ -63,11 +59,10 @@ all:		 $(MODULE_NAME).ko
 
 clean:
 		make -C $(KSRC) M=$(PWD) clean
-		$(RM) *~ "#*#" .swp
+		$(RM) -r *~ "#*#" .swp
 		$(RM) -r debian/omnibook-source *-stamp
 		$(RM) -r Module.symvers Modules.symvers
-		(cd misc/obtest; $(RM) obtest *.o)
-
+		(cd misc/obtest; $(RM) obtest *.o;)
 
 install:	all
 		# Removing module from locations used by previous versions
@@ -95,13 +90,10 @@ $(MODULE_NAME).ko:
 
 kinstall:
 		$(RM) -r $(KMODDIR)
-		$(RM) $(KINCDIR)/omnibook.h
 		$(MKDIR) $(KMODDIR)
-		$(INSTALL) *.c sections.lds $(KMODDIR)
-		$(INSTALL) apmemu.h compat.h ec.h laptop.h $(KMODDIR)
-		$(INSTALL) omnibook.h $(KINCDIR)
+		$(INSTALL) *.h *.c sections.lds $(KMODDIR)
 		$(MKDIR) $(KDOCDIR)
-		$(INSTALL) doc/README doc/README-OneTouch $(KDOCDIR)
+		$(INSTALL) doc/README doc/README-Hotkeys $(KDOCDIR)
 		
 kpatch:		kinstall
 		(cd $(KSRC); patch -p1 < $(PWD)/misc/omnibook-integration.patch)

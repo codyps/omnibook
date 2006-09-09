@@ -15,11 +15,7 @@
  * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
-#ifdef OMNIBOOK_STANDALONE
 #include "omnibook.h"
-#else
-#include <linux/omnibook.h>
-#endif
 
 #include <linux/proc_fs.h>
 #include <linux/dmi.h>
@@ -38,7 +34,8 @@
 
 static struct proc_dir_entry *omnibook_proc_root = NULL;
 
-int omnibook_ectype = NONE;
+enum omnibook_ectype_t omnibook_ectype = NONE;
+
 static char* laptop_model __initdata;
 
 static int omnibook_userset = 0;
@@ -88,8 +85,8 @@ static struct platform_device omnibook_device = {
 static struct omnibook_feature *omnibook_available_feature;
 
 /* Delimiters of the .features section wich holds all the omnibook_feature structs */
-extern struct omnibook_feature _features_start[];
-extern struct omnibook_feature _features_end[];
+extern struct omnibook_feature _start_features_driver[];
+extern struct omnibook_feature _end_features_driver[];
 
 static int __init dmi_matched(struct dmi_system_id *dmi)
 {
@@ -113,7 +110,7 @@ static int procfile_read_dispatch(char *page, char **start, off_t off,
 	if (!feature || !feature->read)
 		return -EINVAL;
 
-	len = feature->read(page);
+	len = feature->read(page,feature->io_op);
 	if (len < 0)
 		return len;
 
@@ -155,7 +152,7 @@ static int procfile_write_dispatch(struct file *file,
 	/* Make sure the string is \0 terminated */
 	kernbuf[count] = '\0';
 
-	retval = feature->write(kernbuf);
+	retval = feature->write(kernbuf,feature->io_op);
 	if (retval == 0)
 		retval = count;
 
@@ -164,23 +161,71 @@ static int procfile_write_dispatch(struct file *file,
 	return retval;
 }
 
+/*
+ * Match an ectype and return pointer to corresponding omnibook_operation.
+ * Also make corresponding backend initialisation if necessary, and skip
+ * to the next entry if it fails.
+ */
+static struct omnibook_operation * omnibook_backend_match(struct omnibook_tbl *tbl)
+{
+	int i;
+	struct omnibook_operation *matched = NULL;
+
+	for (i = 0; tbl[i].ectypes ; i++) {
+		if (omnibook_ectype & tbl[i].ectypes) {
+			if(tbl[i].io_op.backend->init && tbl[i].io_op.backend->init(&tbl[i].io_op)) {
+				dprintk("Backend %s init failed, skipping entry.\n", tbl[i].io_op.backend->name);
+				continue;
+			} 
+			matched = &tbl[i].io_op;
+			dprintk("Returning table entry n°%i.\n",i);
+			break;
+		}
+	}
+	return matched;
+}
+
+
 /* 
  * Initialise a feature and add it to the linked list of active features
  */
 static int __init omnibook_init(struct omnibook_feature *feature)
 {
-	int retval;
+	int retval = 0;
 	mode_t pmode;
 	struct proc_dir_entry *proc_entry;
+	struct omnibook_operation *op;
 
 	if (!feature)
 		return -EINVAL;
 
-	if (feature->init) {
-		retval = feature->init();
-		if (retval)
+/*
+ * Select appropriate backend for feature operations
+ * We copy the io_op field so the tbl can be initdata
+ */
+	if(feature->tbl) {
+		dprintk("begin table match of %s feature.\n",feature->name);
+		op = omnibook_backend_match(feature->tbl);
+		if(!op) {
+			dprintk("match failed: disabling %s.\n",feature->name);
 			return -ENODEV;
-	}
+		}
+		feature->io_op = kmalloc(sizeof(struct omnibook_operation),GFP_KERNEL);
+		if (!feature->io_op)
+			return -ENOMEM;
+		memcpy(feature->io_op, op, sizeof(struct omnibook_operation));
+	} else
+		dprintk("%s feature has no backend table, io_op not initialized.\n",feature->name);
+
+/*
+ * Specific feature init code
+ */
+	if (feature->init && (retval = feature->init(feature->io_op)))
+		goto err;
+
+/*
+ * procfs file setup
+ */
 	if (feature->name && feature->read) {
 		pmode = S_IFREG | S_IRUGO;
 		if (feature->write) {
@@ -189,21 +234,22 @@ static int __init omnibook_init(struct omnibook_feature *feature)
 				pmode |= S_IWUGO;
 		}
 		/*
-		 * Special case for apmemu
+		 * FIXME: Special case for apmemu (not under /proc/omnibook)
 		 */
-		if (feature->proc_entry) {
+		if (feature->proc_entry)
 			proc_entry = create_proc_entry(feature->proc_entry, pmode,
 						      NULL);
-		} else {
-		proc_entry = create_proc_entry(feature->name, pmode,
+		else
+			proc_entry = create_proc_entry(feature->name, pmode,
 					       omnibook_proc_root);
-		}
+
 		if (!proc_entry) {
 			printk(O_ERR
 			       "Unable to create proc entry %s\n",feature->name);
 			if (feature->exit)
-				feature->exit();
-			return -ENOENT;
+				feature->exit(feature->io_op);
+			retval = -ENOENT;
+			goto err;
 		}
 		proc_entry->data = feature;
 		proc_entry->read_proc = &procfile_read_dispatch;
@@ -213,6 +259,9 @@ static int __init omnibook_init(struct omnibook_feature *feature)
 	}
 	list_add_tail(&feature->list, &omnibook_available_feature->list);
 	return 0;
+err:
+	kfree(feature->io_op);
+	return retval;
 }
 
 
@@ -233,9 +282,9 @@ static int __init omnibook_probe(struct platform_device *dev)
 		return -ENOMEM;
 	INIT_LIST_HEAD(&omnibook_available_feature->list);
 	
-	for (i=0; i < _features_end - _features_start; i++ ) {
+	for (i=0; i < _end_features_driver - _start_features_driver; i++ ) {
 		
-		feature = &_features_start[i];
+		feature = &_start_features_driver[i];
 
 		if (!feature->enabled)	
 			continue;
@@ -266,12 +315,17 @@ static int __exit omnibook_remove(struct platform_device *dev)
 	list_for_each_safe(p, n, &omnibook_available_feature->list) {
 		feature = list_entry(p, struct omnibook_feature, list);
 		list_del(p);
-		if (feature->exit)
-			feature->exit();
+		/* Feature specific cleanup */
+                if (feature->exit)
+                        feature->exit(feature->io_op);
+		/* Generic backend cleanup */
+		if (feature->io_op && feature->io_op->backend->exit)
+			feature->io_op->backend->exit(feature->io_op);
 		if (feature->proc_entry)
 			remove_proc_entry(feature->proc_entry, NULL);
 		else if (feature->name)
 			remove_proc_entry(feature->name, omnibook_proc_root);
+		kfree(feature->io_op);
 	}
 	kfree(omnibook_available_feature);
 	
@@ -290,7 +344,7 @@ static int omnibook_suspend(struct platform_device *dev, pm_message_t state)
 	list_for_each(p, &omnibook_available_feature->list) {
 		feature = list_entry(p, struct omnibook_feature, list);
 		if (feature->suspend) {
-			retval = feature->suspend();
+			retval = feature->suspend(feature->io_op);
 			if (!retval)
 				printk(O_ERR
 				        "Unable to suspend the %s feature",
@@ -312,7 +366,7 @@ static int omnibook_resume(struct platform_device *dev)
 	list_for_each(p, &omnibook_available_feature->list) {
 		feature = list_entry(p, struct omnibook_feature, list);
 		if (feature->resume) {
-			retval = feature->resume();
+			retval = feature->resume(feature->io_op);
 			if (!retval)
 				printk(O_ERR
 				       "Unable to resume the %s feature",
@@ -353,7 +407,7 @@ static int __init omnibook_module_init(void)
 	    
 	if (omnibook_ectype != NONE)
 		printk(O_WARN
-		       "Forced load with EC firmware type %i.\n", ffs(omnibook_ectype));
+		       "Forced load with EC type %i.\n", ffs(omnibook_ectype));
 	else if ( dmi_check_system(omnibook_ids) ) 
 		printk(O_INFO "%s detected.\n", laptop_model);
 	else

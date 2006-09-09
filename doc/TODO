@@ -1,22 +1,21 @@
 TODO
 ====
 
+Current issues:
+
 * See if/how key polling can be ported to 2.6
 * LED API support
-* Clarify the TSM40 situation
 * Create a clean access method to the i8042 kbd controller (this will require
   a kernel patch)
-* We use I/O ports without a request_region ( ec.c blank.c fan.c)
-* To be cleaned: blank fan
-* To much global variables sometimes
+* To be cleaned: battery dump fan_policy
 
-Items imported from previous version:
+Old items imported from previous version:
 
 * Fix LCD brighness handling on XE3GF style machines
 * Fully support OB5xx, OB6xxx and XE4500 style machines
 * Battery support for OB5xx, OB6xxx and XE4500 style machines
 
-Will probably always remain here:
+Will probably remain here forever:
 
 * Adding more features of embedded controller
 * Support more machines

@@ -15,12 +15,9 @@
  * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
-#ifdef OMNIBOOK_STANDALONE
 #include "omnibook.h"
-#else
-#include <linux/omnibook.h>
-#endif
 
+#ifdef CONFIG_OMNIBOOK_LEGACY
 
 #ifdef CONFIG_APM
 #include <linux/apm_bios.h>
@@ -68,7 +65,9 @@
       -1: Unknown
    8) min = minutes; sec = seconds */
 
-static int omnibook_apmemu_read(char *buffer)
+extern struct omnibook_feature ac_driver;
+
+static int omnibook_apmemu_read(char *buffer, struct omnibook_operation *io_op)
 {
 	int retval;
 	int len = 0;
@@ -100,7 +99,10 @@ static int omnibook_apmemu_read(char *buffer)
 		"?"
 	};
 
-	ac = omnibook_get_ac();
+/*
+ * FIXME: Broken, how do we know ac and battery are in a usable state ?
+ */
+	ac = omnibook_get_ac(ac_driver.io_op);
 	apm.ac = (ac) ? APMEMU_AC_ONLINE : APMEMU_AC_OFFLINE;
 	/* Asking for Battery 0 as APM does */
 	retval = omnibook_get_battery_status(0, &battstat);
@@ -137,7 +139,7 @@ static int omnibook_apmemu_read(char *buffer)
 	return len;
 }
 
-static int omnibook_apmemu_init(void)
+static int __init omnibook_apmemu_init(struct omnibook_operation *io_op)
 {
 #ifdef CONFIG_APM
 	if (!apm_info.disabled) {
@@ -148,21 +150,18 @@ static int omnibook_apmemu_init(void)
 	return 0;
 }
 
-static struct omnibook_feature __declared_feature apmemu_feature = {
+static struct omnibook_feature __declared_feature apmemu_driver = {
 	 .name = "apmemu",
 	 .proc_entry = "apm", /* create /proc/apm */
-#ifdef CONFIG_OMNIBOOK_APMEMU
          .enabled = 1,
-#else
-	 .enabled = 0,
-#endif
 	 .read = omnibook_apmemu_read,
 	 .init = omnibook_apmemu_init,
 	 .ectypes = XE3GF|XE3GC|TSP10,
 };
 
 
-module_param_named(apmemu, apmemu_feature.enabled, int, S_IRUGO);
+module_param_named(apmemu, apmemu_driver.enabled, int, S_IRUGO);
 MODULE_PARM_DESC(apmemu, "Use 0 to disable, 1 to enable /proc/apm emulation");
 
+#endif /* CONFIG_OMNIBOOK_LEGACY */
 /* End of file */

@@ -24,6 +24,58 @@ Changelog file for omnibook package:
   funtions to simplify implementation of some simple features.
   Used with ac display dock and led features.
 * Rename onetouch feature to "hotkeys" which is a vendor neutral name.
+* The minimal required kernel version is now 2.6.9 (kref API)
+* Convert semaphore to mutex with fallback for pre 2.6.16 kernel
+* Kill CONFIG_OMNIBOOK_APMEMU and introduce OMNIBOOK_LEGACY:
+  pre-ACPI features now depends on it.
+  Default enabling of ac and battery features also
+  depends on it. It is _disabled_ by default.
+* Introduce ACPI methods execution backend: TSM70 needs it
+  for Display and Wifi/Bluetooth features
+* Expand display and hotkeys features
+* Introduce experimental NbSmi backend for TSM40. It is
+  based on technical documentation provided by Toshiba.
+  Thanks Toshiba !
+* Kill unused omnibook_mem_read/write function for mmio
+  access
+* Cleanup in blank.c fan.c temperature.c
+* Unbreak Pio backend: use request/release_region
+* Introduce bluetooth and wifi frontend features : they allow
+  adapter state querry and control (existence probing, wifi 
+  kill switch probing and adapter enabling/disabling).
+  Supported by TSM30X and TSM40
+* Introduce omnibook_backend struct as a uniform way of 
+  communication between backend and frontend, this
+  kill omnibook_io_{read/write} and friends.
+* Modify ombibook_feature struct to incorporate pointers
+  to an omnibook_table table and to a omnibook_operation
+  struct which is picked-up from the ectype matching
+  omnibook_table entry upon feature initialization
+* Add muteled resume handler
+* Add touchpad handling for TSM30X
+* Add proper display handling for TSM30X
+* Change all features struct name from foo_feature to
+  foo_driver to kept modpost section mismatch detection
+  silent. Put tbl, init and exit entries to their relevant
+  sections.
+
+2.200608017 Mathieu Bérard <math_b@users.sourceforge.net>
+* Fix bug in omnibook_io_match
+* Fix DMI handling behaviour: we stop on the FIRST matched
+  DMI entry. This is restoring pre-20060806 behaviour.
+  Invert M40 vs. M40X entry position.
+
+2.20060816 Mathieu Bérard <math_b@users.sourceforge.net>
+* Merge from the new-backend branch: Add new backend code 
+  (in compal.c) used with TSM30X class laptops:
+  Used for lcd access
+  Used for hotkeys support: now most Fn+key generate a scancode,
+  as well as the wifi kill switch.
+  Warning: tested only on TSM40X an TSM70 laptops.
+* Create omnibook_io_operation struct and omnibook_io_{read/write}
+  funtions to simplify implementation of some simple features.
+  Used with ac display dock and led features.
+* Rename onetouch feature to "hotkeys" which is a vendor neutral name.
 * Add dmi info for Toshiba Satellite M100 (Thanks Sertaç Ö. Yıldız)
   And fix it
 * Add dmi info for Toshiba Satellite A105 (Thanks Mikkel L. Ellertson)

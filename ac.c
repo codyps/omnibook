@@ -15,42 +15,26 @@
  * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
-#ifdef OMNIBOOK_STANDALONE
 #include "omnibook.h"
-#else
-#include <linux/omnibook.h>
-#endif
-
 #include "ec.h"
 
-static const struct omnibook_io_operation ac_io_table[] = {
-	{ XE3GF|TSP10|TSM30X, 		    EC,	XE3GF_ADP,  0, XE3GF_ADP_MASK},
-	{ XE3GC|AMILOD,			    EC,	XE3GC_STA1, 0, XE3GC_ADP_MASK},
-	{ OB500|OB510|OB6000|OB6100|XE4500, EC,	OB500_STA2, 0, OB500_ADP_MASK},
-	{ OB4150, 			    EC,	OB4150_ADP, 0, OB4150_ADP_MASK},
-	{ XE2, 				    EC,	XE2_STA1,   0, XE2_ADP_MASK},
-	{ 0,}
-};
-
-static struct omnibook_io_operation *ac_io;
-	
-int omnibook_get_ac(void)
+int omnibook_get_ac(struct omnibook_operation *io_op)
 {
 	u8 ac;
 	int retval;
 
-	retval = omnibook_io_read( ac_io, &ac);
-	if (!retval)
-		retval = ac ? 1 : 0;
+	retval = io_op->backend->byte_read(io_op, &ac);
+	if(!retval)
+		retval = !!ac;
 	return retval;
 }
 
-static int omnibook_ac_read(char *buffer)
+static int omnibook_ac_read(char *buffer,struct omnibook_operation *io_op)
 {
 	int len = 0;
 	int ac;
 
-	ac = omnibook_get_ac();
+	ac = omnibook_get_ac(io_op);
 	if (ac < 0)
 		return ac;
 
@@ -59,21 +43,28 @@ static int omnibook_ac_read(char *buffer)
 	return len;
 }
 
-static int omnibook_ac_init(void)
-{
-	ac_io = omnibook_io_match(ac_io_table);
-	return ac_io ? 0 : -ENODEV;
-}
-
-static struct omnibook_feature __declared_feature ac_feature = {
-	 .name = "ac",
-	 .enabled = 1,
-	 .read = omnibook_ac_read,
-	 .init = omnibook_ac_init,
-	 .ectypes = XE3GF|XE3GC|OB500|OB510|OB6000|OB6100|XE4500|OB4150|XE2|AMILOD|TSP10|TSM30X,
+static struct omnibook_tbl ac_table[] __initdata = {
+	{ XE3GF|TSP10|TSM30X,			SIMPLE_BYTE(EC,XE3GF_ADP,XE3GF_ADP_MASK)},
+	{ XE3GC|AMILOD,				SIMPLE_BYTE(EC,XE3GC_STA1,XE3GC_ADP_MASK)},
+	{ OB500|OB510|OB6000|OB6100|XE4500,	SIMPLE_BYTE(EC,OB500_STA2,OB500_ADP_MASK)},
+	{ OB4150,				SIMPLE_BYTE(EC,OB4150_ADP,OB4150_ADP_MASK)},
+	{ XE2,					SIMPLE_BYTE(EC,XE2_STA1,XE2_ADP_MASK)},
+	{ 0,}
 };
 
-module_param_named(ac, ac_feature.enabled, int, S_IRUGO);
+struct omnibook_feature __declared_feature ac_driver = {
+	.name = "ac",
+#ifdef CONFIG_OMNIBOOK_LEGACY
+	.enabled = 1,
+#else
+	.enabled = 0,
+#endif
+	.read = omnibook_ac_read,
+	.ectypes = XE3GF|XE3GC|OB500|OB510|OB6000|OB6100|XE4500|OB4150|XE2|AMILOD|TSP10|TSM30X,
+	.tbl = ac_table,
+};
+
+module_param_named(ac, ac_driver.enabled, int, S_IRUGO);
 MODULE_PARM_DESC(ac, "Use 0 to disable, 1 to enable AC adapter status monitoring");
 
 /* End of file */

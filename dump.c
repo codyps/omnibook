@@ -19,17 +19,12 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef OMNIBOOK_STANDALONE
 #include "omnibook.h"
-#else
-#include <linux/omnibook.h>
-#endif
-
 #include "ec.h"
 
 static u8 ecdump_regs[256];
 
-static int ecdump_read(char *buffer)
+static int ecdump_read(char *buffer,struct omnibook_operation *io_op)
 {
 	int len = 0;
 	int i, j;
@@ -41,7 +36,7 @@ static int ecdump_read(char *buffer)
 	for (i = 0; i < 255; i += 16) {
 		len += sprintf(buffer + len, "EC 0x%02x:", i);
 		for (j = 0; j < 16; j++) {
-			if (omnibook_ec_read(i + j, &v))
+			if (legacy_ec_read(i + j , &v))
 				break;
 			if (v != ecdump_regs[i + j])
 				len += sprintf(buffer + len, " *%02x", v);
@@ -64,7 +59,7 @@ static int ecdump_read(char *buffer)
 	return len;
 }
 
-static int ecdump_write(char *buffer)
+static int ecdump_write(char *buffer,struct omnibook_operation *io_op)
 {
 
 	int i, v;
@@ -76,7 +71,7 @@ static int ecdump_write(char *buffer)
 	} else
 		return -EINVAL;
 	if (i >= 0 && i < 256 && v >= 0 && v < 256) {
-		if (omnibook_ec_write(i, v))
+		if (legacy_ec_write(i, v))
 			return -EIO;
 	} else
 		return -EINVAL;
@@ -84,14 +79,14 @@ static int ecdump_write(char *buffer)
 	return 0;
 }
 
-static struct omnibook_feature __declared_feature dump_feature = {
+static struct omnibook_feature __declared_feature dump_driver = {
 	 .name = "dump",
 	 .enabled = 0,
 	 .read = ecdump_read,
 	 .write = ecdump_write,
 };
 
-module_param_named(dump, dump_feature.enabled, int, S_IRUGO);
+module_param_named(dump, dump_driver.enabled, int, S_IRUGO);
 MODULE_PARM_DESC(dump, "Use 0 to disable, 1 to enable embedded controller register dump support");
 /* End of file */
 

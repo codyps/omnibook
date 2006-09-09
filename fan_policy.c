@@ -15,11 +15,7 @@
  * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
-#ifdef OMNIBOOK_STANDALONE
 #include "omnibook.h"
-#else
-#include <linux/omnibook.h>
-#endif
 
 #include <linux/ctype.h>
 #include "ec.h"
@@ -56,7 +52,7 @@ static int omnibook_get_fan_policy(void)
 	 */
 	if (omnibook_ectype & (XE3GF) ) {
 		for (i = 0; i <= OMNIBOOK_FAN_LEVELS; i++) {
-			if ((retval = omnibook_ec_read(XE3GF_FOT + i, &tmp)))
+			if ((retval = legacy_ec_read(XE3GF_FOT + i, &tmp)))
 				return retval;
 			omnibook_fan_policy[i] = tmp;
 		}
@@ -90,7 +86,7 @@ static int omnibook_set_fan_policy(void)
 		}
 		for (i = 0; i <= OMNIBOOK_FAN_LEVELS; i++) {
 			if ((retval =
-			     omnibook_ec_write(XE3GF_FOT + i, omnibook_fan_policy[i])))
+			     legacy_ec_write(XE3GF_FOT + i, omnibook_fan_policy[i])))
 				return retval;
 		}
 	} else {
@@ -121,7 +117,7 @@ static int omnibook_set_fan_policy_defaults(void)
 	 */
 	if (omnibook_ectype & (XE3GF) ) {
 		for (i = 0; i <= OMNIBOOK_FAN_LEVELS; i++) {
-			if ((retval = omnibook_ec_write(XE3GF_FOT + i, fan_defaults[i])))
+			if ((retval = legacy_ec_write(XE3GF_FOT + i, fan_defaults[i])))
 				return retval;
 		}
 	} else {
@@ -132,7 +128,7 @@ static int omnibook_set_fan_policy_defaults(void)
 	return retval;
 }
 
-static int omnibook_fan_policy_read(char *buffer)
+static int omnibook_fan_policy_read(char *buffer,struct omnibook_operation *io_op)
 {
 	int retval;
 	int len = 0;
@@ -163,7 +159,7 @@ static int omnibook_fan_policy_read(char *buffer)
 	return len;
 }
 
-static int omnibook_fan_policy_write(char *buffer)
+static int omnibook_fan_policy_write(char *buffer,struct omnibook_operation *io_op)
 {
 	int n = 0;
 	char *b;
@@ -205,7 +201,7 @@ static int omnibook_fan_policy_write(char *buffer)
 	return 0;
 }
 
-static struct omnibook_feature __declared_feature fan_policy_feature = {
+static struct omnibook_feature __declared_feature fan_policy_driver = {
 	 .name = "fan_policy",
 	 .enabled = 1,
 	 .read = omnibook_fan_policy_read,
@@ -213,6 +209,6 @@ static struct omnibook_feature __declared_feature fan_policy_feature = {
 	 .ectypes = XE3GF,
 };
 
-module_param_named(fan_policy, fan_policy_feature.enabled, int, S_IRUGO);
+module_param_named(fan_policy, fan_policy_driver.enabled, int, S_IRUGO);
 MODULE_PARM_DESC(fan_policy, "Use 0 to disable, 1 to enable fan control policy support");
 /* End of file */

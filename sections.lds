@@ -1,9 +1,11 @@
-SECTIONS{
+SECTIONS
+{
   .data :
     {
-      _features_start = .;
+      . = ALIGN(32);
+      _start_features_driver = .;
       *(.features)
-      _features_end = .;
+      _end_features_driver = .;
       *(.data)
     } 
 }

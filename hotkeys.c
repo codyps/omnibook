@@ -15,80 +15,47 @@
  * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
-#ifdef OMNIBOOK_STANDALONE
 #include "omnibook.h"
-#else
-#include <linux/omnibook.h>
-#endif
-
 #include "ec.h"
 
-/* 
- * There is no information about reading Hotkeys status
- */
-static int omnibook_hotkeys_enabled = 0;
 
 /*
- * Some laptop model have require more work to enable an Fn+button hotkeys
+ * Save state for suspend/resume operation
  */
-static int omnibook_fnkeys_enabled = 0;
+static unsigned int saved_state;
 
-/*
- * Enable hotkeys sending command to the i8042
- */
-static int omnibook_hotkeys_on(void)
+/* Predefined convinient on/off states */
+#define HKEY_ON  HKEY_ONETOUCH|HKEY_MULTIMEDIA|HKEY_FN|HKEY_DOCK|HKEY_FNF5
+#define HKEY_OFF 0
+
+static int omnibook_hotkeys_set(struct omnibook_operation *io_op, unsigned int state)
 {
-	int retval;
+	int write_capability;
+
+	write_capability = io_op->backend->hotkeys_set(io_op, state);
+	if( write_capability < 0)
+		return write_capability;
+
+	/* Update saved state */
+	saved_state = state & write_capability;
 	
-	if ((retval =omnibook_kbc_command
-	    (OMNIBOOK_KBC_CONTROL_CMD, OMNIBOOK_KBC_CMD_ONETOUCH_ENABLE))) {
-		printk(O_ERR "Hotkeys enable command failed.\n");
-		return retval;
-	}
-	omnibook_hotkeys_enabled = 1;
-	printk(O_INFO "Enabling Hotkey buttons.\n");
 	return 0;
 }
 
-/*
- * Disable hotkeys sending command to the i8042
- */
-static int omnibook_hotkeys_off(void)
+static int omnibook_hotkeys_get(struct omnibook_operation *io_op, unsigned int *state)
 {
-	int retval;
 	
-	if ((retval = omnibook_kbc_command
-	    (OMNIBOOK_KBC_CONTROL_CMD, OMNIBOOK_KBC_CMD_ONETOUCH_DISABLE))) {
-		printk(O_ERR "Hotkeys disable command failed.\n");
-		return retval;
-	}
-	omnibook_hotkeys_enabled = 0;
-	printk(O_INFO "Disabling Hotkey buttons.\n");
-	return 0;
-}
-
-/*
- * Enable Fn+foo key writing 75h to EC index 45h
- */
-static int omnibook_fnkeys_on(void)
-{
-	int retval;
+	unsigned int read_state = 0;
+	int read_capability = 0;
 	
-	if ((retval = omnibook_cdimode_write(TSM70_FN_INDEX, TSM70_FN_ENABLE))) {
-		printk(O_ERR "fnkeys enable command failed.\n");
-		return retval;
-	}
-	omnibook_fnkeys_enabled = 1;
-	printk(O_INFO "Enabling Fn keys.\n");
-	return 0;
-}
+	if(io_op->backend->hotkeys_get)
+		read_capability = io_op->backend->hotkeys_get(io_op, &read_state);
+	if(read_capability < 0)
+		return read_capability;
 
-/*
- * FIXME Not implemented
- */
-static int omnibook_fnkeys_off(void)
-{
-	printk(O_WARN "Disabling of Fn keys not implemented.\n");
+	/* Return previously set state for the fields that are write only */
+	*state = (read_state & read_capability) + (saved_state & ~read_capability);
+	
 	return 0;
 }
 
@@ -97,104 +64,106 @@ static int omnibook_fnkeys_off(void)
  */
  
 /*
- * omnibook_*keys_enabled = 1 means here "It was enabled prior to suspend, 
- * please reenable"
+ * Restore previously saved state
  */
-static int omnibook_hotkeys_resume(void)
+static int omnibook_hotkeys_resume(struct omnibook_operation *io_op)
 {
-	int retval = 0;
-	retval = (omnibook_hotkeys_enabled ? omnibook_hotkeys_on() : 0);
-	if (omnibook_ectype & TSM30X)
-		retval = (omnibook_fnkeys_enabled ? omnibook_fnkeys_on() : 0);
-	return retval;
+	int retval;
+	retval = io_op->backend->hotkeys_set(io_op, saved_state);
+	return min(retval,0);
 }
 
-static int omnibook_hotkeys_suspend(void)
-{
-	int retval = 0;
-	retval = (omnibook_hotkeys_enabled ? omnibook_hotkeys_off() : 0);
-	if (omnibook_ectype & TSM30X)
-		retval = (omnibook_fnkeys_enabled ? omnibook_fnkeys_off() : 0);
-	return retval;
-}
-
-static int omnibook_hotkeys_enable(void)
+/*
+ * Save state and disable hotkeys upon suspend (FIXME is the disabling required ?)
+ */
+static int omnibook_hotkeys_suspend(struct omnibook_operation *io_op)
 {
 	int retval = 0;
 
-	if (!omnibook_hotkeys_enabled )
-		retval = omnibook_hotkeys_on();
-	if ((!omnibook_fnkeys_enabled) && ( omnibook_ectype & TSM30X ))
-		retval = omnibook_fnkeys_on();
+	retval = omnibook_hotkeys_get(io_op, &saved_state);
+	if(retval < 0)
+		return retval;
 
-	return retval;
+	retval = io_op->backend->hotkeys_set(io_op, HKEY_OFF);
+	if(retval < 0)
+		return retval;
+	
+	return 0;
 }
 
-static int omnibook_hotkeys_disable(void)
-{
-	int retval = 0;
+static const char pretty_name[][27] = {
+	"Onetouch buttons",
+	"Multimedia hotkeys are",
+	"Fn hotkeys are",
+	"Stick key is",
+	"Press Fn twice to lock is",
+	"Dock events are",
+	"Fn + F5 hotkey is"
+};
 
-	if (omnibook_hotkeys_enabled )
-		retval = omnibook_hotkeys_off();
-	if (omnibook_fnkeys_enabled && ( omnibook_ectype & TSM30X ))
-		retval = omnibook_fnkeys_off();
-
-	return retval;
-}
-
-static int omnibook_hotkeys_read(char *buffer)
+static int omnibook_hotkeys_read(char *buffer,struct omnibook_operation *io_op)
 {
 	int len = 0;
+	int read_capability, write_capability;
+	unsigned int read_state, mask;
 
-	len += sprintf(buffer + len, "Hotkey buttons are %s\n",
-		      (omnibook_hotkeys_enabled) ? "enabled" : "disabled");
+	read_capability = omnibook_hotkeys_get(io_op, &read_state);
+	if(read_capability < 0)
+		return read_capability;
 
-	if (omnibook_ectype & TSM30X )
-		len += sprintf(buffer + len, "Fn keys are %s\n",
-			    (omnibook_fnkeys_enabled) ? "enabled" : "disabled");
+	write_capability = omnibook_hotkeys_set(io_op, read_state);
+	if(write_capability < 0)
+		return write_capability;
+
+	for( mask = DISPLAY_LCD_ON ; mask <= HKEY_FNF5; mask = mask << 1) {
+	/* we assume write capability or read capability imply support */
+		 if( (read_capability | write_capability ) & mask )
+			len += sprintf(buffer + len, "%s %s.\n", 
+				pretty_name[ ffs(mask) - 1 ],
+				( read_state & mask ) ? "enabled" : "disabled");
+	}
 	return len;
 }
 
-static int omnibook_hotkeys_write(char *buffer)
+static int omnibook_hotkeys_write(char *buffer,struct omnibook_operation *io_op)
 {
-	int retval = 0;
-	switch (*buffer) {
-	case '0':
-		retval = omnibook_hotkeys_disable();
-		break;
-	case '1':
-		retval = omnibook_hotkeys_enable();
-		break;
-	default:
-		retval = -EINVAL;
-	}
-	return retval;
-}
-
-static int omnibook_hotkeys_init(void)
-{
-	int retval = 0;
+	unsigned int state;	
+	char *endp;
 	
-	if ((omnibook_ectype & TSM30X) && omnibook_cdimode_init()) {
-		retval = -ENODEV;
-		goto out;
+	if (strncmp(buffer, "off", 3) == 0)
+		omnibook_hotkeys_set(io_op, HKEY_OFF);
+	else if (strncmp(buffer, "on", 2) == 0)
+		omnibook_hotkeys_set(io_op, HKEY_ON);
+	else {
+		state = simple_strtoul(buffer, &endp, 16);
+		if (endp == buffer)
+			return -EINVAL;
+		else
+			omnibook_hotkeys_set(io_op, state);
 	}
-			
-	retval = omnibook_hotkeys_enable();
-
-out:
-	return retval;
+	return 0;
 }
 
-static void omnibook_hotkeys_cleanup(void)
+static int __init omnibook_hotkeys_init(struct omnibook_operation *io_op)
+{	
+	printk(O_INFO "Enabling all hotkeys.\n");
+	return omnibook_hotkeys_set(io_op, HKEY_ON);
+}
+
+static void __exit omnibook_hotkeys_cleanup(struct omnibook_operation *io_op)
 {
-	omnibook_hotkeys_disable();
-	
-	if (omnibook_ectype & TSM30X)
-		omnibook_cdimode_exit();
+	printk(O_INFO "Disabling all hotkeys.\n");
+	omnibook_hotkeys_set(io_op, HKEY_OFF);
 }
 
-static struct omnibook_feature __declared_feature hotkeys_feature = {
+static struct omnibook_tbl hotkey_table[] __initdata = {
+	{ XE3GF|XE3GC|OB500|OB510|OB6000|OB6100|XE4500|AMILOD|TSP10, {KBC,}},
+	{ TSM30X,	{CDI,}},
+	{ TSM40,	{SMI,}},
+	{ 0,}
+};
+
+static struct omnibook_feature __declared_feature hotkeys_driver = {
 	 .name = "hotkeys",
 	 .enabled = 1,
 	 .read = omnibook_hotkeys_read,
@@ -203,9 +172,10 @@ static struct omnibook_feature __declared_feature hotkeys_feature = {
 	 .exit = omnibook_hotkeys_cleanup,
 	 .suspend = omnibook_hotkeys_suspend,
 	 .resume = omnibook_hotkeys_resume,
-	 .ectypes = XE3GF|XE3GC|OB500|OB510|OB6000|OB6100|XE4500|AMILOD|TSP10|TSM30X,
+	 .ectypes = XE3GF|XE3GC|OB500|OB510|OB6000|OB6100|XE4500|AMILOD|TSP10|TSM30X|TSM40,
+	 .tbl = hotkey_table,
 };
 
-module_param_named(hotkeys, hotkeys_feature.enabled, int, S_IRUGO);
+module_param_named(hotkeys, hotkeys_driver.enabled, int, S_IRUGO);
 MODULE_PARM_DESC(hotkeys, "Use 0 to disable, 1 to enable hotkeys handling");
 /* End of file */

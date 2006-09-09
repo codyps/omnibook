@@ -15,25 +15,21 @@
  * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
-#ifdef OMNIBOOK_STANDALONE
 #include "omnibook.h"
-#else
-#include <linux/omnibook.h>
-#endif
 
 #include "ec.h"
 
-static int omnibook_ec_read16(u8 addr, u16 * data)
+static int ec_read16(u8 addr, u16 * data)
 {
 	int retval;
 	u8 high;
 	u8 low;
 	u16 result;
 
-	retval = omnibook_ec_read(addr, &low);
+	retval = legacy_ec_read(addr, &low);
 	if (retval)
 		return retval;
-	retval = omnibook_ec_read(addr + 0x01, &high);
+	retval = legacy_ec_read(addr + 0x01, &high);
 	result = ((high << 8) + low);
 	*data = result;
 	return retval;
@@ -55,7 +51,7 @@ static int omnibook_battery_present(int num)
 
 		if (num >= 2)
 			return -EINVAL;
-		if ((retval = omnibook_ec_read(XE3GF_BAL, &bat)))
+		if ((retval = legacy_ec_read(XE3GF_BAL, &bat)))
 			return retval;
 		mask = XE3GF_BAL0_MASK;
 		for (i = 0; i < num; i++)
@@ -67,7 +63,7 @@ static int omnibook_battery_present(int num)
 	} else if (omnibook_ectype & (XE3GC|AMILOD) ) {
 		if (num >= 2)
 			return -EINVAL;
-		if ((retval = omnibook_ec_read(XE3GC_BAT, &bat)))
+		if ((retval = legacy_ec_read(XE3GC_BAT, &bat)))
 			return retval;
 		mask = XE3GC_BAT0_MASK;
 		for (i = 0; i < num; i++)
@@ -104,19 +100,19 @@ static int omnibook_get_battery_info(int num,
 			return retval;
 		if (retval) {
 			if ((retval =
-			     omnibook_ec_read(XE3GF_BTY0 + (offset * num),
+			     legacy_ec_read(XE3GF_BTY0 + (offset * num),
 				     &(*battinfo).type)))
 				return retval;
 			if ((retval =
-			     omnibook_ec_read16(XE3GF_BSN0 + (offset * num),
+			     ec_read16(XE3GF_BSN0 + (offset * num),
 				       &(*battinfo).sn)))
 				return retval;
 			if ((retval =
-			     omnibook_ec_read16(XE3GF_BDV0 + (offset * num),
+			     ec_read16(XE3GF_BDV0 + (offset * num),
 				       &(*battinfo).dv)))
 				return retval;
 			if ((retval =
-			     omnibook_ec_read16(XE3GF_BDC0 + (offset * num),
+			     ec_read16(XE3GF_BDC0 + (offset * num),
 				       &(*battinfo).dc)))
 				return retval;
 
@@ -134,15 +130,15 @@ static int omnibook_get_battery_info(int num,
 			return retval;
 		if (retval) {
 			if ((retval =
-			     omnibook_ec_read16(XE3GC_BDV0 + (offset * num),
+			     ec_read16(XE3GC_BDV0 + (offset * num),
 				       &(*battinfo).dv)))
 				return retval;
 			if ((retval =
-			     omnibook_ec_read16(XE3GC_BDC0 + (offset * num),
+			     ec_read16(XE3GC_BDC0 + (offset * num),
 				       &(*battinfo).dc)))
 				return retval;
 			if ((retval =
-			     omnibook_ec_read(XE3GC_BTY0 + (offset * num),
+			     legacy_ec_read(XE3GC_BTY0 + (offset * num),
 				     &(*battinfo).type)))
 				return retval;
 
@@ -161,15 +157,15 @@ static int omnibook_get_battery_info(int num,
 			return retval;
 		if (retval) {
 			if ((retval =
-			     omnibook_ec_read16(AMILOD_BDV0 + (offset * num),
+			     ec_read16(AMILOD_BDV0 + (offset * num),
 				       &(*battinfo).dv)))
 				return retval;
 			if ((retval =
-			     omnibook_ec_read16(AMILOD_BDC0 + (offset * num),
+			     ec_read16(AMILOD_BDC0 + (offset * num),
 				       &(*battinfo).dc)))
 				return retval;
 			if ((retval =
-			     omnibook_ec_read(AMILOD_BTY0 + (offset * num),
+			     legacy_ec_read(AMILOD_BTY0 + (offset * num),
 				     &(*battinfo).type)))
 				return retval;
 
@@ -243,22 +239,22 @@ int omnibook_get_battery_status(int num,
 			return retval;
 		if (retval) {
 			if ((retval =
-			     omnibook_ec_read(XE3GF_BST0 + (offset * num), &status)))
+			     legacy_ec_read(XE3GF_BST0 + (offset * num), &status)))
 				return retval;
 			if ((retval =
-			     omnibook_ec_read16(XE3GF_BRC0 + (offset * num),
+			     ec_read16(XE3GF_BRC0 + (offset * num),
 				       &(*battstat).rc)))
 				return retval;
 			if ((retval =
-			     omnibook_ec_read16(XE3GF_BPV0 + (offset * num),
+			     ec_read16(XE3GF_BPV0 + (offset * num),
 				       &(*battstat).pv)))
 				return retval;
 			if ((retval =
-			     omnibook_ec_read16(XE3GF_BFC0 + (offset * num),
+			     ec_read16(XE3GF_BFC0 + (offset * num),
 				       &(*battstat).lc)))
 				return retval;
 			if ((retval =
-			     omnibook_ec_read(XE3GF_GAU0 + (offset * num),
+			     legacy_ec_read(XE3GF_GAU0 + (offset * num),
 				     &(*battstat).gauge)))
 				return retval;
 
@@ -287,18 +283,18 @@ int omnibook_get_battery_status(int num,
 			return retval;
 		if (retval) {
 			if ((retval =
-			     omnibook_ec_read(XE3GC_BST0 + (offset * num), &status)))
+			     legacy_ec_read(XE3GC_BST0 + (offset * num), &status)))
 				return retval;
 			if ((retval =
-			     omnibook_ec_read16(XE3GC_BRC0 + (offset * num),
+			     ec_read16(XE3GC_BRC0 + (offset * num),
 				       &(*battstat).rc)))
 				return retval;
 			if ((retval =
-			     omnibook_ec_read16(XE3GC_BPV0 + (offset * num),
+			     ec_read16(XE3GC_BPV0 + (offset * num),
 				       &(*battstat).pv)))
 				return retval;
 			if ((retval =
-			     omnibook_ec_read16(XE3GC_BDC0 + (offset * num), &dc)))
+			     ec_read16(XE3GC_BDC0 + (offset * num), &dc)))
 				return retval;
 
 			if (status & XE3GC_BST_MASK_CRT)
@@ -329,18 +325,18 @@ int omnibook_get_battery_status(int num,
 			return retval;
 		if (retval) {
 			if ((retval =
-			     omnibook_ec_read(AMILOD_BST0 + (offset * num), &status)))
+			     legacy_ec_read(AMILOD_BST0 + (offset * num), &status)))
 				return retval;
 			if ((retval =
-			     omnibook_ec_read16(AMILOD_BRC0 + (offset * num),
+			     ec_read16(AMILOD_BRC0 + (offset * num),
 				       &(*battstat).rc)))
 				return retval;
 			if ((retval =
-			     omnibook_ec_read16(AMILOD_BPV0 + (offset * num),
+			     ec_read16(AMILOD_BPV0 + (offset * num),
 				       &(*battstat).pv)))
 				return retval;
 			if ((retval =
-			     omnibook_ec_read16(AMILOD_BDC0 + (offset * num), &dc)))
+			     ec_read16(AMILOD_BDC0 + (offset * num), &dc)))
 				return retval;
 
 			if (status & AMILOD_BST_MASK_CRT)
@@ -368,27 +364,27 @@ int omnibook_get_battery_status(int num,
 	} else if (omnibook_ectype & (OB500|OB510) ) {
 		switch (num) {
 		case 0:
-			if ((retval = omnibook_ec_read(OB500_BT1S, &status)))
+			if ((retval = legacy_ec_read(OB500_BT1S, &status)))
 				return retval;
-			if ((retval = omnibook_ec_read16(OB500_BT1C, &(*battstat).rc)))
+			if ((retval = ec_read16(OB500_BT1C, &(*battstat).rc)))
 				return retval;
-			if ((retval = omnibook_ec_read16(OB500_BT1V, &(*battstat).pv)))
+			if ((retval = ec_read16(OB500_BT1V, &(*battstat).pv)))
 				return retval;
 			break;
 		case 1:
-			if ((retval = omnibook_ec_read(OB500_BT2S, &status)))
+			if ((retval = legacy_ec_read(OB500_BT2S, &status)))
 				return retval;
-			if ((retval = omnibook_ec_read16(OB500_BT2C, &(*battstat).rc)))
+			if ((retval = ec_read16(OB500_BT2C, &(*battstat).rc)))
 				return retval;
-			if ((retval = omnibook_ec_read16(OB500_BT2V, &(*battstat).pv)))
+			if ((retval = ec_read16(OB500_BT2V, &(*battstat).pv)))
 				return retval;
 			break;
 		case 2:
-			if ((retval = omnibook_ec_read(OB500_BT3S, &status)))
+			if ((retval = legacy_ec_read(OB500_BT3S, &status)))
 				return retval;
-			if ((retval = omnibook_ec_read16(OB500_BT3C, &(*battstat).rc)))
+			if ((retval = ec_read16(OB500_BT3C, &(*battstat).rc)))
 				return retval;
-			if ((retval = omnibook_ec_read16(OB500_BT3V, &(*battstat).pv)))
+			if ((retval = ec_read16(OB500_BT3V, &(*battstat).pv)))
 				return retval;
 			break;
 		default:
@@ -413,19 +409,19 @@ int omnibook_get_battery_status(int num,
 	} else if (omnibook_ectype & (OB6000|OB6100|XE4500) ) {
 		switch (num) {
 		case 0:
-			if ((retval = omnibook_ec_read(OB500_BT1S, &status)))
+			if ((retval = legacy_ec_read(OB500_BT1S, &status)))
 				return retval;
-			if ((retval = omnibook_ec_read16(OB500_BT1C, &(*battstat).rc)))
+			if ((retval = ec_read16(OB500_BT1C, &(*battstat).rc)))
 				return retval;
-			if ((retval = omnibook_ec_read16(OB500_BT1V, &(*battstat).pv)))
+			if ((retval = ec_read16(OB500_BT1V, &(*battstat).pv)))
 				return retval;
 			break;
 		case 1:
-			if ((retval = omnibook_ec_read(OB500_BT3S, &status)))
+			if ((retval = legacy_ec_read(OB500_BT3S, &status)))
 				return retval;
-			if ((retval = omnibook_ec_read16(OB500_BT3C, &(*battstat).rc)))
+			if ((retval = ec_read16(OB500_BT3C, &(*battstat).rc)))
 				return retval;
-			if ((retval = omnibook_ec_read16(OB500_BT3V, &(*battstat).pv)))
+			if ((retval = ec_read16(OB500_BT3V, &(*battstat).pv)))
 				return retval;
 			break;
 		default:
@@ -448,7 +444,7 @@ int omnibook_get_battery_status(int num,
 	return 0;
 }
 
-static int omnibook_battery_read(char *buffer)
+static int omnibook_battery_read(char *buffer,struct omnibook_operation *io_op)
 {
 	char *statustr;
 	char *typestr;
@@ -553,14 +549,18 @@ static int omnibook_battery_read(char *buffer)
 	return len;
 }
 
-static struct omnibook_feature __declared_feature battery_feature  = {
+static struct omnibook_feature __declared_feature battery_driver = {
 	 .name = "battery",
+#ifdef CONFIG_OMNIBOOK_LEGACY
 	 .enabled = 1,
+#else
+	 .enabled = 0,
+#endif
 	 .read = omnibook_battery_read,
-	 .ectypes = XE3GF|XE3GC|AMILOD|TSP10, /* FIXME: OB500|OB6000|OB6100|XE4500 */
+	 .ectypes = XE3GF|XE3GC|AMILOD|TSP10|TSM30X, /* FIXME: OB500|OB6000|OB6100|XE4500 */
 };
 
 
-module_param_named(battery, battery_feature.enabled, int, S_IRUGO);
+module_param_named(battery, battery_driver.enabled, int, S_IRUGO);
 MODULE_PARM_DESC(battery, "Use 0 to disable, 1 to enable battery status monitoring");
 /* End of file */

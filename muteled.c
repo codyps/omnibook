@@ -12,89 +12,74 @@
  * General Public License for more details.
  *
  * Written by Thomas Perl <thp@perli.net>, 2006
+ * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
-#ifdef OMNIBOOK_STANDALONE
 #include "omnibook.h"
-#else
-#include <linux/omnibook.h>
-#endif
-
 #include "ec.h"
 
 /* There is no information about reading MUTE LED status */
 static int omnibook_muteled_enabled = 0;
 
-static int omnibook_muteled_on(void)
+static int omnibook_muteled_set(struct omnibook_operation *io_op, int status)
 {
-	if (omnibook_kbc_command(OMNIBOOK_KBC_CONTROL_CMD, OMNIBOOK_KBC_CMD_MUTELED_ON)) {
-		printk(KERN_ERR "%s: failed muteled on command.\n", OMNIBOOK_MODULE_NAME);
+	if (omnibook_toggle(io_op, !!status)) {
+		printk(O_ERR "Failed muteled %s command.\n", status ? "on" : "off");
 		return -EIO;
 	}
-        omnibook_muteled_enabled = 1;
 	return 0;
 }
 
-static int omnibook_muteled_off(void)
-{
-	if (omnibook_kbc_command(OMNIBOOK_KBC_CONTROL_CMD, OMNIBOOK_KBC_CMD_MUTELED_OFF)) {
-		printk(KERN_ERR "%s: failed muteled off command.\n", OMNIBOOK_MODULE_NAME);
-		return -EIO;
-	}
-        omnibook_muteled_enabled = 0;
-	return 0;
-}
-
-
-static int omnibook_muteled_disable(void)
-{
-        omnibook_muteled_off();
-        return 0;
-}
-
-static int omnibook_muteled_enable(void)
-{
-        omnibook_muteled_on();
-        return 0;
-}
-
-static int omnibook_muteled_read(char *buffer)
+/*
+ * Hardware query is unsupported, reading is unreliable.
+ */
+static int omnibook_muteled_read(char *buffer,struct omnibook_operation *io_op)
 {
 	int len = 0;
 
-	len += sprintf(buffer+len, "The mute LED is %s\n", (omnibook_muteled_enabled) ? "on" : "off");
+	len += sprintf(buffer+len, "Last mute LED action was an %s command.\n", 
+			(omnibook_muteled_enabled) ? "on" : "off");
 
 	return len;
 }
 
-static int omnibook_muteled_write(char *buffer)
+static int omnibook_muteled_write(char *buffer,struct omnibook_operation *io_op)
 {
-	int retval;	
-	
-	switch (*buffer) {
-	case '0':
-		if ((retval = omnibook_muteled_disable()));
-			return retval;
-		break;
-	case '1':
-		if ((retval = omnibook_muteled_enable()));
-			return retval;
-		break;
-	default:
+	int cmd;	
+
+	if ( *buffer == '0' || *buffer == '1') {
+		cmd = *buffer - '0';
+		if(!omnibook_muteled_set(io_op, cmd)) {
+			omnibook_muteled_enabled = cmd;
+			printk(O_INFO "Switching mute LED to %s state.\n", 
+				cmd ? "on" : "off");
+		}
+	} else {
 		return -EINVAL;
 	}
 	return 0;
 }
 
+static int omnibook_muteled_resume(struct omnibook_operation *io_op)
+{	
+	return omnibook_muteled_set(io_op,omnibook_muteled_enabled);		
+}
 
-static struct omnibook_feature __declared_feature muteled_feature = {
+static struct omnibook_tbl muteled_table[] __initdata = {
+	{ XE4500, COMMAND(KBC,OMNIBOOK_KBC_CMD_MUTELED_ON,OMNIBOOK_KBC_CMD_MUTELED_OFF)},
+	{ 0,}
+};
+
+static struct omnibook_feature __declared_feature muteled_driver = {
 	 .name = "muteled",
 	 .enabled = 1,
 	 .read = omnibook_muteled_read,
 	 .write = omnibook_muteled_write,
+	 .resume = omnibook_muteled_resume,
 	 .ectypes = XE4500,
+	 .tbl = muteled_table,
 };
 
-module_param_named(muteled, muteled_feature.enabled, int, S_IRUGO);
+module_param_named(muteled, muteled_driver.enabled, int, S_IRUGO);
 MODULE_PARM_DESC(muteled, "Use 0 to disable, 1 to enable 'Audo Mute' LED control");
 

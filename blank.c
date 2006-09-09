@@ -15,65 +15,40 @@
  * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
-#ifdef OMNIBOOK_STANDALONE
 #include "omnibook.h"
-#else
-#include <linux/omnibook.h>
-#endif
 
 #include <asm/io.h>
 #include "ec.h"
+
+static struct omnibook_feature blank_driver;
 
 static int omnibook_console_blank_enabled = 0;
 
 extern int (*console_blank_hook) (int);
 
+/*
+ * We would need an io_op parameter,but we are bound to the crapy
+ * console_blank_hook here
+ */
+
 int omnibook_lcd_blank(int blank)
 {
 	int retval = 0;
-	u8 cmd;
-	/*
-	 * XE3GF
-	 * XE3GC
-	 * AMILOD
-	 * TSP10
-	 * TSM30X
-	 * TSM40
-	 */
-	if (omnibook_ectype & (XE3GF|XE3GC|AMILOD|TSP10|TSM30X|TSM40) ) {
-		cmd = blank ? OMNIBOOK_KBC_CMD_LCD_OFF : OMNIBOOK_KBC_CMD_LCD_ON;
-		if ((retval =
-		     omnibook_kbc_command(OMNIBOOK_KBC_CONTROL_CMD, cmd)))
-			return retval;
-	/*
-	 * OB500
-	 * OB6000
-	 * XE2
-	 */
-	} else if (omnibook_ectype & (OB500|OB6000|XE2) ) {
-		cmd = inb(OB500_GPO1);
-		cmd = blank ? cmd & ~OB500_BKLT_MASK : cmd | OB500_BKLT_MASK;
-		outb(cmd, OB500_GPO1);
-	/*
-	 * OB510
-	 * OB61000
-	 */
-	} else if (omnibook_ectype & (OB510|OB6100) ) {
-		cmd = inb(OB510_GPO2);
-		cmd = blank ? cmd & ~OB510_BKLT_MASK : cmd | OB510_BKLT_MASK;
-		outb(cmd, OB510_GPO2);
-	/*
-	 * UNKNOWN
-	 */
-	} else {
-		printk(O_INFO
+	
+	if ( blank_driver.io_op->backend == PIO )
+		omnibook_apply_write_mask(blank_driver.io_op, blank);
+	else if ( blank_driver.io_op->backend == KBC )
+		omnibook_toggle(blank_driver.io_op, blank);
+	else {
+		printk(O_WARN
 		       "LCD console blanking is unsupported on this machine.\n");
 		retval = -ENODEV;
 	}
+	
 	return retval;
 }
 
-static int omnibook_console_blank_enable(void)
+static int console_blank_register_hook(void)
 {
 	if (omnibook_console_blank_enabled == 0) {
 		if (console_blank_hook == NULL) {
@@ -90,7 +65,7 @@ static int omnibook_console_blank_enable(void)
 	return 0;
 }
 
-static int omnibook_console_blank_disable(void)
+static int console_blank_unregister_hook(void)
 {
 	if (console_blank_hook == omnibook_lcd_blank) {
 		console_blank_hook = NULL;
@@ -106,7 +81,7 @@ static int omnibook_console_blank_disable(void)
 	return 0;
 }
 
-static int omnibook_console_blank_read(char *buffer)
+static int omnibook_console_blank_read(char *buffer,struct omnibook_operation *io_op)
 {
 	int len = 0;
 
@@ -117,17 +92,17 @@ static int omnibook_console_blank_read(char *buffer)
 	return len;
 }
 
-static int omnibook_console_blank_write(char *buffer)
+static int omnibook_console_blank_write(char *buffer,struct omnibook_operation *io_op)
 {
 	int retval;
 
 	switch (*buffer) {
 	case '0':
-		if ((retval = omnibook_console_blank_disable()))
+		if ((retval = console_blank_unregister_hook()))
 			return retval;
 		break;
 	case '1':
-		if ((retval = omnibook_console_blank_enable()))
+		if ((retval = console_blank_register_hook()))
 			return retval;
 		break;
 	default:
@@ -136,23 +111,25 @@ static int omnibook_console_blank_write(char *buffer)
 	return 0;
 }
 
-static int omnibook_console_blank_init(void)
+static int __init omnibook_console_blank_init(struct omnibook_operation *io_op)
 {
-
-	int retval;
-
-	if ((retval = omnibook_console_blank_enable()))
-		return retval;
-
-	return 0;
+	return console_blank_register_hook();
 }
 
-static void omnibook_console_blank_cleanup(void)
+static void __exit omnibook_console_blank_cleanup(struct omnibook_operation *io_op)
 {
-	omnibook_console_blank_disable();
+	console_blank_unregister_hook();
 }
 
-static struct omnibook_feature __declared_feature blank_feature = {
+static struct omnibook_tbl blank_table[] __initdata = {
+	{ XE3GF|XE3GC|AMILOD|TSP10|TSM30X|TSM40, COMMAND(KBC,OMNIBOOK_KBC_CMD_LCD_OFF,OMNIBOOK_KBC_CMD_LCD_ON)},
+	{ OB500|OB6000|XE2, { PIO, OB500_GPO1, OB500_GPO1, 0, -OB500_BKLT_MASK, OB500_BKLT_MASK}},
+	{ OB510|OB6100,	    { PIO, OB510_GPO2, OB510_GPO2, 0, -OB510_BKLT_MASK, OB510_BKLT_MASK}},
+	{ 0,}
+};
+
+
+static struct omnibook_feature __declared_feature blank_driver = {
 	 .name = "blank",
 	 .enabled = 1,
 	 .read = omnibook_console_blank_read,
@@ -160,8 +137,9 @@ static struct omnibook_feature __declared_feature blank_feature = {
 	 .init = omnibook_console_blank_init,
 	 .exit = omnibook_console_blank_cleanup,
 	 .ectypes = XE3GF|XE3GC|OB500|OB510|OB6000|OB6100|XE2|AMILOD|TSP10|TSM30X|TSM40,
+	 .tbl = blank_table,
 };
 
-module_param_named(blank, blank_feature.enabled, int, S_IRUGO);
+module_param_named(blank, blank_driver.enabled, int, S_IRUGO);
 MODULE_PARM_DESC(blank, "Use 0 to disable, 1 to enable lcd console blanking");
 /* End of file */

@@ -15,16 +15,12 @@
  * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
-#ifdef OMNIBOOK_STANDALONE
 #include "omnibook.h"
-#else
-#include <linux/omnibook.h>
-#endif
 
 #include <linux/dmi.h>
 #include <linux/version.h>
 
-static int omnibook_version_read(char *buffer)
+static int omnibook_version_read(char *buffer,struct omnibook_operation *io_op)
 {
 	int len = 0;
 
@@ -33,7 +29,7 @@ static int omnibook_version_read(char *buffer)
 	return len;
 }
 
-static int omnibook_dmi_read(char *buffer)
+static int omnibook_dmi_read(char *buffer,struct omnibook_operation *io_op)
 {
 	int len = 0;
 
@@ -70,19 +66,19 @@ static int omnibook_dmi_read(char *buffer)
 	return len;
 }
 
-static struct omnibook_feature __declared_feature version_feature = {
+static struct omnibook_feature __declared_feature version_driver = {
 	 .name = "version",
 	 .enabled = 1,
 	 .read = omnibook_version_read,
 };
 
-static struct omnibook_feature __declared_feature dmi_feature = {
+static struct omnibook_feature __declared_feature dmi_driver = {
 	 .name = "dmi",
 	 .enabled = 1,
 	 .read = omnibook_dmi_read,
 };
 
-module_param_named(dmi, dmi_feature.enabled, int, S_IRUGO);
+module_param_named(dmi, dmi_driver.enabled, int, S_IRUGO);
 MODULE_PARM_DESC(dmi, "Use 0 to disable, 1 to enable DMI informations display support");
 
 /* End of file */

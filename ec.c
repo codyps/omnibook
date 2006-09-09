@@ -16,13 +16,13 @@
  * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  */
 
+#include "omnibook.h"
+
 #include <linux/types.h>
 #include <linux/delay.h>
 #include <linux/sched.h>
-#include <linux/config.h>
 #include <linux/spinlock.h>
-#include <linux/acpi.h>
-#include <linux/version.h>
+#include <linux/ioport.h>
 
 #include <asm/io.h>
 #include "ec.h"
@@ -35,13 +35,10 @@
 #define DEFINE_SPINLOCK(s)              spinlock_t s = SPIN_LOCK_UNLOCKED
 #endif
 
-extern int omnibook_ectype;
 
 /*
- *	Interrupt control
+ * Interrupt control
  */
-
-
 
 static DEFINE_SPINLOCK(omnibook_ec_lock);
 
@@ -107,16 +104,20 @@ static int omnibook_ec_wait(u8 event)
  * disabled.
  */
 
-int omnibook_ec_read(u8 addr, u8 *data)
+static int omnibook_ec_read(const struct omnibook_operation *io_op, u8 *data)
 {
-	unsigned long flags;
 	int retval;
-
+	
 #ifdef CONFIG_ACPI_EC
-	if (likely(!acpi_disabled))
-		return ec_read(addr, data);
+	if (likely(!acpi_disabled)) {
+		retval = ec_read((u8) io_op->read_addr, data);
+		if(io_op->read_mask)
+			*data &= io_op->read_mask;
+		dprintk("ACPI EC read at %lx success %i.\n",io_op->read_addr,retval);
+		return retval;
+	}
 #endif
-	spin_lock_irqsave(&omnibook_ec_lock, flags);
+	spin_lock_irq(&omnibook_ec_lock);
 	retval = omnibook_ec_wait(OMNIBOOK_EC_STAT_IBF);
 	if (retval)
 		goto end;
@@ -124,35 +125,41 @@ int omnibook_ec_read(u8 addr, u8 *data)
 	retval = omnibook_ec_wait(OMNIBOOK_EC_STAT_IBF);
 	if (retval)
 		goto end;
-	outb(addr, OMNIBOOK_EC_DATA);
+	outb((u8) io_op->read_addr, OMNIBOOK_EC_DATA);
 	retval = omnibook_ec_wait(OMNIBOOK_EC_STAT_OBF);
 	if (retval)
 		goto end;
 	*data = inb(OMNIBOOK_EC_DATA);
+	if(io_op->read_mask)
+		*data &= io_op->read_mask;
 end:
-	spin_unlock_irqrestore(&omnibook_ec_lock, flags);
+	spin_unlock_irq(&omnibook_ec_lock);
+	dprintk("Custom EC read at %lx success %i.\n",io_op->read_addr,retval);
 	return retval;
 }
-
+	
 /*
- * Write to the embedded controller
- * Decide at run-time if we can use the much cleaner ACPI EC driver instead of
- * this implementation, this is the case if ACPI has been compiled and is not
+ * Write to the embedded controller:
+ * If OMNIBOOK_LEGACY is set, decide at run-time if we can use the much cleaner 
+ * ACPI EC driver instead of this legacy implementation. 
+ * This is the case if ACPI has been compiled and is not
  * disabled.
+ * If OMNIBOOK_LEGACY is unset, we drop our custoim implementation
  */
 
-int omnibook_ec_write(u8 addr, u8 data)
+static int omnibook_ec_write(const struct omnibook_operation *io_op, u8 data)
 {
-
-	unsigned long flags;
 	int retval;
 	
 #ifdef CONFIG_ACPI_EC
-	if (likely(!acpi_disabled))
-		return ec_write(addr, data);		
+	if (likely(!acpi_disabled)) {
+		retval = ec_write((u8) io_op->write_addr, data);
+		dprintk("ACPI EC write at %lx success %i.\n",io_op->write_addr,retval);
+		return retval;
+	}	
 #endif
 	
-	spin_lock_irqsave(&omnibook_ec_lock, flags);
+	spin_lock_irq(&omnibook_ec_lock);
 	retval = omnibook_ec_wait(OMNIBOOK_EC_STAT_IBF);
 	if (retval)
 		goto end;
@@ -160,15 +167,67 @@ int omnibook_ec_write(u8 addr, u8 data)
 	retval = omnibook_ec_wait(OMNIBOOK_EC_STAT_IBF);
 	if (retval)
 		goto end;
-	outb(addr, OMNIBOOK_EC_DATA);
+	outb((u8) io_op->write_addr, OMNIBOOK_EC_DATA);
 	retval = omnibook_ec_wait(OMNIBOOK_EC_STAT_IBF);
 	if (retval)
 		goto end;
 	outb(data, OMNIBOOK_EC_DATA);
 end:
-	spin_unlock_irqrestore(&omnibook_ec_lock, flags);
+	spin_unlock_irq(&omnibook_ec_lock);
+	dprintk("Custom EC write at %lx success %i.\n",io_op->write_addr,retval);
 	return retval;
 }
+
+/*
+ * legacy access function for unconverted old code who expect old omnibook_ec_read
+ */
+
+int legacy_ec_read(u8 addr, u8 *data)
+{
+	int retval;
+	struct omnibook_operation *io_op;
+
+	io_op = kzalloc(sizeof(struct omnibook_operation), GFP_KERNEL);
+	if(!io_op)
+		return -ENOMEM;
+	io_op->read_addr = addr;
+	retval = omnibook_ec_read(io_op, data);
+	kfree(io_op);
+	return retval;
+}
+
+
+/*
+ * legacy access function for unconverted old code who expect old omnibook_ec_write
+ */
+
+int legacy_ec_write(u8 addr, u8 data)
+{
+	int retval;
+	struct omnibook_operation *io_op;
+
+	io_op = kzalloc(sizeof(struct omnibook_operation), GFP_KERNEL);
+	if(!io_op)
+		return -ENOMEM;
+	io_op->write_addr = addr;
+	retval = omnibook_ec_write(io_op, data);
+	kfree(io_op);
+	return retval;
+}
+
+static int omnibook_ec_display(const struct omnibook_operation *io_op, unsigned int *state)
+{
+	int retval;
+	u8 raw_state;
+
+	retval = io_op->backend->byte_read(io_op, &raw_state);
+	if(retval < 0)
+		return retval;
+
+	*state = !!(raw_state) & DISPLAY_CRT_DET;
+
+	return DISPLAY_CRT_DET;
+}	
 
 /*
  * Registers of the keyboard controller
@@ -216,17 +275,16 @@ static int omnibook_kbc_wait(u8 event)
 
 static int omnibook_kbc_write_command(u8 cmd)
 {
-	unsigned long flags;
 	int retval;
 
-	spin_lock_irqsave(&omnibook_ec_lock, flags);
+	spin_lock_irq(&omnibook_ec_lock);
 	retval = omnibook_kbc_wait(OMNIBOOK_KBC_STAT_IBF);
 	if (retval)
 		goto end;
 	outb(cmd, OMNIBOOK_KBC_SC);
 	retval = omnibook_kbc_wait(OMNIBOOK_KBC_STAT_IBF);
-      end:
-	spin_unlock_irqrestore(&omnibook_ec_lock, flags);
+end:
+	spin_unlock_irq(&omnibook_ec_lock);
 	return retval;
 }
 
@@ -236,17 +294,16 @@ static int omnibook_kbc_write_command(u8 cmd)
 
 static int omnibook_kbc_write_data(u8 data)
 {
-	unsigned long flags;
 	int retval;
 
-	spin_lock_irqsave(&omnibook_ec_lock, flags);
+	spin_lock_irq(&omnibook_ec_lock);
 	retval = omnibook_kbc_wait(OMNIBOOK_KBC_STAT_IBF);
 	if (retval)
 		goto end;;
 	outb(data, OMNIBOOK_KBC_DATA);
 	retval = omnibook_kbc_wait(OMNIBOOK_KBC_STAT_IBF);
-      end:
-	spin_unlock_irqrestore(&omnibook_ec_lock, flags);
+end:
+	spin_unlock_irq(&omnibook_ec_lock);
 	return retval;
 }
 
@@ -254,84 +311,240 @@ static int omnibook_kbc_write_data(u8 data)
  * Send a command to keyboard controller
  */
 
-int omnibook_kbc_command(u8 cmd, u8 data)
+static int omnibook_kbc_command(const struct omnibook_operation *io_op, u8 data)
 {
 	int retval;
-
-	retval = omnibook_kbc_write_command(cmd);
-	if (retval)
+	
+	if ((retval = omnibook_kbc_write_command(OMNIBOOK_KBC_CONTROL_CMD)))
 		return retval;
+
 	retval = omnibook_kbc_write_data(data);
 	return retval;
 }
 
 /*
- * Common pattern selector:
- * Match an ectype and return pointer to corresponding io_operation.
- * Also make corresponding backend initialisation if necessary
+ * Onetouch button hotkey handler
  */
-void *omnibook_io_match(const struct omnibook_io_operation *io_op)
+static int omnibook_kbc_hotkeys(const struct omnibook_operation *io_op, unsigned int state)
 {
-	int i;
-	void *matched = NULL;
-	for (i = 0; io_op[i].ectypes ; i++) {
-		if (omnibook_ectype & io_op[i].ectypes) {
-			if (io_op[i].type == CDI && omnibook_cdimode_init())
-				continue;
-			matched = (void *) &io_op[i];
-			break;
+	int retval;
+	struct omnibook_operation hotkeys_op;
+
+	hotkeys_op.backend = KBC;
+	hotkeys_op.on_mask = OMNIBOOK_KBC_CMD_ONETOUCH_ENABLE;
+	hotkeys_op.off_mask = OMNIBOOK_KBC_CMD_ONETOUCH_DISABLE;
+
+	retval = omnibook_toggle( &hotkeys_op, !!(state & HKEY_ONETOUCH));
+	
+	if(retval < 0)
+		return retval;
+	else
+		return HKEY_ONETOUCH;
+}
+
+/*
+ * IO port backend. Only support single or dual ports operations
+ * private data structure: it's the linked list of requested ports
+ * 
+ * Race condition issue: omnibook_pio_init/exit functions are only called from
+ * omnibook_backend_match and omnibook_remove from init.c, this should happen
+ * only at module init/exit time so there is no need for a lock.
+ */
+
+struct pio_private_data_t {
+	unsigned long addr;
+	struct kref refcount;
+	struct list_head list;
+};
+
+static struct pio_private_data_t pio_private_data = {
+	.addr = 0,
+	.list = LIST_HEAD_INIT(pio_private_data.list),
+};
+
+/*
+ * Match an entry in the linked list helper function: see if we have and entry
+ * whose addr field match maddr
+ */
+static struct pio_private_data_t * 
+ omnibook_match_port(struct pio_private_data_t *data, unsigned long maddr)
+{
+	struct list_head  *p;
+	struct pio_private_data_t *cursor;
+
+	list_for_each(p , &data->list ) {
+		cursor = list_entry(p, struct pio_private_data_t, list);
+		if( cursor->addr == maddr ) {
+			return cursor;
 		}
 	}
-	return matched;
+	return NULL;
 }
 
 /*
- * Simple read function for common pattern
- * Given an io_operation they read an address and apply a mask on the result
+ * See if we have to request raddr
  */
-
-int omnibook_io_read(struct omnibook_io_operation *io_op, u8 *value)
+static int omnibook_claim_port(struct pio_private_data_t *data, unsigned long raddr)
 {
-	int retval = 0;
-	
-	switch(io_op->type) {
-	case EC:
-		retval = omnibook_ec_read( io_op->read, value);
-		break;
-	case CDI:
-		retval = omnibook_cdimode_read( io_op->read, value);
-		break;
-	default:
-		BUG();
+	struct pio_private_data_t *match, *new;
+
+	match = omnibook_match_port( data, raddr);
+	if(match) {	
+		/* Already requested by us: increment kref and quit */
+		kref_get(&match->refcount);
+		return 0;
+	}	
+
+	/* there was no match: request the region and add to list */
+	if(!request_region(raddr ,1 , OMNIBOOK_MODULE_NAME)) {
+		printk(O_ERR "Request I/O port error\n");
+		return -ENODEV;
 	}
+
+	new = kmalloc(sizeof(struct pio_private_data_t), GFP_KERNEL);
+	if(!new) {
+		release_region(raddr ,1 );
+		return -ENOMEM;
+	}
+
+	kref_init(&new->refcount);
+	new->addr = raddr;
+	list_add(&new->list, &data->list);
 	
-	if (io_op->mask)
-		*value = *value & io_op->mask;
-	
-	return retval;		
+	return 0;
 }
 
 /*
- * Simple write function for common pattern
- * Given an io_operation they write value at an given address
+ * Register read_addr and write_addr
  */
-
-int omnibook_io_write(struct omnibook_io_operation *io_op, u8 value)
+static int omnibook_pio_init(const struct omnibook_operation *io_op)
 {
 	int retval = 0;
-	
-	switch(io_op->type) {
-	case EC:
-		retval = omnibook_ec_write( io_op->write, value);
-		break;
-	case CDI:
-		retval = omnibook_cdimode_write( io_op->write, value);
-		break;
-	default:
-		BUG();
-	}
-	
-	return retval;		
+
+	if(io_op->read_addr &&
+		(retval = omnibook_claim_port(io_op->backend->data, io_op->read_addr)))
+		goto out;
+
+	if(io_op->write_addr && ( io_op->write_addr != io_op->read_addr ))
+		retval = omnibook_claim_port(io_op->backend->data, io_op->write_addr);
+
+out:
+	return retval;
 }
+
+/*
+ * REALLY release a port
+ */
+static void omnibook_free_port(struct kref *ref)
+{
+	struct pio_private_data_t *data;
+	
+	data = container_of(ref, struct pio_private_data_t, refcount);
+	release_region(data->addr ,1 );
+	list_del(&data->list);
+	kfree(data);
+}
+
+/*
+ * Unregister read_addr and write_addr
+ */
+static void omnibook_pio_exit(const struct omnibook_operation *io_op)
+{
+	struct pio_private_data_t *match;
+
+	match = omnibook_match_port(io_op->backend->data, io_op->read_addr);
+	if(match)
+		kref_put(&match->refcount, omnibook_free_port);
+
+	match = NULL;
+	match = omnibook_match_port(io_op->backend->data, io_op->write_addr);
+	if(match)
+		kref_put(&match->refcount, omnibook_free_port);
+
+}
+
+static int omnibook_io_read(const struct omnibook_operation *io_op, u8 *value)
+{
+	*value = inb(io_op->read_addr);
+	if(io_op->read_mask)
+		*value &= io_op->read_mask;
+	return 0;
+}
+
+static int omnibook_io_write(const struct omnibook_operation *io_op, u8 value)
+{
+	outb(io_op->write_addr, value);
+	return 0;
+}
+
+
+/*
+ * Backend interface declarations
+ */
+
+struct omnibook_backend kbc_backend = {
+	.name = "i8042",
+	.byte_write = omnibook_kbc_command,
+	.hotkeys_set = omnibook_kbc_hotkeys,
+};
+
+struct omnibook_backend pio_backend = {
+	.name = "pio",
+	.data = &pio_private_data,
+	.init = omnibook_pio_init,
+	.exit = omnibook_pio_exit,
+	.byte_read = omnibook_io_read,
+	.byte_write = omnibook_io_write,
+};
+
+struct omnibook_backend ec_backend = {
+	.name = "ec",
+	.byte_read = omnibook_ec_read,
+	.byte_write = omnibook_ec_write,
+	.display_get =  omnibook_ec_display,
+};
+
+int omnibook_apply_write_mask(const struct omnibook_operation *io_op, int toggle)
+{
+	int retval = 0;
+	int mask;
+	u8 data;
+	
+
+	if((retval = io_op->backend->byte_read(io_op,&data)))
+		return retval;
+	
+	if( toggle == 1)
+		mask = io_op->on_mask;
+	else if( toggle == 0)
+		mask = io_op->off_mask;
+	else
+		return -EINVAL;
+
+	if(mask > 0)
+		data |= (u8) mask;
+	else if (mask < 0)
+		data &= ~((u8) (-mask));
+	else
+		return -EINVAL;
+
+	retval = io_op->backend->byte_write(io_op,data);
+	
+	return retval;
+}
+
+/*
+ * Helper for toggle like operations
+ */
+int omnibook_toggle(const struct omnibook_operation *io_op, int toggle)
+{
+	int retval;
+	u8 data;
+	
+	data = toggle ? io_op->on_mask : io_op->off_mask;
+	retval = io_op->backend->byte_write(io_op, data);
+	return retval;
+}
+
 
 /* End of file */

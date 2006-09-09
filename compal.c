@@ -15,19 +15,31 @@
  *
  */
 
-#ifdef OMNIBOOK_STANDALONE
+
 #include "omnibook.h"
-#else
-#include <linux/omnibook.h>
-#endif
 
 #include <linux/delay.h>
 #include <linux/ioport.h>
 #include <linux/pci.h>
+#include <linux/kref.h>
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16))
+#include <asm/semaphore.h>
+#define DEFINE_MUTEX(lock)		DECLARE_MUTEX(lock)
+#define mutex_lock(lock)		down(lock)
+#define mutex_lock_interruptible(lock)	down_interruptible(lock)
+#define mutex_unlock(lock)		up(lock)
+#else
+#include <linux/mutex.h>
+#endif
 
 #include <asm/io.h>
-#include <asm/semaphore.h>
 #include "ec.h"
+
+/*
+ * ATI's IXP PCI-LPC bridge
+ */
+#define PCI_DEVICE_ID_ATI_SB400 0x4377
 
 /* 
  * PCI Config space regiser
@@ -57,8 +69,7 @@
 /* 
  * We protect access to the Command/Data/Index interface by a Mutex
  */
-static DECLARE_MUTEX(compal_sem);
-
+static DEFINE_MUTEX(compal_lock);
 
 /*
  * Private data of this backend
@@ -68,13 +79,15 @@ static struct pci_dev *lpc_bridge; 	/* Southbridge chip ISA bridge/LPC interface
 static u32    ioport_base;		/* PIO base adress */
 static union { u16 word; u32 dword;
 	       } pci_reg_state;		/* Saved state of register in PCI config spave */
+static int already_failed = 0;		/* Backend init already failed at leat once */
 
 /*
  * Possible list of supported southbridges
  * Here mostly to implement a more or less clean PCI probing
  * Works only because of previous DMI probing.
+ * Shared with nbsmi backend
  */
-static const struct pci_device_id lpc_bridge_table[] = {
+const struct pci_device_id lpc_bridge_table[] = {
         { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801AA_0,   PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
         { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801AB_0,   PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
         { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801BA_0,   PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
@@ -92,7 +105,8 @@ static const struct pci_device_id lpc_bridge_table[] = {
         { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_0,      PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
         { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_1,      PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
         { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_31,     PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-        { 0, },                 /* End of list */
+	{ PCI_VENDOR_ID_ATI,   PCI_DEVICE_ID_ATI_SB400,		PCI_ANY_ID, PCI_ANY_ID, 0, 0, },        
+	{ 0, },                 /* End of list */
 };
 
 
@@ -103,10 +117,9 @@ static const struct pci_device_id lpc_bridge_table[] = {
  * Write a 2-bytes wide command to the COMMAND ports
  * Read the result in the DATA port
  */
-static unsigned char lowlevel_read(unsigned int command)
+static unsigned char lowlevel_read(u16 command)
 {
 	unsigned char data;
-
 	outb((command & 0xff00) >> 8 ,ioport_base + PIO_PORT_COMMAND1);
 	outb(command & 0x00ff ,ioport_base + PIO_PORT_COMMAND2);
 	data = inb(ioport_base + PIO_PORT_DATA);
@@ -118,7 +131,7 @@ static unsigned char lowlevel_read(unsigned int command)
  * Write a 2-bytes wide command to the COMMAND ports
  * Write the result in the DATA port
  */
-static void lowlevel_write(unsigned int command, unsigned int data)
+static void lowlevel_write(u16 command, u8 data)
 {
 	outb((command & 0xff00) >> 8 ,ioport_base + PIO_PORT_COMMAND1);
 	outb(command & 0x00ff,ioport_base + PIO_PORT_COMMAND2);
@@ -258,15 +271,12 @@ static void clear_cdimode_pci(void)
 	}
 }
 
-
-
-
 /*
  * Try to init the backend
  * This function can be called blindly as it use a kref
  * to check if the init sequence was already done.
  */
-int omnibook_cdimode_init(void)
+static int omnibook_cdimode_init(const struct omnibook_operation *io_op)
 {
 	int retval = 0;
 	int i;
@@ -275,9 +285,14 @@ int omnibook_cdimode_init(void)
 	if(!(omnibook_ectype & TSM30X))
 		return -ENODEV;
 
+	if(already_failed) {
+		dprintk("CDI backend init already failed, skipping.\n");
+		return -ENODEV;
+	}
+
 	if(!refcount) {
 		/* Fist use of the backend */
-		down(&compal_sem);	
+		mutex_lock(&compal_lock);
 		dprintk("Try to init cdimode\n");	
 		refcount = kmalloc(sizeof(struct kref),GFP_KERNEL);
 		if(!refcount) {
@@ -313,7 +328,7 @@ int omnibook_cdimode_init(void)
 			BUG();
 		}
 		
-		if(!request_region(ioport_base ,4 ,"omnibook")) {
+		if(!request_region(ioport_base ,4 ,OMNIBOOK_MODULE_NAME)) {
 			printk(O_ERR "Request I/O region error\n");
 			retval = -ENODEV;
 			goto error2;
@@ -345,20 +360,26 @@ error2:
 	lpc_bridge = NULL;
 error1:
 	kfree(refcount);
+	refcount = NULL;
+	already_failed = 1;
 out:
-	up(&compal_sem);
+	mutex_unlock(&compal_lock);
 	return retval;
 }
 
-void cdimode_free(struct kref *ref)
+static void cdimode_free(struct kref *ref)
 {
+	mutex_lock(&compal_lock);
 	dprintk("Cdimode not used anymore: disposing\n");
 	pci_dev_put(lpc_bridge);
 	release_region(ioport_base,4);
 	kfree(refcount);
+	lpc_bridge = NULL;
+	refcount = NULL;
+	mutex_unlock(&compal_lock);
 }
 
-void omnibook_cdimode_exit(void)
+static void omnibook_cdimode_exit(const struct omnibook_operation *io_op)
 {
 /* ectypes other than TSM30X have no business with this backend */
 	BUG_ON(!(omnibook_ectype & TSM30X));
@@ -370,31 +391,32 @@ void omnibook_cdimode_exit(void)
  * Read EC index and write result to value 
  * 'EC index' here is unrelated to an index in the EC registers
  */
-int omnibook_cdimode_read(unsigned int index, u8 *value)
+static int omnibook_cdimode_read(const struct omnibook_operation *io_op, u8 *value)
 {
 	int retval = 0;
-	
-	BUG_ON(!(omnibook_ectype & TSM30X));
 	
 	if(!lpc_bridge)
 		return -ENODEV;
 	
-	if(down_interruptible(&compal_sem))
+	if(mutex_lock_interruptible(&compal_lock))
 		return -ERESTARTSYS;
 	
 	retval = enable_cdimode();
 	if(retval)
 		goto out;
-	retval = send_ec_cmd(0xfbfd,index);
+	retval = send_ec_cmd(0xfbfd,(unsigned int) io_op->read_addr);
 	if(retval)
 		goto error;
 	retval = read_ec_cmd(0xfbfe,value);
+	
+	if(io_op->read_mask)
+		*value &= io_op->read_mask;
 	
 error:
 	clear_cdimode();
 out:
 	clear_cdimode_pci();
-	up(&compal_sem);
+	mutex_unlock(&compal_lock);
 	return retval;
 }
 
@@ -402,34 +424,63 @@ out:
  * Write value 
  * 'EC index' here is unrelated to an index in the EC registers
  */
-int omnibook_cdimode_write(unsigned int index, u8 value)
+static int omnibook_cdimode_write(const struct omnibook_operation *io_op, u8 value)
 {
 	int retval = 0;
-	
-	BUG_ON(!(omnibook_ectype & TSM30X));
 	
 	if(!lpc_bridge)
 		return -ENODEV;
 	
-	if(down_interruptible(&compal_sem))
+	if(mutex_lock_interruptible(&compal_lock))
 		return -ERESTARTSYS;
 		
 	retval = enable_cdimode();
 	if(retval)
 		goto out;
-	retval = send_ec_cmd(0xfbfd,index);
+	retval = send_ec_cmd(0xfbfd,(unsigned int) io_op->write_addr);
 	if(retval)
 		goto error;
 	retval = send_ec_cmd(0xfbfe,value);
-	
 error:
 	clear_cdimode();
 out:
 	clear_cdimode_pci();
-	up(&compal_sem);
+	mutex_unlock(&compal_lock);
 	return retval;
 
 }
+
+/*
+ * Fn+foo and multimedia hotkeys handling
+ */
+static int omnibook_cdimode_hotkeys(const struct omnibook_operation *io_op, unsigned int state)
+{
+	int retval;	
+	struct omnibook_operation hotkeys_op;
+	
+ 	/* Fn+foo handling */
+	hotkeys_op.backend = CDI;
+	hotkeys_op.write_addr = TSM70_FN_INDEX;
+  	hotkeys_op.on_mask = TSM70_FN_ENABLE;
+	hotkeys_op.off_mask = TSM70_FN_DISABLE;
+	retval = omnibook_toggle(&hotkeys_op, !!(state & HKEY_FN) );
+	if(retval < 0)
+		return retval;
+	
+	/* Multimedia keys handling */
+	if(state & HKEY_MULTIMEDIA) {
+		hotkeys_op.write_addr = TSM70_HOTKEYS_INDEX;
+		retval = omnibook_cdimode_write(&hotkeys_op, TSM70_HOTKEYS_ENABLE);
+	} else {
+		/* FIXME: quirk use kbc backend */
+		retval = kbc_backend.byte_write(NULL,OMNIBOOK_KBC_CMD_ONETOUCH_DISABLE);
+	}
+
+	if(retval < 0)
+		return retval;
+	else
+  		return HKEY_MULTIMEDIA|HKEY_FN;
+}	
 
 /* Scan index space, this hard locks my machine */
 #if 0
@@ -452,5 +503,14 @@ static int compal_scan(char *buffer)
 	return len;
 }
 #endif
+
+struct omnibook_backend compal_backend = {
+	.name = "compal",
+	.init = omnibook_cdimode_init,
+	.exit = omnibook_cdimode_exit,
+	.byte_read = omnibook_cdimode_read,
+	.byte_write = omnibook_cdimode_write,
+	.hotkeys_set = omnibook_cdimode_hotkeys,
+};
 
 /* End of file */
