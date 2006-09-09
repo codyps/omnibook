@@ -130,6 +130,7 @@ static int omnibook_acpi_get_wireless(const struct omnibook_operation *io_op, un
 	if ((retval = omnibook_acpi_execute(GET_WIRELESS_METHOD,0,&raw_state)))
 		return retval;
 
+	dprintk("get_wireless raw_state: %x\n", raw_state);
 
 	*state = ( raw_state & WLEX_MASK ) ? WIFI_EX : 0;
 	*state |= ( raw_state & WLAT_MASK ) ? WIFI_STA : 0;

@@ -22,22 +22,13 @@
  
 #include "omnibook.h"
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16))
-#include <asm/semaphore.h>
-#define DEFINE_MUTEX(lock)		DECLARE_MUTEX(lock)
-#define mutex_lock(lock)		down(lock)
-#define mutex_lock_interruptible(lock)	down_interruptible(lock)
-#define mutex_unlock(lock)		up(lock)
-#else
-#include <linux/mutex.h>
-#endif
-
 #include <linux/preempt.h>
 #include <linux/pci.h>
 #include <linux/kref.h>
 #include <asm/io.h>
 #include <asm/mc146818rtc.h>
 #include "ec.h"
+#include "compat.h"
 
 /*
  * ATI's IXP PCI-LPC bridge
