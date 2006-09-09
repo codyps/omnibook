@@ -101,7 +101,7 @@ static inline void restore_all_regs_flag(void)
 	__asm__ __volatile__("popfl; popal"
 			     :
 			     : 
-			     : "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi");
+			     : "eax", "ecx", "edx", "ebx", "esp", "esi", "edi");
 	spin_unlock_irq(&smi_spinlock);	
 }
 
