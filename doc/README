@@ -11,7 +11,7 @@ manufactured by Compal Electronics, Inc as ODM.
 
 How does it work?
 -----------------
-   Some features of sup pored laptops can be controlled via the keyboard control
+   Some features of supported laptops can be controlled via the keyboard control
    and data registers. Commands and parameters were discovered by Pavel
    Mihaylov.
 
@@ -489,19 +489,22 @@ following entry:
 
 Graphical frontends
 -------------------
-There are at least three graphical frontends for omnibook kernel module:
+There are at least four graphical frontends for omnibook kernel module:
 
 1. wmtemp from Ducrot Bruno <ducrot@poupinou.org> is a WindowMaker dockapp
    to monitor the CPU temperature and control the fan. It is available from
-   http://sf.net/projects/omnibook.
+   http://sf.net/projects/omke.
 2. komnibook from Guilherme Fortunato <guilherme@linksat.com.br> is a KDE
    frontend that would stay in the tray and display/set status information
-   of the laptop. It is available from http://sf.net/projects/omnibook.
+   of the laptop. It is available from http://sf.net/projects/omke.
 3. HAL and gnome-power-manager. HAL understand the LCD brightness level exported
    in the /proc/omnibook/lcd file. gnome-power-manager uses HAL as its backend,
    See http://hal.freedesktop.org/wiki/Software_2fhal and 
    http://www.gnome.org/projects/gnome-power-manager
    Many thanks to Richard Hughes for the HAL patch that add omnibook support.
+4. KToshiba from Azael Avalos <coproscefalo@gmail.com> is another KDE frontend
+   See http://ktoshiba.sourceforge.net/index.html and the list of supported
+   features http://ktoshiba.sourceforge.net/feats.html 
 
 How can your laptop be supported?
 ---------------------------------
