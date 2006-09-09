@@ -55,7 +55,7 @@ static int omnibook_fan_on(struct omnibook_operation *io_op)
 
 static int omnibook_fan_off(struct omnibook_operation *io_op)
 {
-	int retval = 0;
+	int i,retval = 0;
 
 /*
  * Special handling for XE3GF & TSP10
@@ -75,15 +75,19 @@ static int omnibook_fan_off(struct omnibook_operation *io_op)
 			return retval;
 		
 /*
- * FIXME: should add a timeout
+ * Wait for no longer than 250ms, this is arbitrary
  */
-		do {
+		for(i=0; i < 250; i++) {
 			fot_io_op.backend->byte_write(&fot_io_op, temp);
 			mdelay(1);
-		} while (omnibook_get_fan(io_op) != 0);
-
+			if( omnibook_get_fan(io_op) == 0) {
+				retval = fot_io_op.backend->byte_write(&fot_io_op, fot);
+				return retval;
+			}
+		}
 		fot_io_op.backend->byte_write(&fot_io_op, fot);
-	
+		printk(O_ERR "Attempt to switch off the fan failed.\n");
+		return -EIO;
 	} else 
 		retval = omnibook_apply_write_mask(io_op, 0);
 
