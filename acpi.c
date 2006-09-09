@@ -28,8 +28,6 @@
  * ACPI backend masks and strings
  */
 
-#define EC_ACPI_DEVICE "\\_SB.PCI0.LPCB.EC0"
-
 #define GET_WIRELESS_METHOD "ANTR"
 #define SET_WIRELESS_METHOD "ANTW"
 #define WLEX_MASK 	0x4
@@ -48,6 +46,12 @@
 #define	CRT_CSTE	0x2
 #define	TVO_CSTE	0x4
 
+
+static char ec_dev_list[][20] = {
+	"\\_SB.PCI0.LPCB.EC0",
+	"\\_SB.PCI0.LPC0.EC0",
+};
+
 /*
  * Probe for expected ACPI device
  * FIXME we check only the ACPI device and not the associated methods
@@ -55,22 +59,23 @@
 static int omnibook_acpi_probe(const struct omnibook_operation *io_op)
 {
 	acpi_handle dev_handle;	
-	int retval = 0;
+	int i;
 	
 	if(acpi_disabled) {
 		printk(O_ERR "ACPI is disabled: feature unavailable.\n");
 		return -ENODEV;
 	}
 
-	if(acpi_get_handle(NULL, EC_ACPI_DEVICE, &dev_handle) != AE_OK) {
-		printk(O_ERR "Can't get handle on ACPI EC device");	
-		return -ENODEV;
+	for(i = 0; i < ARRAY_SIZE(ec_dev_list); i++) {
+		if(acpi_get_handle(NULL, ec_dev_list[i], &dev_handle) == AE_OK) {
+			acpi_backend.data = dev_handle;
+			dprintk("ACPI probing was successfull\n");
+			return 0;
+		}
 	}
 
-	acpi_backend.data = dev_handle;
-
-	dprintk("ACPI probing was successfull\n");
-	return retval;
+	printk(O_ERR "Can't get handle on ACPI EC device.\n");	
+	return -ENODEV;
 }
 
 /*
