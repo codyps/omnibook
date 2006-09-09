@@ -175,6 +175,9 @@ static int nbsmi_smi_command(u16 function,const u8 *inputbuffer, u8 *outputbuffe
 			BUG();
 	}
 
+	if(retval)
+		printk(O_ERR "smi_command failed with error %i.\n", retval);
+
 	for(count = 0; count < BUFFER_SIZE; count++) {
 		outb( count + start_offset, RTC_PORT(2) );
 		*(outputbuffer + count) = inb( RTC_PORT(3) );

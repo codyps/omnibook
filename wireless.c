@@ -82,8 +82,8 @@ static int __init omnibook_wifi_init(struct omnibook_operation *io_op)
  * Shared with bluetooth.c
  */
 struct omnibook_tbl wireless_table[] __initdata = {
-	{ TSM30X, {ACPI, 0, 0, 0, 0, 0}}, /* stubs to select backend */
-	{ TSM40,  {SMI, 0, 0, 0, 0, 0}}, /* stubs to select backend */
+	{ TSM30X, {ACPI,}}, /* stubs to select backend */
+	{ TSM40,  {SMI,}}, /* stubs to select backend */
 	{ 0,}
 };
 

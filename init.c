@@ -220,9 +220,12 @@ static int __init omnibook_init(struct omnibook_feature *feature)
 /*
  * Specific feature init code
  */
-	if (feature->init && (retval = feature->init(feature->io_op)))
+	if (feature->init && (retval = feature->init(feature->io_op))) {
+		printk(O_ERR "Init function of %s failed with error %i.\n",
+			feature->name,
+			retval);
 		goto err;
-
+	}
 /*
  * procfs file setup
  */
@@ -260,6 +263,8 @@ static int __init omnibook_init(struct omnibook_feature *feature)
 	list_add_tail(&feature->list, &omnibook_available_feature->list);
 	return 0;
 err:
+	if (feature->io_op && feature->io_op->backend->exit)
+		feature->io_op->backend->exit(feature->io_op);
 	kfree(feature->io_op);
 	return retval;
 }

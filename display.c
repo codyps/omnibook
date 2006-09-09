@@ -82,6 +82,7 @@ static int __init omnibook_display_init(struct omnibook_operation *io_op)
 
 static struct omnibook_tbl display_table[] __initdata = {
 	{ TSM30X,				{ACPI, }},
+	{ TSM40,				{SMI, }},
 	{ XE3GF|TSP10|TSM30X|TSM40,	    SIMPLE_BYTE(EC,XE3GF_STA1,XE3GF_SHDD_MASK)},
 	{ XE3GC,			    SIMPLE_BYTE(EC,XE3GC_STA1,XE3GC_CRTI_MASK)},
 	{ OB500|OB510|OB6000|OB6100|XE4500, SIMPLE_BYTE(EC,OB500_STA1,OB500_CRTS_MASK)},
