@@ -41,7 +41,7 @@ RM	= rm -f
 FIND	= find
 endif
 
-DEBUG	=  # -D OMNIBOOK_DEBUG -g -O0
+DEBUG	=   -D OMNIBOOK_DEBUG # -g -O0
 
 EXTRA_CFLAGS += -D OMNIBOOK_STANDALONE $(DEBUG)
 EXTRA_LDFLAGS +=  $(src)/sections.lds

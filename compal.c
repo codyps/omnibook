@@ -35,9 +35,10 @@
 /* 
  * PCI Config space regiser
  * Laptop with Intel ICH Chipset
- * Called GEN1_DEC according to ICH6M spec 
+ * See ICH6M and ICH7M spec
  */
-#define INTEL_LPC_GEN1_DEC  	0x84
+#define INTEL_LPC_GEN1_DEC	0x84
+#define INTEL_LPC_GEN4_DEC	0x90
 #define INTEL_IOPORT_BASE 	0xff2c
 
 /* 
@@ -67,9 +68,9 @@ static DEFINE_MUTEX(compal_lock);
  */
 static struct kref *refcount;		/* Reference counter of this backend */
 static struct pci_dev *lpc_bridge; 	/* Southbridge chip ISA bridge/LPC interface PCI device */
-static u32    ioport_base;		/* PIO base adress */
+static u32	ioport_base;		/* PIO base adress */
 static union { u16 word; u32 dword;
-	       } pci_reg_state;		/* Saved state of register in PCI config spave */
+		} pci_reg_state;	/* Saved state of register in PCI config spave */
 static int already_failed = 0;		/* Backend init already failed at leat once */
 
 /*
@@ -79,25 +80,26 @@ static int already_failed = 0;		/* Backend init already failed at leat once */
  * Shared with nbsmi backend
  */
 const struct pci_device_id lpc_bridge_table[] = {
-        { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801AA_0,   PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-        { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801AB_0,   PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-        { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801BA_0,   PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-        { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801BA_10,  PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-        { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801CA_0,   PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-        { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801CA_12,  PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-        { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801DB_0,   PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-        { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801DB_12,  PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-        { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801E_0,    PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-        { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801EB_0,   PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-        { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ESB_1,       PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-        { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH6_0,      PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-        { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH6_1,      PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-        { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH6_2,      PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-        { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_0,      PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-        { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_1,      PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-        { PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_31,     PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ PCI_VENDOR_ID_ATI,   PCI_DEVICE_ID_ATI_SB400,		PCI_ANY_ID, PCI_ANY_ID, 0, 0, },        
-	{ 0, },                 /* End of list */
+	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801AA_0,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
+	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801AB_0,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
+	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801BA_0,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
+	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801BA_10,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
+	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801CA_0,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
+	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801CA_12,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
+	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801DB_0,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
+	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801DB_12,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
+	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801E_0,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
+	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801EB_0,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
+	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ESB_1,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
+	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH6_0,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
+	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH6_1,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
+	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH6_2,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
+	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_0,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
+	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_1,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
+	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_30,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
+	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_31,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
+	{ PCI_VENDOR_ID_ATI, PCI_DEVICE_ID_ATI_SB400,		PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
+	{ 0, },		/* End of list */
 };
 
 
@@ -141,21 +143,38 @@ static int check_cdimode_flag(unsigned int mode)
 {
 	int i;
 	int retval;
+
 	dprintk("Index mode:");
-	for (i=1; i <= 100; i++) {
+	for (i=1; i <= 250; i++) {
 		retval = lowlevel_read(0xfbfc);
 		dprintk_simple(" [%i]", retval);
 		if (retval == mode) {
 			dprintk_simple(".\n");	
 			dprintk("Index Mode Ok (%i) after %i iter\n",mode,i);
 			return 0;
-		} else
-			udelay(100);
+		}
+		udelay(100);
 	}
 	printk(O_ERR "check_cdimode_flag timeout.\n");
 	return -ETIME;
 }
 
+/*
+ * Check for conventional default (0xf432) state in Commad ports
+ */
+static int check_default_state(void)
+{
+	int i;
+
+	for(i=1; i <= 250; i++) {
+		if( (inb(ioport_base + PIO_PORT_COMMAND1) == 0xf4) &&
+		    (inb(ioport_base + PIO_PORT_COMMAND2) == 0x32) )
+			return 0;
+		udelay(100);
+	}
+	printk(O_ERR "check_default_state timeout.\n");
+	return -ETIME;
+}	
 
 /*
  * Enable EC Command/Data/Index PIO Access and then check EC state.
@@ -173,10 +192,22 @@ static int enable_cdimode(void)
 
 	switch (lpc_bridge->vendor) {
 	case PCI_VENDOR_ID_INTEL:
-		pci_read_config_word(lpc_bridge, INTEL_LPC_GEN1_DEC, &(value.word));
-		pci_reg_state.word = value.word;
-		value.word = (INTEL_IOPORT_BASE & 0xfff1) | 0x1;
-		pci_write_config_word(lpc_bridge, INTEL_LPC_GEN1_DEC, value.word);
+		switch (lpc_bridge->device) {
+		case PCI_DEVICE_ID_INTEL_ICH7_0: /* ICH7 */
+		case PCI_DEVICE_ID_INTEL_ICH7_1:
+		case PCI_DEVICE_ID_INTEL_ICH7_30:
+		case PCI_DEVICE_ID_INTEL_ICH7_31:
+			pci_read_config_dword(lpc_bridge, INTEL_LPC_GEN4_DEC, &(value.dword));
+			pci_reg_state.dword = value.dword;
+			value.dword = 0x3CFF21;
+			pci_write_config_dword(lpc_bridge, INTEL_LPC_GEN4_DEC, value.dword);
+			break;		
+		default:	/* All other Intel chipset */ 		
+			pci_read_config_word(lpc_bridge, INTEL_LPC_GEN1_DEC, &(value.word));
+			pci_reg_state.word = value.word;
+			value.word = (INTEL_IOPORT_BASE & 0xfff1) | 0x1;
+			pci_write_config_word(lpc_bridge, INTEL_LPC_GEN1_DEC, value.word);
+		}
 		break;
 	case PCI_VENDOR_ID_ATI:
 		pci_read_config_dword(lpc_bridge,ATI_LPC_REG,&(value.dword));
@@ -189,12 +220,11 @@ static int enable_cdimode(void)
 	}
 	dprintk("Saved state of PCI register: [%x].\n", pci_reg_state.dword);
 	
-	if( (inb(ioport_base + PIO_PORT_COMMAND1)!= 0xf4) ||
-	    (inb(ioport_base + PIO_PORT_COMMAND2)!= 0x32) ||
- 	     check_cdimode_flag(0) ) {
+	if( check_default_state() || check_cdimode_flag(0) ) {
 		printk(O_ERR "EC state check failure, please report.\n");
 		return -EIO;
 	}
+
 	return 0;
 	
 }
@@ -252,7 +282,16 @@ static void clear_cdimode_pci(void)
 {
 	switch (lpc_bridge->vendor) {
 	case PCI_VENDOR_ID_INTEL:
-		pci_write_config_word(lpc_bridge,INTEL_LPC_GEN1_DEC,pci_reg_state.word);
+		switch (lpc_bridge->device) {
+		case PCI_DEVICE_ID_INTEL_ICH7_0: /* ICH7 */
+		case PCI_DEVICE_ID_INTEL_ICH7_1:
+		case PCI_DEVICE_ID_INTEL_ICH7_30:
+		case PCI_DEVICE_ID_INTEL_ICH7_31:
+			pci_write_config_dword(lpc_bridge, INTEL_LPC_GEN4_DEC,pci_reg_state.dword);
+			break;		
+		default:	/* All other Intel chipset */ 		
+			pci_write_config_word(lpc_bridge,INTEL_LPC_GEN1_DEC,pci_reg_state.word);
+		}
 		break;
 	case PCI_VENDOR_ID_ATI:
 		pci_write_config_dword(lpc_bridge,ATI_LPC_REG,pci_reg_state.dword);
@@ -471,7 +510,7 @@ static int omnibook_cdimode_hotkeys(const struct omnibook_operation *io_op, unsi
 	if(retval < 0)
 		return retval;
 	else
-  		return HKEY_MULTIMEDIA|HKEY_FN;
+		return HKEY_MULTIMEDIA|HKEY_FN;
 }	
 
 /* Scan index space, this hard locks my machine */

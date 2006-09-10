@@ -61,6 +61,7 @@ static void inline *kzalloc(size_t size, int flags)
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,11))
 #define PCI_DEVICE_ID_INTEL_ICH7_0      0x27b8
 #define PCI_DEVICE_ID_INTEL_ICH7_1      0x27b9
+#define PCI_DEVICE_ID_INTEL_ICH7_30	0x27b0
 #define PCI_DEVICE_ID_INTEL_ICH7_31     0x27bd
 #endif
 
