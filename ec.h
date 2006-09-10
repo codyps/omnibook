@@ -393,6 +393,9 @@ int omnibook_toggle(const struct omnibook_operation *io_op, int toggle);
 #define TSM70_LCD_WRITE		0x5D
 #define TSM70_TOUCHPAD_ON 	0x80
 #define TSM70_TOUCHPAD_OFF	0x81
+#define TSM100_BLANK_INDEX	0x59
+#define	TSM100_LCD_ON		0xe1
+#define	TSM100_LCD_OFF		0xe2
 
 /* Toshiba SMI funtion */
 #define SMI_FN_PRESSED		0x00

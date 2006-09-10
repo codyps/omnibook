@@ -37,7 +37,8 @@ int omnibook_lcd_blank(int blank)
 	
 	if ( blank_driver.io_op->backend == PIO )
 		omnibook_apply_write_mask(blank_driver.io_op, blank);
-	else if ( blank_driver.io_op->backend == KBC )
+	else if ( blank_driver.io_op->backend == KBC ||
+		  blank_driver.io_op->backend == CDI )
 		omnibook_toggle(blank_driver.io_op, blank);
 	else {
 		printk(O_WARN
@@ -122,6 +123,7 @@ static void __exit omnibook_console_blank_cleanup(struct omnibook_operation *io_
 }
 
 static struct omnibook_tbl blank_table[] __initdata = {
+	{ TSM30X,	{CDI, 0, TSM100_BLANK_INDEX, 0, TSM100_LCD_OFF, TSM100_LCD_ON}}, 
 	{ XE3GF|XE3GC|AMILOD|TSP10|TSM30X|TSM40, COMMAND(KBC,OMNIBOOK_KBC_CMD_LCD_OFF,OMNIBOOK_KBC_CMD_LCD_ON)},
 	{ OB500|OB6000|XE2, { PIO, OB500_GPO1, OB500_GPO1, 0, -OB500_BKLT_MASK, OB500_BKLT_MASK}},
 	{ OB510|OB6100,	    { PIO, OB510_GPO2, OB510_GPO2, 0, -OB510_BKLT_MASK, OB510_BKLT_MASK}},
