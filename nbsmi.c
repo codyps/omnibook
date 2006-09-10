@@ -197,7 +197,7 @@ static int nbsmi_smi_read_command(const struct omnibook_operation *io_op, u8 *da
 	}
 	
 	outputbuffer = kcalloc(BUFFER_SIZE,sizeof(u8),GFP_KERNEL);
-	if(!inputbuffer) {
+	if(!outputbuffer) {
 		retval = -ENOMEM;
 		goto error2;
 	}
@@ -239,7 +239,7 @@ static int nbsmi_smi_write_command(const struct omnibook_operation *io_op, u8 da
 	}
 	
 	outputbuffer = kcalloc(BUFFER_SIZE,sizeof(u8),GFP_KERNEL);
-	if(!inputbuffer) {
+	if(!outputbuffer) {
 		retval = -ENOMEM;
 		goto error2;
 	}
