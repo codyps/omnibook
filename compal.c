@@ -346,6 +346,7 @@ static int omnibook_cdimode_init(const struct omnibook_operation *io_op)
 	
 error3:
 	clear_cdimode_pci();
+	release_region(ioport_base,4);
 error2:
 	pci_dev_put(lpc_bridge);
 	lpc_bridge = NULL;
