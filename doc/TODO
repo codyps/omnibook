@@ -8,7 +8,6 @@ Current issues:
 * Create a clean access method to the i8042 kbd controller (this will require
   a kernel patch)
 * To be cleaned: battery dump fan_policy
-* Fix wifi and Toshiba Satellite M100 (ipw3945)
 
 Old items imported from previous version:
 

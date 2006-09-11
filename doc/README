@@ -80,8 +80,12 @@ How does it work?
        Toshiba Satellite P20
    12. Toshiba Satellite M30X
        Toshiba Satellite M35X
+       Toshiba Satellite M40X
        Toshiba Satellite M70
+       Toshiba Satellite M100
    13. Toshiba Satellite M40
+       Toshiba Satellite M45
+       Toshiba Tecra S1
    14. Toshiba Satellite A105
    
    If your model is not listed above you may try to load the module. If it
@@ -166,9 +170,9 @@ How to use?
 	Fn + F5 hotkey:			0x40
 
     That is to enable multimedia hotkeys only do: 
-	$cat 0x2 > /proc/omnibook/hotkeys
+	$echo 0x2 > /proc/omnibook/hotkeys
     To enable Fn hotkeys and Dock events only do:
-	$cat 0x24 > /proc/omnibook/hotkeys	(as 0x24 = 0x4 + 0x20)
+	$echo 0x24 > /proc/omnibook/hotkeys	(as 0x24 = 0x4 + 0x20)
 
     Finally 'off' is equivalent to 0x0, and 'on' to 0x67 that is
     Onetouch, Multimedia, Fn, Dock and Fn+F5.

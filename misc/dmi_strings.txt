@@ -220,7 +220,21 @@ Board Name:    SB400
 Board Version: Rev0.4b
 
 ---------------------------------------------
+Toshiba Satellite M45 (S355) ----------------
+
+BIOS Vendor:   TOSHIBA
+BIOS Version:  Version 2.00
+BIOS Release:  02/07/2006
+System Vendor: TOSHIBA
+Product Name:  Satellite M45
+Version:       PSM40U-073001
+Serial Number: 85080639Q
+Board Vendor:  TOSHIBA
+Board Name:    Version A0
+
+---------------------------------------------
 Toshiba Satellite M40X (-131)----------------
+
 BIOS Vendor:   TOSHIBA
 BIOS Version:  V1.60
 BIOS Release:  06/09/2005

@@ -34,12 +34,13 @@ static int omnibook_hotkeys_set(struct omnibook_operation *io_op, unsigned int s
 
 	write_capability = io_op->backend->hotkeys_set(io_op, state);
 	if( write_capability < 0)
-		return write_capability;
+		goto out;
 
 	/* Update saved state */
 	saved_state = state & write_capability;
-	
-	return 0;
+
+out:	
+	return write_capability;
 }
 
 static int omnibook_hotkeys_get(struct omnibook_operation *io_op, unsigned int *state)
@@ -51,12 +52,13 @@ static int omnibook_hotkeys_get(struct omnibook_operation *io_op, unsigned int *
 	if(io_op->backend->hotkeys_get)
 		read_capability = io_op->backend->hotkeys_get(io_op, &read_state);
 	if(read_capability < 0)
-		return read_capability;
+		goto out;
 
 	/* Return previously set state for the fields that are write only */
 	*state = (read_state & read_capability) + (saved_state & ~read_capability);
-	
-	return 0;
+
+out:	
+	return read_capability;
 }
 
 /*
@@ -108,14 +110,16 @@ static int omnibook_hotkeys_read(char *buffer,struct omnibook_operation *io_op)
 	unsigned int read_state, mask;
 
 	read_capability = omnibook_hotkeys_get(io_op, &read_state);
+	dprintk("read_cap :%i\n",read_capability);
 	if(read_capability < 0)
 		return read_capability;
 
 	write_capability = omnibook_hotkeys_set(io_op, read_state);
+	dprintk("write_cap :%i\n",write_capability);
 	if(write_capability < 0)
 		return write_capability;
 
-	for( mask = DISPLAY_LCD_ON ; mask <= HKEY_FNF5; mask = mask << 1) {
+	for( mask = HKEY_ONETOUCH ; mask <= HKEY_FNF5; mask = mask << 1) {
 	/* we assume write capability or read capability imply support */
 		 if( (read_capability | write_capability ) & mask )
 			len += sprintf(buffer + len, "%s %s.\n", 
@@ -146,8 +150,10 @@ static int omnibook_hotkeys_write(char *buffer,struct omnibook_operation *io_op)
 
 static int __init omnibook_hotkeys_init(struct omnibook_operation *io_op)
 {	
+	int retval;	
 	printk(O_INFO "Enabling all hotkeys.\n");
-	return omnibook_hotkeys_set(io_op, HKEY_ON);
+	retval = omnibook_hotkeys_set(io_op, HKEY_ON);
+	return retval < 0 ? retval : 0;
 }
 
 static void __exit omnibook_hotkeys_cleanup(struct omnibook_operation *io_op)
