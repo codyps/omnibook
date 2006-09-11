@@ -1,3 +1,11 @@
+omnibook (2:200609XX-1) unstable; urgency=low
+
+  * New upstream release:
+    + added DMI Signature for Toshiba Equium A110
+    + added DMI Signature for Toshiba Satellite M100
+
+ -- Julien Valroff <julien@kirya.net>  Mon, 11 Sep 2006 18:01:05 +0200
+
 omnibook (2:2.20060817-1) unstable; urgency=low
 
   * New upstream release
@@ -5,7 +13,7 @@ omnibook (2:2.20060817-1) unstable; urgency=low
   * Changed defaut STEM value to linux (follows kernel-package)
   * Uses dh_installmodules for maintainance scripts
 
- -- Julien Valroff <julien@kirya.net>  Thu, 17 Aug 2006 19:34:07 +0200
+ -- Julien Valroff <julien@kirya.net>  Mon, 11 Sep 2006 18:00:50 +0200
 
 omnibook (2:2.20060809-2) unstable; urgency=low
 
