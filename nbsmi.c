@@ -81,45 +81,46 @@ extern const struct pci_device_id lpc_bridge_table[];
  * process. So we save and restore all registers and eflags in the stack.
  * We also disable preemtion and IRQs upon SMI call.
  */
-static inline void save_all_regs_flag(void)
-{	
-	spin_lock_irq(&smi_spinlock);
-	__asm__ __volatile__("pushal ; pushfl");
-}
-
-static inline void restore_all_regs_flag(void)
-{
-	__asm__ __volatile__("popfl; popal"
-			     :
-			     : 
-			     : "eax", "ecx", "edx", "ebx", "esp", "esi", "edi");
-	spin_unlock_irq(&smi_spinlock);	
-}
 
 static inline void ati_do_smi_call(int *retval, u16 function)
 {
-	outw( function, ATI_SMI_PORT ); /* Call to SMI */
+	// Call to SMI
+	spin_lock_irq(&smi_spinlock);
+	__asm__ __volatile__("pushf;	\
+			      pusha;	\
+			      out %w0,%w1;	\
+			      popa;	\
+			      popf"
+			     :
+			     : "a"(function), "Nd"(ATI_SMI_PORT)
+			     : "esp");
+	/*	outw( function, ATI_SMI_PORT ); Call to SMI */
 	*retval = inw(ATI_SMI_PORT + 1);
+	spin_unlock_irq(&smi_spinlock);	
 }
 
 static inline void intel_do_smi_call(int *retval, u16 function, u32 sci_en)
 {
 	u32 state;
 	
+	spin_lock_irq(&smi_spinlock);
 	state = inl(sci_en);
 	outl( 0, sci_en );
 
-	outw( function, INTEL_SMI_PORT ); /* Call to SMI */
+	/* Success/Failure is saved in eax so don't save is on stack */
 	
-/*
- * Success/Failure state in now stored in eax
- */
-	__asm__ __volatile__("movl %%eax, %0"
+	__asm__ __volatile__("pushf;	\
+			      push %%ecx;push %%edx;push %%ebx;push %%esi;push %%edi; push %%ebp;	\
+			      out %w0,%w1;	\
+			      pop %%ebp; pop %%edi; pop %%esi; pop %%ebx; pop %%edx; pop %%ecx; 	\
+			      popf; 	\
+			      movl %%eax, (%2)"
 			     :
-			     : "m" (retval)
-			    );
-
-	outl( state, sci_en );	
+			     : "a"(function), "Nd"(INTEL_SMI_PORT), "b"(retval)
+			     : "ecx", "edx", "esi", "edi", "ebp", "esp");
+	
+	outl( state, sci_en );
+	spin_unlock_irq(&smi_spinlock);	
 }
 
 
@@ -153,21 +154,17 @@ static int nbsmi_smi_command(u16 function,const u8 *inputbuffer, u8 *outputbuffe
 			pci_read_config_dword(lpc_bridge, INTEL_PMBASE, &sci_en);
 			sci_en = sci_en & 0xff80; /* Keep bits 15:7 */
 			sci_en += INTEL_GPE0_EN;  /* GPEO_EN offset */
-			save_all_regs_flag();
 			intel_do_smi_call(&retval,function,sci_en);
-			restore_all_regs_flag();
 			break;
 		case PCI_VENDOR_ID_ATI:
-			save_all_regs_flag();
 			ati_do_smi_call(&retval,function);
-			restore_all_regs_flag();
 			break;
 		default:
 			BUG();
 	}
 
 	if(retval)
-		printk(O_ERR "smi_command failed with error %i.\n", retval);
+		printk(O_ERR "smi_command failed with error %u.\n", retval);
 
 	for(count = 0; count < BUFFER_SIZE; count++) {
 		outb( count + start_offset, RTC_PORT(2) );
