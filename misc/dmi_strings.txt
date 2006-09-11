@@ -6,7 +6,6 @@ BIOS Release:  02/28/2002
 System Vendor: Hewlett-Packard
 Product Name:  HP OmniBook PC
 Version:       HP OmniBook XT1000
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    HP OmniBook PC
 Board Version: HP OmniBook XT1000
@@ -20,7 +19,6 @@ BIOS Release:  08/13/2002
 System Vendor: Hewlett-Packard
 Product Name:  HP OmniBook PC
 Version:       HP OmniBook
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    HP OmniBook PC
 Board Version: HP OmniBook
@@ -34,7 +32,6 @@ BIOS Release:  08/14/2002
 System Vendor: Hewlett-Packard
 Product Name:  HP OmniBook PC
 Version:       HP OmniBook XE3 GF
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    N/A
 Board Version: OmniBook Zinfandel 4.5
@@ -48,7 +45,6 @@ BIOS Release:  01/01/1992
 System Vendor: Hewlett-Packard
 Product Name:  HP OmniBook PC
 Version:       HP OmniBook XE3 GC
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    N/A
 Board Version: OmniBook N32N-733
@@ -62,7 +58,6 @@ BIOS Release:  03/05/2002
 System Vendor: Hewlett-Packard
 Product Name:  HP OmniBook PC
 Version:       HP OmniBook XE3 GF
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    N/A
 Board Version: OmniBook N32N-101
@@ -76,7 +71,6 @@ BIOS Release:  11/30/1999
 System Vendor: Hewlett-Packard
 Product Name:  HP OmniBook PC
 Version:       HP OmniBook 500 FA
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    HP OmniBook PC
 Board Version: 500 FA
@@ -90,7 +84,6 @@ BIOS Release:  04/12/02
 System Vendor: Hewlett-Packard
 Product Name:  HP OmniBook PC
 Version:       HP OmniBook 510 FB
-Serial Number: o12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    HP OmniBook PC
 Board Version: 510FB
@@ -104,7 +97,6 @@ BIOS Release:  10/12/01
 System Vendor: TOSHIBA
 Product Name:  S3000-100
 Version:       PS300E-03EKL-FR
-Serial Number: 12345678GÃ¾SS300-03EKLFR
 Board Vendor:  Null
 Board Name:    888M1
 Board Version: Null
@@ -118,7 +110,6 @@ BIOS Release:  09/11/2002
 System Vendor: TOSHIBA
 Product Name:  Satellite 1115
 Version:       PS111U-001FUV
-Serial Number: X1234567K
 Board Vendor:  TOSHIBA
 Board Name:    BTK20
 Board Version: Null
@@ -132,7 +123,6 @@ BIOS Release:  09/11/2002
 System Vendor: TOSHIBA
 Product Name:  S1110
 Version:       PS111E-003DN-GR
-Serial Number: Y1234567K
 Board Vendor:  TOSHIBA
 Board Name:    BTK20
 Board Version: Null
@@ -146,7 +136,6 @@ BIOS Release:  11/25/2002
 System Vendor: TOSHIBA
 Product Name:  Satellite 1950
 Version:       PS195E-008QY-DU
-Serial Number: Z1234567GÃ¾SS195-008QYDU+0OL
 Board Vendor:  TOSHIBA
 Board Name:    ATR60
 
@@ -159,7 +148,6 @@ BIOS Release:  01/17/2003
 System Vendor: TOSHIBA
 Product Name:  Satellite 1955
 Version:       PS197U-000LEV
-Serial Number: R1234567C
 Board Vendor:  TOSHIBA
 Board Name:    BTR80
 Board Version: Null
@@ -173,7 +161,6 @@ BIOS Release:  02/09/2006
 System Vendor: TOSHIBA
 Product Name:  Satellite A105
 Version:       PSAA8U-02000U
-Serial Number: 36244466Q
 Board Vendor:  Intel Corporation
 Board Name:    Not Applicable
 
@@ -186,7 +173,6 @@ BIOS Release:  09/12/2003
 System Vendor: TOSHIBA
 Product Name:  Satellite P10
 Version:       PSP10E-34FJR
-Serial Number: Y1234567G
 Board Vendor:  TOSHIBA
 Board Name:    DAL00
 Board Version: Null
@@ -200,7 +186,6 @@ BIOS Release:  09/12/2003
 System Vendor: TOSHIBA
 Product Name:  Satellite P15
 Version:       PSP10U-0DUJPV
-Serial Number: 12345678K
 Board Vendor:  TOSHIBA
 Board Name:    DAL00
 Board Version: Null
@@ -214,7 +199,6 @@ BIOS Release:  08/24/05
 System Vendor: TOSHIBA
 Product Name:  Satellite M40
 Version:       PSM44E-00U00EFR
-Serial Number: 95096786Q
 Board Vendor:  ATI
 Board Name:    SB400
 Board Version: Rev0.4b
@@ -228,7 +212,6 @@ BIOS Release:  02/07/2006
 System Vendor: TOSHIBA
 Product Name:  Satellite M45
 Version:       PSM40U-073001
-Serial Number: 85080639Q
 Board Vendor:  TOSHIBA
 Board Name:    Version A0
 
@@ -241,7 +224,6 @@ BIOS Release:  06/09/2005
 System Vendor: TOSHIBA
 Product Name:  Satellite M40X
 Version:       PSM4XE-01400GFR
-Serial Number: 55224184K
 Board Vendor:  TOSHIBA
 Board Name:    EAL30
 Board Version: Null
@@ -255,7 +237,6 @@ BIOS Release:	09/15/2005
 System Vendor:	TOSHIBA
 Product Name:	Satellite M70
 Version:	PSM71E-01100KFR
-Serial Number:	Y1234567K
 Board Vendor:	TOSHIBA
 Board Name:	HTW00
 Board Version:	Null
@@ -269,7 +250,6 @@ BIOS Release:   07/20/2006
 System Vendor:  TOSHIBA
 Product Name:   SATELLITE M100
 Version:        PSMA0E-030019TE
-Serial Number:  46795329G
 Board Vendor:   TOSHIBA
 Board Name:     HAQAA
 Board Version:  Null
@@ -283,13 +263,12 @@ BIOS Release:  03/30/2006
 System Vendor: TOSHIBA
 Product Name:  Satellite M100
 Version:       PSMA2U-00T00G
-Serial Number: 56150526K
 Board Vendor:  TOSHIBA
 Board Name:    HAWAA
 Board Version: None
 
 ---------------------------------------------
-Toshiba Equium A110 ----------------------
+Toshiba Equium A110 -------------------------
 
 BIOS Vendor:   TOSHIBA
 BIOS Version:  V1.30
@@ -297,6 +276,18 @@ BIOS Release:  07/20/2006
 System Vendor: TOSHIBA
 Product Name:  EQUIUM A110
 Version:       PSAB2E-002006AV
+Board Vendor:  TOSHIBA
+Board Name:    Null
+
+---------------------------------------------
+Toshiba Tecra S2 ----------------------------
+
+BIOS Vendor:   TOSHIBA
+BIOS Version:  V2.50
+BIOS Release:  01/11/2006
+System Vendor: TOSHIBA
+Product Name:  Tecra S2
+Version:       PTS20E-1FE04Q8M
 Board Vendor:  TOSHIBA
 Board Name:    Null
 
@@ -309,7 +300,6 @@ BIOS Release:  03/25/02
 System Vendor: COMPAL
 Product Name:  *
 Version:       *
-Serial Number: *
 Board Vendor:  Null
 Board Name:    ACL00
 Board Version: Null
@@ -323,7 +313,6 @@ BIOS Release:  04/12/2001
 System Vendor: *
 Product Name:  *
 Version:       *
-Serial Number: *
 Board Vendor:  COMPAL
 Board Name:    ACL10
 Board Version: Null
@@ -337,7 +326,6 @@ BIOS Release:  03/20/2002
 System Vendor: Hewlett-Packard
 Product Name:  HP Pavilion Notebook PC
 Version:       HP Pavilion Notebook
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    HP Pavilion Notebook PC
 Board Version: HP Pavilion Notebook
@@ -351,7 +339,6 @@ BIOS Release:  02/28/2002
 System Vendor: Hewlett-Packard
 Product Name:  HP Pavilion Notebook PC
 Version:       HP Pavilion Notebook ZT1000
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    HP Pavilion Notebook PC
 Board Version: HP Pavilion Notebook ZT1000
@@ -365,7 +352,6 @@ BIOS Release:  02/27/02
 System Vendor: Hewlett-Packard
 Product Name:  HP OmniBook PC
 Version:       HP OmniBook 6100 EB
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    HP OmniBook PC
 Board Version: 6100EB
@@ -379,7 +365,6 @@ BIOS Release:  02/22/2002
 System Vendor: Hewlett-Packard
 Product Name:  HP OmniBook PC
 Version:       HP OmniBook 6000 EA
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    HP OmniBook PC
 Board Version: 6000EA
@@ -393,7 +378,6 @@ BIOS Release:  08/05/20022
 System Vendor: Hewlett-Packard.
 Product Name:  HP OmniBook PC
 Version:       HP OmniBook xe4500
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    HP OmniBook PC
 Board Version: xe4500
@@ -407,7 +391,6 @@ BIOS Release:  09/27/2001
 System Vendor: Hewlett-Packard
 Product Name:  HP Pavilion Notebook PC
 Version:       HP Pavilion Notebook Model GD
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    N/A
 Board Version: OmniBook N32N-736
@@ -421,7 +404,6 @@ BIOS Release:  09/27/2001
 System Vendor: Hewlett-Packard
 Product Name:  HP OmniBook PC
 Version:       HP OmniBook XE3 GD
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    N/A
 Board Version: OmniBook N32N-736
@@ -435,7 +417,6 @@ BIOS Release:  07/30/2002
 System Vendor: Hewlett-Packard
 Product Name:  HP OmniBook PC
 Version:       HP OmniBook XE3 GE
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    N/A
 Board Version: OmniBook N32N-736
@@ -449,7 +430,6 @@ BIOS Release:  01/01/1992
 System Vendor: Hewlett-Packard
 Product Name:  HP Pavilion Notebook PC
 Version:       HP Pavilion Notebook XE3 GC
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    N/A
 Board Version: OmniBook N32N-733
@@ -463,7 +443,6 @@ BIOS Release:  09/19/02
 System Vendor: Hewlett-Packard
 Product Name:  HP OmniBook PC
 Version:       HP OmniBook 6200 EG
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    HP OmniBook PC
 Board Version: 6200EG
@@ -477,7 +456,6 @@ BIOS Release:  06/10/99
 System Vendor: Hewlett-Packard
 Product Name:  HP OmniBook PC
 Version:       HP OmniBook 4150
-Serial Number: FR12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    N/A
 Board Version: OmniBook TS32T2
@@ -491,7 +469,6 @@ BIOS Release:  09/19/02
 System Vendor: Hewlett-Packard
 Product Name:  HP OmniBook PC
 Version:       HP OmniBook 6200 EG
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    HP OmniBook PC
 Board Version: 6200EG
@@ -505,7 +482,6 @@ BIOS Release:  09/13/2002
 System Vendor: Hewlett-Packard
 Product Name:  HP NoteBook PC
 Version:       HP NoteBook ze4000
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    HP NoteBook PC
 Board Version: HP NoteBook ze4000
@@ -519,7 +495,6 @@ BIOS Release:  10/11/20022
 System Vendor: Hewlett-Packard
 Product Name:  HP NoteBook PC
 Version:       HP Notebook PC
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    HP NoteBook PC
 Board Version: HP Notebook PC
@@ -533,7 +508,6 @@ BIOS Release:  07/11/2002
 System Vendor: Hewlett-Packard
 Product Name:  HP OmniBook PC
 Version:       HP OmniBook xe4000
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    HP OmniBook PC
 Board Version: 4000KC
@@ -547,13 +521,12 @@ BIOS Release:  09/19/20022
 System Vendor: Hewlett-Packard
 Product Name:  HP OmniBook PC
 Version:       HP Omnibook xe4400
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    HP OmniBook PC
 Board Version: xe4400
 
 ---------------------------------------------
-HP Pavilion ze4100 -------------------------
+HP Pavilion ze4100 --------------------------
 
 BIOS Vendor:   Phoenix Technologies Ltd.
 BIOS Version:  KE.M1.40
@@ -561,7 +534,6 @@ BIOS Release:  10/11/20022
 System Vendor: Hewlett-Packard
 Product Name:  HP NoteBook PC         
 Version:       HP Notebook PC
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    HP NoteBook PC         
 Board Version: HP Notebook PC
@@ -574,7 +546,6 @@ BIOS Release:  12/01/2003
 System Vendor: Acer,Inc.
 Product Name:  Aspire 1350
 Version:       3A24
-Serial Number: LXA123456781234CF6EF15
 Board Vendor:  Acer,Inc.
 Board Name:    Aspire 1350
 Board Version: Rev.A
@@ -588,7 +559,6 @@ BIOS Release:  10/04/02
 System Vendor: Acer
 Product Name:  Aspire 1400 series
 Version:       *
-Serial Number: LXA123456789123456EB00
 Board Vendor:  Null
 Board Name:    BR20
 Board Version: Null
@@ -602,7 +572,6 @@ BIOS Release:  12/10/20022
 System Vendor: Hewlett-Packard
 Product Name:  Pavilion ze4200
 Version:       KE.M1.53
-Serial Number: CN12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    002A
 Board Version: NS570 Version PQ1A74
@@ -616,7 +585,6 @@ BIOS Release:  11/30/1999
 System Vendor: Hewlett-Packard
 Product Name:  HP Pavilion Notebook PC
 Version:       HP Pavilion ZU1000 FA
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    HP Pavilion Notebook PC
 Board Version: 1000FA
@@ -630,7 +598,6 @@ BIOS Release:  11/08/2001
 System Vendor: Hewlett-Packard
 Product Name:  HP Pavilion Notebook PC
 Version:       HP Pavilion Notebook Model GE
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    N/A
 Board Version: OmniBook N32N-736
@@ -644,7 +611,6 @@ BIOS Release:  01/16/2003
 System Vendor: TOSHIBA
 Product Name:  Satellite 2430
 Version:       PS243E-06P4S-4V
-Serial Number: 12345678GÃ¾SS243-06P4S4V+0OL
 Board Vendor:  TOSHIBA
 Board Name:    BTS88
 Board Version: Null
@@ -658,7 +624,6 @@ BIOS Release:  11/11/99
 System Vendor: Hewlett-Packard
 Product Name:  HP OmniBook PC
 Version:       HP OmniBook 900 B
-Serial Number: TW12345678
 Board Vendor:  Hewlett-Packard
 Board Name:    N/A
 Board Version: OmniBook TS32U2
@@ -672,7 +637,6 @@ BIOS Release:  05/16/2003
 System Vendor: Hewlett-Packard        
 Product Name:  HP nx9000 (DG223T)       
 Version:       KG.M1.06
-Serial Number: CNF12345TM      
 Board Vendor:  Hewlett-Packard        
 Board Name:    002A                   
 Board Version: NS570 Version PQ1A78   
@@ -686,7 +650,6 @@ BIOS Release:  12/19/2003
 System Vendor: Hewlett-Packard
 Product Name:  HP Notebook PC
 Version:       HP Notebook PC
-Serial Number: <NULL>
 Board Vendor:  <NULL>
 Board Name:    <NULL>
 Board Version: <NULL>
@@ -700,7 +663,6 @@ BIOS Release:  07/21/200392
 System Vendor: Hewlett-Packard
 Product Name:  HP nx9005 (DJ163A)
 Version:       KAM1.46
-Serial Number: CNF1234DWD
 Board Vendor:  Hewlett-Packard
 Board Name:    0024
 Board Version: PQ1A78
@@ -714,7 +676,6 @@ BIOS Release:  06/06/2003
 System Vendor: Hewlett-Packard
 Product Name:  HP nx9010 (DJ123A)
 Version:       KH.F.08
-Serial Number: CNF1234D56
 Board Vendor:  Hewlett-Packard
 Board Name:    0850
 Board Version: NS570 Version PQ1B56
@@ -728,7 +689,6 @@ BIOS Release:  11/13/2003
 System Vendor: Hewlett-Packard
 Product Name:  Pavilion ze8500 (DJ317A)
 Version:       KH.F.18
-Serial Number: CNF1234M4Y
 Board Vendor:  Hewlett-Packard
 Board Name:    0850
 Board Version: NS570 Version PQ1B60
@@ -742,7 +702,6 @@ BIOS Release:  11/14/2001
 System Vendor: FUJITSU SIEMENS
 Product Name:  Amilo D-Series
 Version:       DESKTOP CPU ONLY
-Serial Number: CELEON 800 - 1.2G , PIII 700 - 1.1G
 Board Vendor:  CY23
 Board Name:    8606-686B
 Board Version: None

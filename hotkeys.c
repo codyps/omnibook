@@ -110,12 +110,10 @@ static int omnibook_hotkeys_read(char *buffer,struct omnibook_operation *io_op)
 	unsigned int read_state, mask;
 
 	read_capability = omnibook_hotkeys_get(io_op, &read_state);
-	dprintk("read_cap :%i\n",read_capability);
 	if(read_capability < 0)
 		return read_capability;
 
 	write_capability = omnibook_hotkeys_set(io_op, read_state);
-	dprintk("write_cap :%i\n",write_capability);
 	if(write_capability < 0)
 		return write_capability;
 
