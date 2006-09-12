@@ -200,7 +200,7 @@ static int nbsmi_smi_read_command(const struct omnibook_operation *io_op, u8 *da
 	}
 	
 	retval = nbsmi_smi_command( (u16) io_op->read_addr, inputbuffer, outputbuffer);
-	if(!retval)
+	if(retval)
 		goto out;
 	
 	*data = outputbuffer[0];
