@@ -117,7 +117,7 @@ static inline void intel_do_smi_call(int *retval, u16 function, u32 sci_en)
 			      movl %%eax, (%2)"
 			     :
 			     : "a"(function), "Nd"(INTEL_SMI_PORT), "b"(retval)
-			     : "ecx", "edx", "esi", "edi", "ebp", "esp");
+			     : "ecx", "edx", "esi", "edi", "esp");
 	
 	outl( state, sci_en );
 	spin_unlock_irq(&smi_spinlock);	
