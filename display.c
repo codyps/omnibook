@@ -25,41 +25,41 @@ static const char display_name[][16] = {
 	"External DVI",
 };
 
-static int omnibook_display_read(char *buffer,struct omnibook_operation *io_op)
+static int omnibook_display_read(char *buffer, struct omnibook_operation *io_op)
 {
 	int len = 0;
 	int retval;
 	unsigned int sta, en_mask, det_mask;
 
 	retval = io_op->backend->display_get(io_op, &sta);
-	if ( retval < 0)
+	if (retval < 0)
 		return retval;
 
-	for( en_mask = DISPLAY_LCD_ON ; en_mask <= DISPLAY_DVI_ON; en_mask = en_mask << 1) {
-		det_mask = en_mask << 4; /* see display masks in omnibook.h */
-		if( !( retval & en_mask ) && !( retval & det_mask ) )
-			continue; /* not supported */
-		len += sprintf(buffer + len, "%s:", 
-				display_name[ ffs(en_mask) - 1 ]);
-		if( retval & det_mask )
-			len += sprintf(buffer + len, " display %s",
-				( sta & det_mask ) ? "present" : "absent");
-		if( retval & en_mask )
-			len += sprintf(buffer + len, " port %s",
-				( sta & en_mask ) ? "enabled" : "disabled");
-		len += sprintf(buffer + len, "\n"); 
+	for (en_mask = DISPLAY_LCD_ON; en_mask <= DISPLAY_DVI_ON; en_mask = en_mask << 1) {
+		det_mask = en_mask << 4;	/* see display masks in omnibook.h */
+		if (!(retval & en_mask) && !(retval & det_mask))
+			continue;	/* not supported */
+		len += sprintf(buffer + len, "%s:", display_name[ffs(en_mask) - 1]);
+		if (retval & det_mask)
+			len +=
+			    sprintf(buffer + len, " display %s",
+				    (sta & det_mask) ? "present" : "absent");
+		if (retval & en_mask)
+			len +=
+			    sprintf(buffer + len, " port %s",
+				    (sta & en_mask) ? "enabled" : "disabled");
+		len += sprintf(buffer + len, "\n");
 	}
-
 
 	return len;
 }
 
-static int omnibook_display_write(char *buffer,struct omnibook_operation *io_op)
+static int omnibook_display_write(char *buffer, struct omnibook_operation *io_op)
 {
 	int retval;
-	unsigned int state;	
+	unsigned int state;
 	char *endp;
-	
+
 	state = simple_strtoul(buffer, &endp, 16);
 	if (endp == buffer)
 		return -EINVAL;
@@ -73,31 +73,32 @@ static struct omnibook_feature display_driver;
 
 static int __init omnibook_display_init(struct omnibook_operation *io_op)
 {
-	/* Disable file writing if unsuported by backend */	
-	if(!io_op->backend->display_set)
+	/* Disable file writing if unsuported by backend */
+	if (!io_op->backend->display_set)
 		display_driver.write = NULL;
 	return 0;
 }
 
-
 static struct omnibook_tbl display_table[] __initdata = {
-	{ TSM30X,				{ACPI, }},
-	{ TSM40,				{SMI, }},
-	{ XE3GF|TSP10|TSM30X|TSM40,	    SIMPLE_BYTE(EC,XE3GF_STA1,XE3GF_SHDD_MASK)},
-	{ XE3GC,			    SIMPLE_BYTE(EC,XE3GC_STA1,XE3GC_CRTI_MASK)},
-	{ OB500|OB510|OB6000|OB6100|XE4500, SIMPLE_BYTE(EC,OB500_STA1,OB500_CRTS_MASK)},
-	{ OB4150,			    SIMPLE_BYTE(EC,OB4150_STA2,OB4150_CRST_MASK)},
-	{ 0,}
+	{TSM30X, {ACPI,}},
+	{TSM40, {SMI, SMI_GET_DISPLAY_STATE, SMI_SET_DISPLAY_STATE, 0, 0, 0}},
+	{XE3GF | TSP10 | TSM30X | TSM40, SIMPLE_BYTE(EC, XE3GF_STA1, XE3GF_SHDD_MASK)},
+	{XE3GC, SIMPLE_BYTE(EC, XE3GC_STA1, XE3GC_CRTI_MASK)},
+	{OB500 | OB510 | OB6000 | OB6100 | XE4500, SIMPLE_BYTE(EC, OB500_STA1, OB500_CRTS_MASK)},
+	{OB4150, SIMPLE_BYTE(EC, OB4150_STA2, OB4150_CRST_MASK)},
+	{0,}
 };
 
 static struct omnibook_feature __declared_feature display_driver = {
-	 .name = "display",
-	 .enabled = 1,
-	 .init = omnibook_display_init,
-	 .read = omnibook_display_read,
-	 .write = omnibook_display_write,
-	 .ectypes = XE3GF|XE3GC|OB500|OB510|OB6000|OB6100|XE4500|OB4150|TSP10|TSM30X|TSM40,
-	 .tbl = display_table,
+	.name = "display",
+	.enabled = 1,
+	.init = omnibook_display_init,
+	.read = omnibook_display_read,
+	.write = omnibook_display_write,
+	.ectypes =
+	    XE3GF | XE3GC | OB500 | OB510 | OB6000 | OB6100 | XE4500 | OB4150 | TSP10 | TSM30X |
+	    TSM40,
+	.tbl = display_table,
 };
 
 module_param_named(display, display_driver.enabled, int, S_IRUGO);

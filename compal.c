@@ -15,7 +15,6 @@
  *
  */
 
-
 #include "omnibook.h"
 
 #include <linux/delay.h>
@@ -66,12 +65,14 @@ static DEFINE_MUTEX(compal_lock);
 /*
  * Private data of this backend
  */
-static struct kref *refcount;		/* Reference counter of this backend */
-static struct pci_dev *lpc_bridge; 	/* Southbridge chip ISA bridge/LPC interface PCI device */
-static u32	ioport_base;		/* PIO base adress */
-static union { u16 word; u32 dword;
-		} pci_reg_state;	/* Saved state of register in PCI config spave */
-static int already_failed = 0;		/* Backend init already failed at leat once */
+static struct kref *refcount;	/* Reference counter of this backend */
+static struct pci_dev *lpc_bridge;	/* Southbridge chip ISA bridge/LPC interface PCI device */
+static u32 ioport_base;		/* PIO base adress */
+static union {
+	u16 word;
+	u32 dword;
+} pci_reg_state;		/* Saved state of register in PCI config spave */
+static int already_failed = 0;	/* Backend init already failed at leat once */
 
 /*
  * Possible list of supported southbridges
@@ -80,30 +81,27 @@ static int already_failed = 0;		/* Backend init already failed at leat once */
  * Shared with nbsmi backend
  */
 const struct pci_device_id lpc_bridge_table[] = {
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801AA_0,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801AB_0,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801BA_0,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801BA_10,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801CA_0,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801CA_12,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801DB_0,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801DB_12,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801E_0,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801EB_0,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ESB_1,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH6_0,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH6_1,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH6_2,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_0,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_1,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_30,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_31,	PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ PCI_VENDOR_ID_ATI, PCI_DEVICE_ID_ATI_SB400,		PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ 0, },		/* End of list */
+	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801AA_0, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
+	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801AB_0, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
+	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801BA_0, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
+	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801BA_10, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
+	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801CA_0, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
+	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801CA_12, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
+	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801DB_0, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
+	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801DB_12, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
+	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801E_0, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
+	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801EB_0, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
+	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ESB_1, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
+	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH6_0, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
+	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH6_1, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
+	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH6_2, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
+	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_0, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
+	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_1, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
+	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_30, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
+	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_31, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
+	{PCI_VENDOR_ID_ATI, PCI_DEVICE_ID_ATI_SB400, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
+	{0,},			/* End of list */
 };
-
-
-
 
 /*
  * Low-level Read function:
@@ -113,8 +111,8 @@ const struct pci_device_id lpc_bridge_table[] = {
 static unsigned char lowlevel_read(u16 command)
 {
 	unsigned char data;
-	outb((command & 0xff00) >> 8 ,ioport_base + PIO_PORT_COMMAND1);
-	outb(command & 0x00ff ,ioport_base + PIO_PORT_COMMAND2);
+	outb((command & 0xff00) >> 8, ioport_base + PIO_PORT_COMMAND1);
+	outb(command & 0x00ff, ioport_base + PIO_PORT_COMMAND2);
 	data = inb(ioport_base + PIO_PORT_DATA);
 	return data;
 }
@@ -126,11 +124,10 @@ static unsigned char lowlevel_read(u16 command)
  */
 static void lowlevel_write(u16 command, u8 data)
 {
-	outb((command & 0xff00) >> 8 ,ioport_base + PIO_PORT_COMMAND1);
-	outb(command & 0x00ff,ioport_base + PIO_PORT_COMMAND2);
+	outb((command & 0xff00) >> 8, ioport_base + PIO_PORT_COMMAND1);
+	outb(command & 0x00ff, ioport_base + PIO_PORT_COMMAND2);
 	outb(data, ioport_base + PIO_PORT_DATA);
 }
-
 
 /*
  * Probe for a state of the PIO Command/Data/Index interface
@@ -145,12 +142,12 @@ static int check_cdimode_flag(unsigned int mode)
 	int retval;
 
 	dprintk("Index mode:");
-	for (i=1; i <= 250; i++) {
+	for (i = 1; i <= 250; i++) {
 		retval = lowlevel_read(0xfbfc);
 		dprintk_simple(" [%i]", retval);
 		if (retval == mode) {
-			dprintk_simple(".\n");	
-			dprintk("Index Mode Ok (%i) after %i iter\n",mode,i);
+			dprintk_simple(".\n");
+			dprintk("Index Mode Ok (%i) after %i iter\n", mode, i);
 			return 0;
 		}
 		udelay(100);
@@ -166,15 +163,15 @@ static int check_default_state(void)
 {
 	int i;
 
-	for(i=1; i <= 250; i++) {
-		if( (inb(ioport_base + PIO_PORT_COMMAND1) == 0xf4) &&
-		    (inb(ioport_base + PIO_PORT_COMMAND2) == 0x32) )
+	for (i = 1; i <= 250; i++) {
+		if ((inb(ioport_base + PIO_PORT_COMMAND1) == 0xf4)
+		    && (inb(ioport_base + PIO_PORT_COMMAND2) == 0x32))
 			return 0;
 		udelay(100);
 	}
 	printk(O_ERR "check_default_state timeout.\n");
 	return -ETIME;
-}	
+}
 
 /*
  * Enable EC Command/Data/Index PIO Access and then check EC state.
@@ -188,12 +185,15 @@ static int check_default_state(void)
  */
 static int enable_cdimode(void)
 {
-	union { u16 word; u32 dword;} value;			
+	union {
+		u16 word;
+		u32 dword;
+	} value;
 
 	switch (lpc_bridge->vendor) {
 	case PCI_VENDOR_ID_INTEL:
 		switch (lpc_bridge->device) {
-		case PCI_DEVICE_ID_INTEL_ICH7_0: /* ICH7 */
+		case PCI_DEVICE_ID_INTEL_ICH7_0:	/* ICH7 */
 		case PCI_DEVICE_ID_INTEL_ICH7_1:
 		case PCI_DEVICE_ID_INTEL_ICH7_30:
 		case PCI_DEVICE_ID_INTEL_ICH7_31:
@@ -201,8 +201,8 @@ static int enable_cdimode(void)
 			pci_reg_state.dword = value.dword;
 			value.dword = 0x3CFF21;
 			pci_write_config_dword(lpc_bridge, INTEL_LPC_GEN4_DEC, value.dword);
-			break;		
-		default:	/* All other Intel chipset */ 		
+			break;
+		default:	/* All other Intel chipset */
 			pci_read_config_word(lpc_bridge, INTEL_LPC_GEN1_DEC, &(value.word));
 			pci_reg_state.word = value.word;
 			value.word = (INTEL_IOPORT_BASE & 0xfff1) | 0x1;
@@ -210,23 +210,23 @@ static int enable_cdimode(void)
 		}
 		break;
 	case PCI_VENDOR_ID_ATI:
-		pci_read_config_dword(lpc_bridge,ATI_LPC_REG,&(value.dword));
+		pci_read_config_dword(lpc_bridge, ATI_LPC_REG, &(value.dword));
 		pci_reg_state.dword = value.dword;
-		value.dword = (( pci_reg_state.dword & 0x7f ) | 0x80 ) << 0x10;
+		value.dword = ((pci_reg_state.dword & 0x7f) | 0x80) << 0x10;
 		pci_write_config_dword(lpc_bridge, ATI_LPC_REG, value.dword);
 		break;
 	default:
 		BUG();
 	}
 	dprintk("Saved state of PCI register: [%x].\n", pci_reg_state.dword);
-	
-	if( check_default_state() || check_cdimode_flag(0) ) {
+
+	if (check_default_state() || check_cdimode_flag(0)) {
 		printk(O_ERR "EC state check failure, please report.\n");
 		return -EIO;
 	}
 
 	return 0;
-	
+
 }
 
 /*
@@ -241,7 +241,7 @@ static int send_ec_cmd(unsigned int command, u8 code)
 	lowlevel_write(0xfbfc, 0x2);
 	lowlevel_write(command, code);
 	lowlevel_write(0xfbfc, 0x1);
-	if(check_cdimode_flag(2))
+	if (check_cdimode_flag(2))
 		return -ETIME;
 	return 0;
 }
@@ -252,15 +252,14 @@ static int send_ec_cmd(unsigned int command, u8 code)
  * 0xfbfe: Read a previously selected Index
  * 0xfbfc: Set CDI mode flag
  */
-static int read_ec_cmd(unsigned int command, u8 *value)
+static int read_ec_cmd(unsigned int command, u8 * value)
 {
 	*value = lowlevel_read(command);
 	lowlevel_write(0xfbfc, 0x1);
-	if(check_cdimode_flag(2))
+	if (check_cdimode_flag(2))
 		return -ETIME;
 	return 0;
 }
-
 
 /*
  * Disable EC Command/Data/Index PIO Access 
@@ -274,8 +273,8 @@ static int read_ec_cmd(unsigned int command, u8 *value)
 static void clear_cdimode(void)
 {
 	lowlevel_write(0xfbfc, 0x0);
-	outb(0xf4,ioport_base + PIO_PORT_COMMAND1);
-	outb(0x32,ioport_base + PIO_PORT_COMMAND2);
+	outb(0xf4, ioport_base + PIO_PORT_COMMAND1);
+	outb(0x32, ioport_base + PIO_PORT_COMMAND2);
 }
 
 static void clear_cdimode_pci(void)
@@ -283,18 +282,18 @@ static void clear_cdimode_pci(void)
 	switch (lpc_bridge->vendor) {
 	case PCI_VENDOR_ID_INTEL:
 		switch (lpc_bridge->device) {
-		case PCI_DEVICE_ID_INTEL_ICH7_0: /* ICH7 */
+		case PCI_DEVICE_ID_INTEL_ICH7_0:	/* ICH7 */
 		case PCI_DEVICE_ID_INTEL_ICH7_1:
 		case PCI_DEVICE_ID_INTEL_ICH7_30:
 		case PCI_DEVICE_ID_INTEL_ICH7_31:
-			pci_write_config_dword(lpc_bridge, INTEL_LPC_GEN4_DEC,pci_reg_state.dword);
-			break;		
-		default:	/* All other Intel chipset */ 		
-			pci_write_config_word(lpc_bridge,INTEL_LPC_GEN1_DEC,pci_reg_state.word);
+			pci_write_config_dword(lpc_bridge, INTEL_LPC_GEN4_DEC, pci_reg_state.dword);
+			break;
+		default:	/* All other Intel chipset */
+			pci_write_config_word(lpc_bridge, INTEL_LPC_GEN1_DEC, pci_reg_state.word);
 		}
 		break;
 	case PCI_VENDOR_ID_ATI:
-		pci_write_config_dword(lpc_bridge,ATI_LPC_REG,pci_reg_state.dword);
+		pci_write_config_dword(lpc_bridge, ATI_LPC_REG, pci_reg_state.dword);
 		break;
 	default:
 		BUG();
@@ -311,22 +310,22 @@ static int omnibook_cdimode_init(const struct omnibook_operation *io_op)
 	int retval = 0;
 	int i;
 
-/* ectypes other than TSM30X have no business with this backend */	
-	if(!(omnibook_ectype & TSM30X))
+/* ectypes other than TSM30X have no business with this backend */
+	if (!(omnibook_ectype & TSM30X))
 		return -ENODEV;
 
-	if(already_failed) {
+	if (already_failed) {
 		dprintk("CDI backend init already failed, skipping.\n");
 		return -ENODEV;
 	}
 
-	if(!refcount) {
+	if (!refcount) {
 		/* Fist use of the backend */
 		mutex_lock(&compal_lock);
-		dprintk("Try to init cdimode\n");	
-		refcount = kmalloc(sizeof(struct kref),GFP_KERNEL);
-		if(!refcount) {
-			retval= -ENOMEM;
+		dprintk("Try to init cdimode\n");
+		refcount = kmalloc(sizeof(struct kref), GFP_KERNEL);
+		if (!refcount) {
+			retval = -ENOMEM;
 			goto out;
 		}
 
@@ -334,19 +333,21 @@ static int omnibook_cdimode_init(const struct omnibook_operation *io_op)
 
 		/* PCI probing: find the LPC Super I/O bridge PCI device */
 		for (i = 0; !lpc_bridge && lpc_bridge_table[i].vendor; ++i)
-			lpc_bridge = pci_get_device(lpc_bridge_table[i].vendor, lpc_bridge_table[i].device, NULL);
+			lpc_bridge =
+			    pci_get_device(lpc_bridge_table[i].vendor, lpc_bridge_table[i].device,
+					   NULL);
 
 		if (!lpc_bridge) {
 			printk(O_ERR "Fail to find a supported LPC I/O bridge, please report\n");
 			retval = -ENODEV;
 			goto error1;
 		}
-		
-		if((retval = pci_enable_device(lpc_bridge))) {
+
+		if ((retval = pci_enable_device(lpc_bridge))) {
 			printk(O_ERR "Unable to enable PCI device.\n");
 			goto error2;
 		}
-		
+
 		switch (lpc_bridge->vendor) {
 		case PCI_VENDOR_ID_INTEL:
 			ioport_base = INTEL_IOPORT_BASE;
@@ -357,23 +358,23 @@ static int omnibook_cdimode_init(const struct omnibook_operation *io_op)
 		default:
 			BUG();
 		}
-		
-		if(!request_region(ioport_base ,4 ,OMNIBOOK_MODULE_NAME)) {
+
+		if (!request_region(ioport_base, 4, OMNIBOOK_MODULE_NAME)) {
 			printk(O_ERR "Request I/O region error\n");
 			retval = -ENODEV;
 			goto error2;
 		}
-		
+
 		/*
 		 * Make an enable-check disable cycle for testing purpose
 		 */
-		
+
 		retval = enable_cdimode();
-		if(retval)
+		if (retval)
 			goto error3;
 
 		clear_cdimode();
-		clear_cdimode_pci();		
+		clear_cdimode_pci();
 
 		dprintk("Cdimode init ok\n");
 		goto out;
@@ -382,18 +383,18 @@ static int omnibook_cdimode_init(const struct omnibook_operation *io_op)
 		kref_get(refcount);
 		return 0;
 	}
-	
-error3:
+
+      error3:
 	clear_cdimode_pci();
-	release_region(ioport_base,4);
-error2:
+	release_region(ioport_base, 4);
+      error2:
 	pci_dev_put(lpc_bridge);
 	lpc_bridge = NULL;
-error1:
+      error1:
 	kfree(refcount);
 	refcount = NULL;
 	already_failed = 1;
-out:
+      out:
 	mutex_unlock(&compal_lock);
 	return retval;
 }
@@ -403,7 +404,7 @@ static void cdimode_free(struct kref *ref)
 	mutex_lock(&compal_lock);
 	dprintk("Cdimode not used anymore: disposing\n");
 	pci_dev_put(lpc_bridge);
-	release_region(ioport_base,4);
+	release_region(ioport_base, 4);
 	kfree(refcount);
 	lpc_bridge = NULL;
 	refcount = NULL;
@@ -415,37 +416,37 @@ static void omnibook_cdimode_exit(const struct omnibook_operation *io_op)
 /* ectypes other than TSM30X have no business with this backend */
 	BUG_ON(!(omnibook_ectype & TSM30X));
 	dprintk("Trying to dispose cdimode\n");
-	kref_put(refcount,cdimode_free);
+	kref_put(refcount, cdimode_free);
 }
 
 /* 
  * Read EC index and write result to value 
  * 'EC index' here is unrelated to an index in the EC registers
  */
-static int omnibook_cdimode_read(const struct omnibook_operation *io_op, u8 *value)
+static int omnibook_cdimode_read(const struct omnibook_operation *io_op, u8 * value)
 {
 	int retval = 0;
-	
-	if(!lpc_bridge)
+
+	if (!lpc_bridge)
 		return -ENODEV;
-	
-	if(mutex_lock_interruptible(&compal_lock))
+
+	if (mutex_lock_interruptible(&compal_lock))
 		return -ERESTARTSYS;
-	
+
 	retval = enable_cdimode();
-	if(retval)
+	if (retval)
 		goto out;
-	retval = send_ec_cmd(0xfbfd,(unsigned int) io_op->read_addr);
-	if(retval)
+	retval = send_ec_cmd(0xfbfd, (unsigned int)io_op->read_addr);
+	if (retval)
 		goto error;
-	retval = read_ec_cmd(0xfbfe,value);
-	
-	if(io_op->read_mask)
+	retval = read_ec_cmd(0xfbfe, value);
+
+	if (io_op->read_mask)
 		*value &= io_op->read_mask;
-	
-error:
+
+      error:
 	clear_cdimode();
-out:
+      out:
 	clear_cdimode_pci();
 	mutex_unlock(&compal_lock);
 	return retval;
@@ -458,23 +459,23 @@ out:
 static int omnibook_cdimode_write(const struct omnibook_operation *io_op, u8 value)
 {
 	int retval = 0;
-	
-	if(!lpc_bridge)
+
+	if (!lpc_bridge)
 		return -ENODEV;
-	
-	if(mutex_lock_interruptible(&compal_lock))
+
+	if (mutex_lock_interruptible(&compal_lock))
 		return -ERESTARTSYS;
-		
+
 	retval = enable_cdimode();
-	if(retval)
+	if (retval)
 		goto out;
-	retval = send_ec_cmd(0xfbfd,(unsigned int) io_op->write_addr);
-	if(retval)
+	retval = send_ec_cmd(0xfbfd, (unsigned int)io_op->write_addr);
+	if (retval)
 		goto error;
-	retval = send_ec_cmd(0xfbfe,value);
-error:
+	retval = send_ec_cmd(0xfbfe, value);
+      error:
 	clear_cdimode();
-out:
+      out:
 	clear_cdimode_pci();
 	mutex_unlock(&compal_lock);
 	return retval;
@@ -486,32 +487,29 @@ out:
  */
 static int omnibook_cdimode_hotkeys(const struct omnibook_operation *io_op, unsigned int state)
 {
-	int retval;	
-	struct omnibook_operation hotkeys_op;
-	
- 	/* Fn+foo handling */
-	hotkeys_op.backend = CDI;
-	hotkeys_op.write_addr = TSM70_FN_INDEX;
-  	hotkeys_op.on_mask = TSM70_FN_ENABLE;
-	hotkeys_op.off_mask = TSM70_FN_DISABLE;
-	retval = omnibook_toggle(&hotkeys_op, !!(state & HKEY_FN) );
-	if(retval < 0)
+	int retval;
+	struct omnibook_operation hotkeys_op = 
+		{ CDI, 0, TSM70_FN_INDEX, 0, TSM70_FN_ENABLE, TSM70_FN_DISABLE};
+
+	/* Fn+foo handling */
+	retval = omnibook_toggle(&hotkeys_op, !!(state & HKEY_FN));
+	if (retval < 0)
 		return retval;
-	
+
 	/* Multimedia keys handling */
-	if(state & HKEY_MULTIMEDIA) {
+	if (state & HKEY_MULTIMEDIA) {
 		hotkeys_op.write_addr = TSM70_HOTKEYS_INDEX;
 		retval = omnibook_cdimode_write(&hotkeys_op, TSM70_HOTKEYS_ENABLE);
 	} else {
 		/* FIXME: quirk use kbc backend */
-		retval = kbc_backend.byte_write(NULL,OMNIBOOK_KBC_CMD_ONETOUCH_DISABLE);
+		retval = kbc_backend.byte_write(NULL, OMNIBOOK_KBC_CMD_ONETOUCH_DISABLE);
 	}
 
-	if(retval < 0)
+	if (retval < 0)
 		return retval;
 	else
-		return HKEY_MULTIMEDIA|HKEY_FN;
-}	
+		return HKEY_MULTIMEDIA | HKEY_FN;
+}
 
 /* Scan index space, this hard locks my machine */
 #if 0
@@ -523,7 +521,7 @@ static int compal_scan(char *buffer)
 
 	for (i = 0; i < 255; i += 16) {
 		for (j = 0; j < 16; j++) {
-			omnibook_compal_read(i + j,&v);
+			omnibook_compal_read(i + j, &v);
 			len += sprintf(buffer + len, "Read index %02x: %02x\n", i + j, v);
 			mdelay(500);
 		}

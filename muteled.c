@@ -33,26 +33,26 @@ static int omnibook_muteled_set(struct omnibook_operation *io_op, int status)
 /*
  * Hardware query is unsupported, reading is unreliable.
  */
-static int omnibook_muteled_read(char *buffer,struct omnibook_operation *io_op)
+static int omnibook_muteled_read(char *buffer, struct omnibook_operation *io_op)
 {
 	int len = 0;
 
-	len += sprintf(buffer+len, "Last mute LED action was an %s command.\n", 
-			(omnibook_muteled_enabled) ? "on" : "off");
+	len +=
+	    sprintf(buffer + len, "Last mute LED action was an %s command.\n",
+		    (omnibook_muteled_enabled) ? "on" : "off");
 
 	return len;
 }
 
-static int omnibook_muteled_write(char *buffer,struct omnibook_operation *io_op)
+static int omnibook_muteled_write(char *buffer, struct omnibook_operation *io_op)
 {
-	int cmd;	
+	int cmd;
 
-	if ( *buffer == '0' || *buffer == '1') {
+	if (*buffer == '0' || *buffer == '1') {
 		cmd = *buffer - '0';
-		if(!omnibook_muteled_set(io_op, cmd)) {
+		if (!omnibook_muteled_set(io_op, cmd)) {
 			omnibook_muteled_enabled = cmd;
-			printk(O_INFO "Switching mute LED to %s state.\n", 
-				cmd ? "on" : "off");
+			printk(O_INFO "Switching mute LED to %s state.\n", cmd ? "on" : "off");
 		}
 	} else {
 		return -EINVAL;
@@ -61,25 +61,24 @@ static int omnibook_muteled_write(char *buffer,struct omnibook_operation *io_op)
 }
 
 static int omnibook_muteled_resume(struct omnibook_operation *io_op)
-{	
-	return omnibook_muteled_set(io_op,omnibook_muteled_enabled);		
+{
+	return omnibook_muteled_set(io_op, omnibook_muteled_enabled);
 }
 
 static struct omnibook_tbl muteled_table[] __initdata = {
-	{ XE4500, COMMAND(KBC,OMNIBOOK_KBC_CMD_MUTELED_ON,OMNIBOOK_KBC_CMD_MUTELED_OFF)},
-	{ 0,}
+	{XE4500, COMMAND(KBC, OMNIBOOK_KBC_CMD_MUTELED_ON, OMNIBOOK_KBC_CMD_MUTELED_OFF)},
+	{0,}
 };
 
 static struct omnibook_feature __declared_feature muteled_driver = {
-	 .name = "muteled",
-	 .enabled = 1,
-	 .read = omnibook_muteled_read,
-	 .write = omnibook_muteled_write,
-	 .resume = omnibook_muteled_resume,
-	 .ectypes = XE4500,
-	 .tbl = muteled_table,
+	.name = "muteled",
+	.enabled = 1,
+	.read = omnibook_muteled_read,
+	.write = omnibook_muteled_write,
+	.resume = omnibook_muteled_resume,
+	.ectypes = XE4500,
+	.tbl = muteled_table,
 };
 
 module_param_named(muteled, muteled_driver.enabled, int, S_IRUGO);
 MODULE_PARM_DESC(muteled, "Use 0 to disable, 1 to enable 'Audo Mute' LED control");
-

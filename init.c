@@ -79,12 +79,11 @@ static int compat_omnibook_resume(struct device *dev, u32 level)
 
 #endif
 
-
 static struct proc_dir_entry *omnibook_proc_root = NULL;
 
 enum omnibook_ectype_t omnibook_ectype = NONE;
 
-static char* laptop_model __initdata;
+static char *laptop_model __initdata;
 
 static int omnibook_userset = 0;
 
@@ -104,15 +103,15 @@ static struct platform_driver omnibook_driver = {
 #endif
 	.driver = {
 		   .name = OMNIBOOK_MODULE_NAME,
-		   .owner  = THIS_MODULE,
+		   .owner = THIS_MODULE,
 		   },
 };
 
-#else /* 2.6.15 */
+#else				/* 2.6.15 */
 
 static struct device_driver omnibook_driver = {
-	.name   = OMNIBOOK_MODULE_NAME,
-	.bus    = &platform_bus_type,
+	.name = OMNIBOOK_MODULE_NAME,
+	.bus = &platform_bus_type,
 	.probe = compat_omnibook_probe,
 	.remove = compat_omnibook_remove,
 #ifdef CONFIG_PM
@@ -120,13 +119,12 @@ static struct device_driver omnibook_driver = {
 	.resume = compat_omnibook_resume,
 #endif
 };
- 
+
 static struct platform_device omnibook_device = {
-	.name   = OMNIBOOK_MODULE_NAME,
+	.name = OMNIBOOK_MODULE_NAME,
 };
 
-#endif /* 2.6.15 */
-
+#endif				/* 2.6.15 */
 
 /* Linked list of all enabled features */
 static struct omnibook_feature *omnibook_available_feature;
@@ -137,19 +135,19 @@ extern struct omnibook_feature _end_features_driver[];
 
 static int __init dmi_matched(struct dmi_system_id *dmi)
 {
-	omnibook_ectype = (int) dmi->driver_data;
+	omnibook_ectype = (int)dmi->driver_data;
 	if (dmi->ident)
-		laptop_model = (char*) dmi->ident;
+		laptop_model = (char *)dmi->ident;
 	else
 		laptop_model = dmi_get_system_info(DMI_PRODUCT_VERSION);
-	return 1; /* return non zero means we stop the parsing selecting this entry*/
+	return 1;		/* return non zero means we stop the parsing selecting this entry */
 }
 
 /* 
  * Callback function for procfs file reading: the name of the file read was stored in *data 
  */
-static int procfile_read_dispatch(char *page, char **start, off_t off,
-				  int count, int *eof, void *data)
+static int procfile_read_dispatch(char *page, char **start, off_t off, int count, int *eof,
+				  void *data)
 {
 	struct omnibook_feature *feature = (struct omnibook_feature *)data;
 	int len;
@@ -157,7 +155,7 @@ static int procfile_read_dispatch(char *page, char **start, off_t off,
 	if (!feature || !feature->read)
 		return -EINVAL;
 
-	len = feature->read(page,feature->io_op);
+	len = feature->read(page, feature->io_op);
 	if (len < 0)
 		return len;
 
@@ -176,8 +174,7 @@ static int procfile_read_dispatch(char *page, char **start, off_t off,
 /* 
  * Callback function for procfs file writing: the name of the file written was stored in *data 
  */
-static int procfile_write_dispatch(struct file *file,
-				   const char __user * userbuf,
+static int procfile_write_dispatch(struct file *file, const char __user * userbuf,
 				   unsigned long count, void *data)
 {
 	struct omnibook_feature *feature = (struct omnibook_feature *)data;
@@ -199,7 +196,7 @@ static int procfile_write_dispatch(struct file *file,
 	/* Make sure the string is \0 terminated */
 	kernbuf[count] = '\0';
 
-	retval = feature->write(kernbuf,feature->io_op);
+	retval = feature->write(kernbuf, feature->io_op);
 	if (retval == 0)
 		retval = count;
 
@@ -213,25 +210,25 @@ static int procfile_write_dispatch(struct file *file,
  * Also make corresponding backend initialisation if necessary, and skip
  * to the next entry if it fails.
  */
-static struct omnibook_operation * omnibook_backend_match(struct omnibook_tbl *tbl)
+static struct omnibook_operation *omnibook_backend_match(struct omnibook_tbl *tbl)
 {
 	int i;
 	struct omnibook_operation *matched = NULL;
 
-	for (i = 0; tbl[i].ectypes ; i++) {
+	for (i = 0; tbl[i].ectypes; i++) {
 		if (omnibook_ectype & tbl[i].ectypes) {
-			if(tbl[i].io_op.backend->init && tbl[i].io_op.backend->init(&tbl[i].io_op)) {
-				dprintk("Backend %s init failed, skipping entry.\n", tbl[i].io_op.backend->name);
+			if (tbl[i].io_op.backend->init && tbl[i].io_op.backend->init(&tbl[i].io_op)) {
+				dprintk("Backend %s init failed, skipping entry.\n",
+					tbl[i].io_op.backend->name);
 				continue;
-			} 
+			}
 			matched = &tbl[i].io_op;
-			dprintk("Returning table entry n°%i.\n",i);
+			dprintk("Returning table entry n°%i.\n", i);
 			break;
 		}
 	}
 	return matched;
 }
-
 
 /* 
  * Initialise a feature and add it to the linked list of active features
@@ -250,27 +247,25 @@ static int __init omnibook_init(struct omnibook_feature *feature)
  * Select appropriate backend for feature operations
  * We copy the io_op field so the tbl can be initdata
  */
-	if(feature->tbl) {
-		dprintk("begin table match of %s feature.\n",feature->name);
+	if (feature->tbl) {
+		dprintk("Begin table match of %s feature.\n", feature->name);
 		op = omnibook_backend_match(feature->tbl);
-		if(!op) {
-			dprintk("match failed: disabling %s.\n",feature->name);
+		if (!op) {
+			dprintk("Match failed: disabling %s.\n", feature->name);
 			return -ENODEV;
 		}
-		feature->io_op = kmalloc(sizeof(struct omnibook_operation),GFP_KERNEL);
+		feature->io_op = kmalloc(sizeof(struct omnibook_operation), GFP_KERNEL);
 		if (!feature->io_op)
 			return -ENOMEM;
 		memcpy(feature->io_op, op, sizeof(struct omnibook_operation));
 	} else
-		dprintk("%s feature has no backend table, io_op not initialized.\n",feature->name);
+		dprintk("%s feature has no backend table, io_op not initialized.\n", feature->name);
 
 /*
  * Specific feature init code
  */
 	if (feature->init && (retval = feature->init(feature->io_op))) {
-		printk(O_ERR "Init function of %s failed with error %i.\n",
-			feature->name,
-			retval);
+		printk(O_ERR "Init function of %s failed with error %i.\n", feature->name, retval);
 		goto err;
 	}
 /*
@@ -287,15 +282,12 @@ static int __init omnibook_init(struct omnibook_feature *feature)
 		 * FIXME: Special case for apmemu (not under /proc/omnibook)
 		 */
 		if (feature->proc_entry)
-			proc_entry = create_proc_entry(feature->proc_entry, pmode,
-						      NULL);
+			proc_entry = create_proc_entry(feature->proc_entry, pmode, NULL);
 		else
-			proc_entry = create_proc_entry(feature->name, pmode,
-					       omnibook_proc_root);
+			proc_entry = create_proc_entry(feature->name, pmode, omnibook_proc_root);
 
 		if (!proc_entry) {
-			printk(O_ERR
-			       "Unable to create proc entry %s\n",feature->name);
+			printk(O_ERR "Unable to create proc entry %s\n", feature->name);
 			if (feature->exit)
 				feature->exit(feature->io_op);
 			retval = -ENOENT;
@@ -309,13 +301,12 @@ static int __init omnibook_init(struct omnibook_feature *feature)
 	}
 	list_add_tail(&feature->list, &omnibook_available_feature->list);
 	return 0;
-err:
+      err:
 	if (feature->io_op && feature->io_op->backend->exit)
 		feature->io_op->backend->exit(feature->io_op);
 	kfree(feature->io_op);
 	return retval;
 }
-
 
 /* 
  * Callback function for driver registering :
@@ -327,24 +318,22 @@ static int __init omnibook_probe(struct platform_device *dev)
 	struct list_head *p;
 	struct omnibook_feature *feature;
 
-	
-	omnibook_available_feature =
-	    kzalloc(sizeof(struct omnibook_feature), GFP_KERNEL);
+	omnibook_available_feature = kzalloc(sizeof(struct omnibook_feature), GFP_KERNEL);
 	if (!omnibook_available_feature)
 		return -ENOMEM;
 	INIT_LIST_HEAD(&omnibook_available_feature->list);
-	
-	for (i=0; i < _end_features_driver - _start_features_driver; i++ ) {
-		
+
+	for (i = 0; i < _end_features_driver - _start_features_driver; i++) {
+
 		feature = &_start_features_driver[i];
 
-		if (!feature->enabled)	
+		if (!feature->enabled)
 			continue;
-		
+
 		if ((omnibook_ectype & feature->ectypes) || (!feature->ectypes))
 			omnibook_init(feature);
 	}
-	
+
 	printk(O_INFO "Enabled features:");
 	list_for_each(p, &omnibook_available_feature->list) {
 		feature = list_entry(p, struct omnibook_feature, list);
@@ -352,7 +341,7 @@ static int __init omnibook_probe(struct platform_device *dev)
 			printk(" %s", feature->name);
 	}
 	printk(".\n");
-	
+
 	return 0;
 }
 
@@ -368,8 +357,8 @@ static int __exit omnibook_remove(struct platform_device *dev)
 		feature = list_entry(p, struct omnibook_feature, list);
 		list_del(p);
 		/* Feature specific cleanup */
-                if (feature->exit)
-                        feature->exit(feature->io_op);
+		if (feature->exit)
+			feature->exit(feature->io_op);
 		/* Generic backend cleanup */
 		if (feature->io_op && feature->io_op->backend->exit)
 			feature->io_op->backend->exit(feature->io_op);
@@ -380,7 +369,7 @@ static int __exit omnibook_remove(struct platform_device *dev)
 		kfree(feature->io_op);
 	}
 	kfree(omnibook_available_feature);
-	
+
 	return 0;
 }
 
@@ -398,9 +387,7 @@ static int omnibook_suspend(struct platform_device *dev, pm_message_t state)
 		if (feature->suspend) {
 			retval = feature->suspend(feature->io_op);
 			if (!retval)
-				printk(O_ERR
-				        "Unable to suspend the %s feature",
-				        feature->name);
+				printk(O_ERR "Unable to suspend the %s feature", feature->name);
 		}
 	}
 	return 0;
@@ -420,9 +407,7 @@ static int omnibook_resume(struct platform_device *dev)
 		if (feature->resume) {
 			retval = feature->resume(feature->io_op);
 			if (!retval)
-				printk(O_ERR
-				       "Unable to resume the %s feature",
-				       feature->name);
+				printk(O_ERR "Unable to resume the %s feature", feature->name);
 		}
 	}
 	return 0;
@@ -437,18 +422,19 @@ static int __init set_ectype_param(const char *val, struct kernel_param *kp)
 	char *endp;
 	int value;
 
-	if (!val) return -EINVAL;
-	
-	value = simple_strtol(val, &endp, 10);
-	if (endp == val) /* No match */
+	if (!val)
 		return -EINVAL;
-	omnibook_ectype = 1 << ( value - 1);
+
+	value = simple_strtol(val, &endp, 10);
+	if (endp == val)	/* No match */
+		return -EINVAL;
+	omnibook_ectype = 1 << (value - 1);
 	return 0;
 }
 
 static int get_ectype_param(char *buffer, struct kernel_param *kp)
 {
-	return sprintf(buffer,"%i", ffs(omnibook_ectype));
+	return sprintf(buffer, "%i", ffs(omnibook_ectype));
 }
 
 static int __init omnibook_module_init(void)
@@ -456,11 +442,10 @@ static int __init omnibook_module_init(void)
 	int retval;
 
 	printk(O_INFO "Driver version %s.\n", OMNIBOOK_MODULE_VERSION);
-	    
+
 	if (omnibook_ectype != NONE)
-		printk(O_WARN
-		       "Forced load with EC type %i.\n", ffs(omnibook_ectype));
-	else if ( dmi_check_system(omnibook_ids) ) 
+		printk(O_WARN "Forced load with EC type %i.\n", ffs(omnibook_ectype));
+	else if (dmi_check_system(omnibook_ids))
 		printk(O_INFO "%s detected.\n", laptop_model);
 	else
 		printk(O_INFO "Unknown model.\n");
@@ -478,33 +463,33 @@ static int __init omnibook_module_init(void)
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,15))
 
 	retval = platform_driver_register(&omnibook_driver);
-	if (retval < 0) return retval;
+	if (retval < 0)
+		return retval;
 
 	omnibook_device = platform_device_alloc(OMNIBOOK_MODULE_NAME, -1);
 	if (!omnibook_device) {
 		platform_driver_unregister(&omnibook_driver);
 		return -ENOMEM;
 	}
-	
+
 	retval = platform_device_add(omnibook_device);
 	if (retval) {
 		platform_device_put(omnibook_device);
 		platform_driver_unregister(&omnibook_driver);
 		return retval;
 	}
-
-#else /* 2.6.15 */
+#else				/* 2.6.15 */
 
 	retval = driver_register(&omnibook_driver);
-	if (retval < 0) return retval;
-        
-        retval = platform_device_register(&omnibook_device);
-        
-        if (retval) {
-        	driver_unregister(&omnibook_driver);	
+	if (retval < 0)
+		return retval;
+
+	retval = platform_device_register(&omnibook_device);
+
+	if (retval) {
+		driver_unregister(&omnibook_driver);
 		return retval;
 	}
-
 #endif
 	return 0;
 }
@@ -533,12 +518,12 @@ module_init(omnibook_module_init);
 module_exit(omnibook_module_cleanup);
 
 MODULE_AUTHOR("Soós Péter, Mathieu Bérard");
-MODULE_DESCRIPTION("Kernel interface for HP OmniBook, HP Pavilion, Toshiba Satellite, Acer Aspire and Compal ACL00 laptops");
+MODULE_DESCRIPTION
+    ("Kernel interface for HP OmniBook, HP Pavilion, Toshiba Satellite, Acer Aspire and Compal ACL00 laptops");
 MODULE_LICENSE("GPL");
 module_param_call(ectype, set_ectype_param, get_ectype_param, NULL, S_IRUGO);
 module_param_named(userset, omnibook_userset, int, S_IRUGO);
 MODULE_PARM_DESC(ectype, "Type of embedded controller firmware");
 MODULE_PARM_DESC(userset, "Use 0 to disable, 1 to enable users to set parameters");
-
 
 /* End of file */

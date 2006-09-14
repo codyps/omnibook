@@ -19,36 +19,33 @@
 
 #include "ec.h"
 
-static int omnibook_dock_read(char *buffer,struct omnibook_operation *io_op)
+static int omnibook_dock_read(char *buffer, struct omnibook_operation *io_op)
 {
 	int len = 0;
 	u8 dock;
 	int retval;
-	
-	if ((retval = io_op->backend->byte_read(io_op,&dock)))
+
+	if ((retval = io_op->backend->byte_read(io_op, &dock)))
 		return retval;
-	
-	len +=
-	    sprintf(buffer + len, "Laptop is %s\n",
-		    (dock) ? "docked" : "undocked");
+
+	len += sprintf(buffer + len, "Laptop is %s\n", (dock) ? "docked" : "undocked");
 
 	return len;
 }
 
 static struct omnibook_tbl dock_table[] __initdata = {
-	{ XE3GF,		     SIMPLE_BYTE(EC,XE3GF_CSPR,XE3GF_CSPR_MASK)},
-	{ OB500|OB510|OB6000|OB6100, SIMPLE_BYTE(EC,OB500_STA1,OB500_DCKS_MASK)},
-	{ OB4150,		     SIMPLE_BYTE(EC,OB4150_DCID,0)},	
-	{ 0,}
+	{XE3GF, SIMPLE_BYTE(EC, XE3GF_CSPR, XE3GF_CSPR_MASK)},
+	{OB500 | OB510 | OB6000 | OB6100, SIMPLE_BYTE(EC, OB500_STA1, OB500_DCKS_MASK)},
+	{OB4150, SIMPLE_BYTE(EC, OB4150_DCID, 0)},
+	{0,}
 };
 
-
 static struct omnibook_feature __declared_feature dock_driver = {
-	 .name = "dock",
-	 .enabled = 0,
-	 .read = omnibook_dock_read,
-	 .ectypes = XE3GF|OB500|OB510|OB6000|OB6100|OB4150,
-	 .tbl = dock_table,
+	.name = "dock",
+	.enabled = 0,
+	.read = omnibook_dock_read,
+	.ectypes = XE3GF | OB500 | OB510 | OB6000 | OB6100 | OB4150,
+	.tbl = dock_table,
 };
 
 module_param_named(dock, dock_driver.enabled, int, S_IRUGO);

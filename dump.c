@@ -24,19 +24,20 @@
 
 static u8 ecdump_regs[256];
 
-static int ecdump_read(char *buffer,struct omnibook_operation *io_op)
+static int ecdump_read(char *buffer, struct omnibook_operation *io_op)
 {
 	int len = 0;
 	int i, j;
 	u8 v;
 
-	len += sprintf(buffer + len, "EC      "
-		       " +00 +01 +02 +03 +04 +05 +06 +07"
-		       " +08 +09 +0a +0b +0c +0d +0e +0f\n");
+	len +=
+	    sprintf(buffer + len,
+		    "EC      " " +00 +01 +02 +03 +04 +05 +06 +07"
+		    " +08 +09 +0a +0b +0c +0d +0e +0f\n");
 	for (i = 0; i < 255; i += 16) {
 		len += sprintf(buffer + len, "EC 0x%02x:", i);
 		for (j = 0; j < 16; j++) {
-			if (legacy_ec_read(i + j , &v))
+			if (legacy_ec_read(i + j, &v))
 				break;
 			if (v != ecdump_regs[i + j])
 				len += sprintf(buffer + len, " *%02x", v);
@@ -51,15 +52,17 @@ static int ecdump_read(char *buffer,struct omnibook_operation *io_op)
 
 	/* These are way too dangerous to advertise openly... */
 #if 0
-	len += sprintf(buffer + len, "commands:\t0x<offset> 0x<value>"
-		       " (<offset> is 00-ff, <value> is 00-ff)\n");
-	len += sprintf(buffer + len, "commands:\t0x<offset> <value>  "
-		       " (<offset> is 00-ff, <value> is 0-255)\n");
+	len +=
+	    sprintf(buffer + len,
+		    "commands:\t0x<offset> 0x<value>" " (<offset> is 00-ff, <value> is 00-ff)\n");
+	len +=
+	    sprintf(buffer + len,
+		    "commands:\t0x<offset> <value>  " " (<offset> is 00-ff, <value> is 0-255)\n");
 #endif
 	return len;
 }
 
-static int ecdump_write(char *buffer,struct omnibook_operation *io_op)
+static int ecdump_write(char *buffer, struct omnibook_operation *io_op)
 {
 
 	int i, v;
@@ -80,13 +83,12 @@ static int ecdump_write(char *buffer,struct omnibook_operation *io_op)
 }
 
 static struct omnibook_feature __declared_feature dump_driver = {
-	 .name = "dump",
-	 .enabled = 0,
-	 .read = ecdump_read,
-	 .write = ecdump_write,
+	.name = "dump",
+	.enabled = 0,
+	.read = ecdump_read,
+	.write = ecdump_write,
 };
 
 module_param_named(dump, dump_driver.enabled, int, S_IRUGO);
 MODULE_PARM_DESC(dump, "Use 0 to disable, 1 to enable embedded controller register dump support");
 /* End of file */
-

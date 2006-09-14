@@ -48,12 +48,12 @@ static int omnibook_get_backlight(struct backlight_device *bd)
 	int retval = 0;
 	struct omnibook_operation *io_op;
 	u8 brgt;
-	
+
 	io_op = class_get_devdata(&bd->class_dev);
 	retval = io_op->backend->byte_read(io_op, &brgt);
 	if (!retval)
 		retval = brgt;
-	
+
 	return retval;
 }
 
@@ -67,21 +67,21 @@ static int omnibook_set_backlight(struct backlight_device *bd)
 }
 #endif
 
-static int omnibook_brightness_read(char *buffer,struct omnibook_operation *io_op)
+static int omnibook_brightness_read(char *buffer, struct omnibook_operation *io_op)
 {
 	int len = 0;
 	u8 brgt;
 
 	io_op->backend->byte_read(io_op, &brgt);
 
-	len += sprintf(buffer + len, "LCD brightness: %2d (max value: %d)\n",
-			brgt,
-			omnibook_max_brightness);
+	len +=
+	    sprintf(buffer + len, "LCD brightness: %2d (max value: %d)\n", brgt,
+		    omnibook_max_brightness);
 
 	return len;
 }
 
-static int omnibook_brightness_write(char *buffer,struct omnibook_operation *io_op)
+static int omnibook_brightness_write(char *buffer, struct omnibook_operation *io_op)
 {
 	int brgt = 0;
 	char *endp;
@@ -112,18 +112,21 @@ static int __init omnibook_brightness_init(struct omnibook_operation *io_op)
 	 * TSM40
 	 * TSA105
 	 */
-	if (omnibook_ectype & (TSM30X|TSM40|TSA105) )
+	if (omnibook_ectype & (TSM30X | TSM40 | TSA105))
 		omnibook_max_brightness = 7;
 	else {
 		omnibook_max_brightness = 10;
-		printk(O_WARN "Assuming that LCD brightness is between 0 and %i,\n", omnibook_max_brightness);
-		printk(O_WARN "please contact http://sourceforge.net/projects/omnibook to confirm.\n");
+		printk(O_WARN "Assuming that LCD brightness is between 0 and %i,\n",
+		       omnibook_max_brightness);
+		printk(O_WARN
+		       "please contact http://sourceforge.net/projects/omnibook to confirm.\n");
 	}
 
 #ifdef CONFIG_OMNIBOOK_BACKLIGHT
+	io_op->backend->byte_read(io_op, (u8*) &omnibookbl_data.brightness);
 	omnibookbl_data.max_brightness = omnibook_max_brightness;
-	    omnibook_backlight_device =
-	    backlight_device_register(OMNIBOOK_MODULE_NAME, (void *) io_op, &omnibookbl_data);
+	omnibook_backlight_device =
+	    backlight_device_register(OMNIBOOK_MODULE_NAME, (void *)io_op, &omnibookbl_data);
 	if (IS_ERR(omnibook_backlight_device)) {
 		printk(O_ERR "Unable to register as backlight device.\n");
 		return -ENODEV;
@@ -140,24 +143,24 @@ static void __exit omnibook_brightness_cleanup(struct omnibook_operation *io_op)
 }
 
 static struct omnibook_tbl lcd_table[] __initdata = {
-	{ TSM30X,		{CDI,TSM70_LCD_READ,TSM70_LCD_WRITE,0,0,0}},
-	{ TSM40,		{SMI,SMI_GET_LCD_BRIGHTNESS,SMI_SET_LCD_BRIGHTNESS,0,0,0}},
-	{ XE3GF|TSP10|TSM30X,	SIMPLE_BYTE(EC,XE3GF_BRTS,XE3GF_BRTS_MASK)},
-	{ XE3GC,		SIMPLE_BYTE(EC,XE3GC_BTVL,XE3GC_BTVL_MASK)},
-	{ AMILOD,		SIMPLE_BYTE(EC,AMILOD_CBRG,XE3GC_BTVL_MASK)},
-	{ TSA105,		SIMPLE_BYTE(EC,A105_BNDT,A105_BNDT_MASK)},
-	{ 0,}
+	{TSM30X, {CDI, TSM70_LCD_READ, TSM70_LCD_WRITE, 0, 0, 0}},
+	{TSM40, {SMI, SMI_GET_LCD_BRIGHTNESS, SMI_SET_LCD_BRIGHTNESS, 0, 0, 0}},
+	{XE3GF | TSP10 | TSM30X, SIMPLE_BYTE(EC, XE3GF_BRTS, XE3GF_BRTS_MASK)},
+	{XE3GC, SIMPLE_BYTE(EC, XE3GC_BTVL, XE3GC_BTVL_MASK)},
+	{AMILOD, SIMPLE_BYTE(EC, AMILOD_CBRG, XE3GC_BTVL_MASK)},
+	{TSA105, SIMPLE_BYTE(EC, A105_BNDT, A105_BNDT_MASK)},
+	{0,}
 };
 
 static struct omnibook_feature __declared_feature lcd_driver = {
-	 .name = "lcd",
-	 .enabled = 1,
-	 .read = omnibook_brightness_read,
-	 .write = omnibook_brightness_write,
-	 .init = omnibook_brightness_init,
-	 .exit = omnibook_brightness_cleanup,
-	 .ectypes = XE3GF|XE3GC|AMILOD|TSP10|TSM30X|TSM40|TSA105,
-	 .tbl = lcd_table,
+	.name = "lcd",
+	.enabled = 1,
+	.read = omnibook_brightness_read,
+	.write = omnibook_brightness_write,
+	.init = omnibook_brightness_init,
+	.exit = omnibook_brightness_cleanup,
+	.ectypes = XE3GF | XE3GC | AMILOD | TSP10 | TSM30X | TSM40 | TSA105,
+	.tbl = lcd_table,
 };
 
 module_param_named(lcd, lcd_driver.enabled, int, S_IRUGO);

@@ -46,7 +46,6 @@ static int omnibook_touchpad_resume(struct omnibook_operation *io_op)
 static int omnibook_touchpad_read(char *buffer, struct omnibook_operation *io_op)
 {
 	int len = 0;
-	
 
 	len +=
 	    sprintf(buffer + len, "Last touchpad action was an %s command.\n",
@@ -59,9 +58,9 @@ static int omnibook_touchpad_write(char *buffer, struct omnibook_operation *io_o
 {
 	int cmd;
 
-	if ( *buffer == '0' || *buffer == '1') {
+	if (*buffer == '0' || *buffer == '1') {
 		cmd = *buffer - '0';
-		if(!omnibook_touchpad_set(io_op, cmd)) {
+		if (!omnibook_touchpad_set(io_op, cmd)) {
 			omnibook_touchpad_enabled = cmd;
 			printk(O_INFO "%sabling touchpad.\n", cmd ? "En" : "Dis");
 		}
@@ -76,25 +75,26 @@ static int omnibook_touchpad_write(char *buffer, struct omnibook_operation *io_o
  */
 static void __exit omnibook_touchpad_cleanup(struct omnibook_operation *io_op)
 {
-	omnibook_touchpad_set(io_op,1);
+	omnibook_touchpad_set(io_op, 1);
 	printk(O_INFO "Enabling touchpad.\n");
 }
 
 static struct omnibook_tbl touchpad_table[] __initdata = {
-	{ XE3GF|XE3GC|TSP10, COMMAND(KBC,OMNIBOOK_KBC_CMD_TOUCHPAD_ENABLE,OMNIBOOK_KBC_CMD_TOUCHPAD_DISABLE)},
-	{ TSM30X, {CDI, 0, TSM70_FN_INDEX, 0, TSM70_TOUCHPAD_ON, TSM70_TOUCHPAD_OFF}},
-	{ 0,}
+	{XE3GF | XE3GC | TSP10,
+	 COMMAND(KBC, OMNIBOOK_KBC_CMD_TOUCHPAD_ENABLE, OMNIBOOK_KBC_CMD_TOUCHPAD_DISABLE)},
+	{TSM30X, {CDI, 0, TSM70_FN_INDEX, 0, TSM70_TOUCHPAD_ON, TSM70_TOUCHPAD_OFF}},
+	{0,}
 };
 
 static struct omnibook_feature __declared_feature touchpad_driver = {
-	 .name = "touchpad",
-	 .enabled = 1,
-	 .read = omnibook_touchpad_read,
-	 .write = omnibook_touchpad_write,
-	 .exit = omnibook_touchpad_cleanup,
-	 .resume = omnibook_touchpad_resume,
-	 .ectypes = XE3GF|XE3GC|TSP10|TSM30X,
-	 .tbl = touchpad_table,
+	.name = "touchpad",
+	.enabled = 1,
+	.read = omnibook_touchpad_read,
+	.write = omnibook_touchpad_write,
+	.exit = omnibook_touchpad_cleanup,
+	.resume = omnibook_touchpad_resume,
+	.ectypes = XE3GF | XE3GC | TSP10 | TSM30X,
+	.tbl = touchpad_table,
 };
 
 module_param_named(touchpad, touchpad_driver.enabled, int, S_IRUGO);

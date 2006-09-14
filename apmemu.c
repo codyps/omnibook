@@ -72,9 +72,9 @@ static int omnibook_apmemu_read(char *buffer, struct omnibook_operation *io_op)
 	int retval;
 	int len = 0;
 	int ac;
-	
+
 	struct omnibook_battery_state battstat;
-	
+
 	struct apm_features {
 		char *drvver;
 		char *apmver;
@@ -125,16 +125,8 @@ static int omnibook_apmemu_read(char *buffer, struct omnibook_operation *io_op)
 	}
 
 	len += sprintf(buffer + len, "%s %s 0x%02x 0x%02x 0x%02x 0x%02x %d%% %d %s\n",
-			apm.drvver,
-			apm.apmver,
-			apm.apmflags,
-			apm.ac,
-			apm.battstat,
-			apm.battflags,
-			apm.gauge,
-			apm.time,
-			apm.units
-	);
+		       apm.drvver, apm.apmver, apm.apmflags, apm.ac, apm.battstat, apm.battflags,
+		       apm.gauge, apm.time, apm.units);
 
 	return len;
 }
@@ -151,17 +143,16 @@ static int __init omnibook_apmemu_init(struct omnibook_operation *io_op)
 }
 
 static struct omnibook_feature __declared_feature apmemu_driver = {
-	 .name = "apmemu",
-	 .proc_entry = "apm", /* create /proc/apm */
-         .enabled = 1,
-	 .read = omnibook_apmemu_read,
-	 .init = omnibook_apmemu_init,
-	 .ectypes = XE3GF|XE3GC|TSP10,
+	.name = "apmemu",
+	.proc_entry = "apm",	/* create /proc/apm */
+	.enabled = 0,		/* This feature is broken */
+	.read = omnibook_apmemu_read,
+	.init = omnibook_apmemu_init,
+	.ectypes = XE3GF | XE3GC | TSP10,
 };
-
 
 module_param_named(apmemu, apmemu_driver.enabled, int, S_IRUGO);
 MODULE_PARM_DESC(apmemu, "Use 0 to disable, 1 to enable /proc/apm emulation");
 
-#endif /* CONFIG_OMNIBOOK_LEGACY */
+#endif				/* CONFIG_OMNIBOOK_LEGACY */
 /* End of file */

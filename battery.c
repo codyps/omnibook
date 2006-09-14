@@ -41,13 +41,13 @@ static int omnibook_battery_present(int num)
 	int i;
 	u8 bat;
 	u8 mask = 0;
-	
+
 	/*
 	 * XE3GF
 	 * TSP10
 	 * TSM30X
 	 */
-	if (omnibook_ectype & (XE3GF|TSP10|TSM30X) ) {
+	if (omnibook_ectype & (XE3GF | TSP10 | TSM30X)) {
 
 		if (num >= 2)
 			return -EINVAL;
@@ -56,11 +56,11 @@ static int omnibook_battery_present(int num)
 		mask = XE3GF_BAL0_MASK;
 		for (i = 0; i < num; i++)
 			mask = mask << 1;
-	/*
-	 * XE3GC
-	 * AMILOD
-	 */
-	} else if (omnibook_ectype & (XE3GC|AMILOD) ) {
+		/*
+		 * XE3GC
+		 * AMILOD
+		 */
+	} else if (omnibook_ectype & (XE3GC | AMILOD)) {
 		if (num >= 2)
 			return -EINVAL;
 		if ((retval = legacy_ec_read(XE3GC_BAT, &bat)))
@@ -82,8 +82,7 @@ static int omnibook_battery_present(int num)
  *    1 - Battery is not present
  *    2 - Not supported
  */
-static int omnibook_get_battery_info(int num,
-				     struct omnibook_battery_info *battinfo)
+static int omnibook_get_battery_info(int num, struct omnibook_battery_info *battinfo)
 {
 	int retval;
 	u32 offset;
@@ -93,93 +92,73 @@ static int omnibook_get_battery_info(int num,
 	 * TSP10
 	 * TSM30X
 	 */
-	if (omnibook_ectype & (XE3GF|TSP10|TSM30X) ) {
+	if (omnibook_ectype & (XE3GF | TSP10 | TSM30X)) {
 		offset = 0x10;
 		retval = omnibook_battery_present(num);
 		if (retval < 0)
 			return retval;
 		if (retval) {
 			if ((retval =
-			     legacy_ec_read(XE3GF_BTY0 + (offset * num),
-				     &(*battinfo).type)))
+			     legacy_ec_read(XE3GF_BTY0 + (offset * num), &(*battinfo).type)))
 				return retval;
-			if ((retval =
-			     ec_read16(XE3GF_BSN0 + (offset * num),
-				       &(*battinfo).sn)))
+			if ((retval = ec_read16(XE3GF_BSN0 + (offset * num), &(*battinfo).sn)))
 				return retval;
-			if ((retval =
-			     ec_read16(XE3GF_BDV0 + (offset * num),
-				       &(*battinfo).dv)))
+			if ((retval = ec_read16(XE3GF_BDV0 + (offset * num), &(*battinfo).dv)))
 				return retval;
-			if ((retval =
-			     ec_read16(XE3GF_BDC0 + (offset * num),
-				       &(*battinfo).dc)))
+			if ((retval = ec_read16(XE3GF_BDC0 + (offset * num), &(*battinfo).dc)))
 				return retval;
 
-			(*battinfo).type =
-			    ((*battinfo).type & XE3GF_BTY_MASK) ? 1 : 0;
+			(*battinfo).type = ((*battinfo).type & XE3GF_BTY_MASK) ? 1 : 0;
 		} else
 			return 1;
-	/*
-	 * XE3GC
-	 */
-	} else if (omnibook_ectype & (XE3GC) ) {
+		/*
+		 * XE3GC
+		 */
+	} else if (omnibook_ectype & (XE3GC)) {
 		offset = 0x10;
 		retval = omnibook_battery_present(num);
 		if (retval < 0)
 			return retval;
 		if (retval) {
-			if ((retval =
-			     ec_read16(XE3GC_BDV0 + (offset * num),
-				       &(*battinfo).dv)))
+			if ((retval = ec_read16(XE3GC_BDV0 + (offset * num), &(*battinfo).dv)))
+				return retval;
+			if ((retval = ec_read16(XE3GC_BDC0 + (offset * num), &(*battinfo).dc)))
 				return retval;
 			if ((retval =
-			     ec_read16(XE3GC_BDC0 + (offset * num),
-				       &(*battinfo).dc)))
-				return retval;
-			if ((retval =
-			     legacy_ec_read(XE3GC_BTY0 + (offset * num),
-				     &(*battinfo).type)))
+			     legacy_ec_read(XE3GC_BTY0 + (offset * num), &(*battinfo).type)))
 				return retval;
 
-			(*battinfo).type =
-			    ((*battinfo).type & XE3GC_BTY_MASK) ? 1 : 0;
+			(*battinfo).type = ((*battinfo).type & XE3GC_BTY_MASK) ? 1 : 0;
 			(*battinfo).sn = 0;	/* Unknown */
 		} else
 			return 1;
-	/*
-	 * AMILOD
-	 */
-	} else if (omnibook_ectype & (AMILOD) ) {
+		/*
+		 * AMILOD
+		 */
+	} else if (omnibook_ectype & (AMILOD)) {
 		offset = 0x10;
 		retval = omnibook_battery_present(num);
 		if (retval < 0)
 			return retval;
 		if (retval) {
-			if ((retval =
-			     ec_read16(AMILOD_BDV0 + (offset * num),
-				       &(*battinfo).dv)))
+			if ((retval = ec_read16(AMILOD_BDV0 + (offset * num), &(*battinfo).dv)))
+				return retval;
+			if ((retval = ec_read16(AMILOD_BDC0 + (offset * num), &(*battinfo).dc)))
 				return retval;
 			if ((retval =
-			     ec_read16(AMILOD_BDC0 + (offset * num),
-				       &(*battinfo).dc)))
-				return retval;
-			if ((retval =
-			     legacy_ec_read(AMILOD_BTY0 + (offset * num),
-				     &(*battinfo).type)))
+			     legacy_ec_read(AMILOD_BTY0 + (offset * num), &(*battinfo).type)))
 				return retval;
 
-			(*battinfo).type =
-			    ((*battinfo).type & AMILOD_BTY_MASK) ? 1 : 0;
+			(*battinfo).type = ((*battinfo).type & AMILOD_BTY_MASK) ? 1 : 0;
 			(*battinfo).sn = 0;	/* Unknown */
 		} else
 			return 1;
-	/*
-	 * FIXME
-	 * OB500
-	 * OB510
-	 */
-	} else if (omnibook_ectype & (OB500|OB510) ) {
+		/*
+		 * FIXME
+		 * OB500
+		 * OB510
+		 */
+	} else if (omnibook_ectype & (OB500 | OB510)) {
 		switch (num) {
 		case 0:
 			break;
@@ -190,12 +169,12 @@ static int omnibook_get_battery_info(int num,
 		default:
 			return -EINVAL;
 		}
-	/*
-	 * OB6000
-	 * OB6100
-	 * XE4500
-	 */
-	} else if (omnibook_ectype & (OB6000|OB6100|XE4500) ) {
+		/*
+		 * OB6000
+		 * OB6100
+		 * XE4500
+		 */
+	} else if (omnibook_ectype & (OB6000 | OB6100 | XE4500)) {
 		switch (num) {
 		case 0:
 			break;
@@ -218,8 +197,7 @@ static int omnibook_get_battery_info(int num,
  *    1 - Battery is not present
  *    2 - Not supported
  */
-int omnibook_get_battery_status(int num,
-				       struct omnibook_battery_state *battstat)
+int omnibook_get_battery_status(int num, struct omnibook_battery_state *battstat)
 {
 	int retval;
 	u8 status;
@@ -232,30 +210,22 @@ int omnibook_get_battery_status(int num,
 	 * TSP10
 	 * TSM30X
 	 */
-	if (omnibook_ectype & (XE3GF|TSP10|TSM30X) ) {
+	if (omnibook_ectype & (XE3GF | TSP10 | TSM30X)) {
 		offset = 0x10;
 		retval = omnibook_battery_present(num);
 		if (retval < 0)
 			return retval;
 		if (retval) {
-			if ((retval =
-			     legacy_ec_read(XE3GF_BST0 + (offset * num), &status)))
+			if ((retval = legacy_ec_read(XE3GF_BST0 + (offset * num), &status)))
+				return retval;
+			if ((retval = ec_read16(XE3GF_BRC0 + (offset * num), &(*battstat).rc)))
+				return retval;
+			if ((retval = ec_read16(XE3GF_BPV0 + (offset * num), &(*battstat).pv)))
+				return retval;
+			if ((retval = ec_read16(XE3GF_BFC0 + (offset * num), &(*battstat).lc)))
 				return retval;
 			if ((retval =
-			     ec_read16(XE3GF_BRC0 + (offset * num),
-				       &(*battstat).rc)))
-				return retval;
-			if ((retval =
-			     ec_read16(XE3GF_BPV0 + (offset * num),
-				       &(*battstat).pv)))
-				return retval;
-			if ((retval =
-			     ec_read16(XE3GF_BFC0 + (offset * num),
-				       &(*battstat).lc)))
-				return retval;
-			if ((retval =
-			     legacy_ec_read(XE3GF_GAU0 + (offset * num),
-				     &(*battstat).gauge)))
+			     legacy_ec_read(XE3GF_GAU0 + (offset * num), &(*battstat).gauge)))
 				return retval;
 
 			if (status & XE3GF_BST_MASK_CRT)
@@ -263,38 +233,30 @@ int omnibook_get_battery_status(int num,
 			else if (status & XE3GF_BST_MASK_CHR)
 				(*battstat).status = OMNIBOOK_BATTSTAT_CHARGING;
 			else if (status & XE3GF_BST_MASK_DSC)
-				(*battstat).status =
-				    OMNIBOOK_BATTSTAT_DISCHARGING;
-			else if (status &
-				 (XE3GF_BST_MASK_CHR | XE3GF_BST_MASK_DSC))
+				(*battstat).status = OMNIBOOK_BATTSTAT_DISCHARGING;
+			else if (status & (XE3GF_BST_MASK_CHR | XE3GF_BST_MASK_DSC))
 				(*battstat).status = OMNIBOOK_BATTSTAT_UNKNOWN;
 			else {
 				(*battstat).status = OMNIBOOK_BATTSTAT_CHARGED;
 			}
 		} else
 			return 1;
-	/*
-	 * XE3GC
-	 */
-	} else if (omnibook_ectype & (XE3GC) ) {
+		/*
+		 * XE3GC
+		 */
+	} else if (omnibook_ectype & (XE3GC)) {
 		offset = 0x10;
 		retval = omnibook_battery_present(num);
 		if (retval < 0)
 			return retval;
 		if (retval) {
-			if ((retval =
-			     legacy_ec_read(XE3GC_BST0 + (offset * num), &status)))
+			if ((retval = legacy_ec_read(XE3GC_BST0 + (offset * num), &status)))
 				return retval;
-			if ((retval =
-			     ec_read16(XE3GC_BRC0 + (offset * num),
-				       &(*battstat).rc)))
+			if ((retval = ec_read16(XE3GC_BRC0 + (offset * num), &(*battstat).rc)))
 				return retval;
-			if ((retval =
-			     ec_read16(XE3GC_BPV0 + (offset * num),
-				       &(*battstat).pv)))
+			if ((retval = ec_read16(XE3GC_BPV0 + (offset * num), &(*battstat).pv)))
 				return retval;
-			if ((retval =
-			     ec_read16(XE3GC_BDC0 + (offset * num), &dc)))
+			if ((retval = ec_read16(XE3GC_BDC0 + (offset * num), &dc)))
 				return retval;
 
 			if (status & XE3GC_BST_MASK_CRT)
@@ -302,10 +264,8 @@ int omnibook_get_battery_status(int num,
 			else if (status & XE3GC_BST_MASK_CHR)
 				(*battstat).status = OMNIBOOK_BATTSTAT_CHARGING;
 			else if (status & XE3GC_BST_MASK_DSC)
-				(*battstat).status =
-				    OMNIBOOK_BATTSTAT_DISCHARGING;
-			else if (status &
-				 (XE3GC_BST_MASK_CHR | XE3GC_BST_MASK_DSC))
+				(*battstat).status = OMNIBOOK_BATTSTAT_DISCHARGING;
+			else if (status & (XE3GC_BST_MASK_CHR | XE3GC_BST_MASK_DSC))
 				(*battstat).status = OMNIBOOK_BATTSTAT_UNKNOWN;
 			else {
 				(*battstat).status = OMNIBOOK_BATTSTAT_CHARGED;
@@ -315,28 +275,22 @@ int omnibook_get_battery_status(int num,
 			(*battstat).lc = 0;	/* Unknown */
 		} else
 			return 1;
-	/*
-	 * AMILOD
-	 */
-	} else if (omnibook_ectype & (AMILOD) ) {
+		/*
+		 * AMILOD
+		 */
+	} else if (omnibook_ectype & (AMILOD)) {
 		offset = 0x10;
 		retval = omnibook_battery_present(num);
 		if (retval < 0)
 			return retval;
 		if (retval) {
-			if ((retval =
-			     legacy_ec_read(AMILOD_BST0 + (offset * num), &status)))
+			if ((retval = legacy_ec_read(AMILOD_BST0 + (offset * num), &status)))
 				return retval;
-			if ((retval =
-			     ec_read16(AMILOD_BRC0 + (offset * num),
-				       &(*battstat).rc)))
+			if ((retval = ec_read16(AMILOD_BRC0 + (offset * num), &(*battstat).rc)))
 				return retval;
-			if ((retval =
-			     ec_read16(AMILOD_BPV0 + (offset * num),
-				       &(*battstat).pv)))
+			if ((retval = ec_read16(AMILOD_BPV0 + (offset * num), &(*battstat).pv)))
 				return retval;
-			if ((retval =
-			     ec_read16(AMILOD_BDC0 + (offset * num), &dc)))
+			if ((retval = ec_read16(AMILOD_BDC0 + (offset * num), &dc)))
 				return retval;
 
 			if (status & AMILOD_BST_MASK_CRT)
@@ -344,10 +298,8 @@ int omnibook_get_battery_status(int num,
 			else if (status & AMILOD_BST_MASK_CHR)
 				(*battstat).status = OMNIBOOK_BATTSTAT_CHARGING;
 			else if (status & AMILOD_BST_MASK_DSC)
-				(*battstat).status =
-				    OMNIBOOK_BATTSTAT_DISCHARGING;
-			else if (status &
-				 (AMILOD_BST_MASK_CHR | AMILOD_BST_MASK_DSC))
+				(*battstat).status = OMNIBOOK_BATTSTAT_DISCHARGING;
+			else if (status & (AMILOD_BST_MASK_CHR | AMILOD_BST_MASK_DSC))
 				(*battstat).status = OMNIBOOK_BATTSTAT_UNKNOWN;
 			else {
 				(*battstat).status = OMNIBOOK_BATTSTAT_CHARGED;
@@ -357,11 +309,11 @@ int omnibook_get_battery_status(int num,
 			(*battstat).lc = 0;	/* Unknown */
 		} else
 			return 1;
-	/*
-	 * OB500
-	 * OB510
-	 */
-	} else if (omnibook_ectype & (OB500|OB510) ) {
+		/*
+		 * OB500
+		 * OB510
+		 */
+	} else if (omnibook_ectype & (OB500 | OB510)) {
 		switch (num) {
 		case 0:
 			if ((retval = legacy_ec_read(OB500_BT1S, &status)))
@@ -401,12 +353,12 @@ int omnibook_get_battery_status(int num,
 		else {
 			(*battstat).status = OMNIBOOK_BATTSTAT_CHARGED;
 		}
-	/*
-	 * OB6000
-	 * OB6100
-	 * XE4500
-	 */
-	} else if (omnibook_ectype & (OB6000|OB6100|XE4500) ) {
+		/*
+		 * OB6000
+		 * OB6100
+		 * XE4500
+		 */
+	} else if (omnibook_ectype & (OB6000 | OB6100 | XE4500)) {
 		switch (num) {
 		case 0:
 			if ((retval = legacy_ec_read(OB500_BT1S, &status)))
@@ -444,7 +396,7 @@ int omnibook_get_battery_status(int num,
 	return 0;
 }
 
-static int omnibook_battery_read(char *buffer,struct omnibook_operation *io_op)
+static int omnibook_battery_read(char *buffer, struct omnibook_operation *io_op)
 {
 	char *statustr;
 	char *typestr;
@@ -464,18 +416,18 @@ static int omnibook_battery_read(char *buffer,struct omnibook_operation *io_op)
 	 * AMILOD
 	 * TSP10
 	 */
-	if (omnibook_ectype & (XE3GF|XE3GC|OB6000|OB6100|XE4500|AMILOD|TSP10) )
+	if (omnibook_ectype & (XE3GF | XE3GC | OB6000 | OB6100 | XE4500 | AMILOD | TSP10))
 		max = 2;
 	/*
 	 * OB500
 	 * 0B510
 	 */
-	else if (omnibook_ectype & (OB500|OB510) )
+	else if (omnibook_ectype & (OB500 | OB510))
 		max = 3;
 	/*
 	 * TSM30X
 	 */
-	else if (omnibook_ectype & (TSM30X) )
+	else if (omnibook_ectype & (TSM30X))
 		max = 1;
 
 	for (i = 0; i < max; i++) {
@@ -501,45 +453,23 @@ static int omnibook_battery_read(char *buffer,struct omnibook_operation *io_op)
 				statustr = "unknown";
 			}
 
-			len +=
-			    sprintf(buffer + len, "Battery:            %11d\n",
-				    i);
-			len +=
-			    sprintf(buffer + len, "Type:               %11s\n",
-				    typestr);
+			len += sprintf(buffer + len, "Battery:            %11d\n", i);
+			len += sprintf(buffer + len, "Type:               %11s\n", typestr);
 			if (battinfo.sn)
 				len +=
-				    sprintf(buffer + len,
-					    "Serial Number:      %11d\n",
+				    sprintf(buffer + len, "Serial Number:      %11d\n",
 					    battinfo.sn);
-			len +=
-			    sprintf(buffer + len,
-				    "Present Voltage:    %11d mV\n",
-				    battstat.pv);
-			len +=
-			    sprintf(buffer + len,
-				    "Design Voltage:     %11d mV\n",
-				    battinfo.dv);
-			len +=
-			    sprintf(buffer + len,
-				    "Remaining Capacity: %11d mAh\n",
-				    battstat.rc);
+			len += sprintf(buffer + len, "Present Voltage:    %11d mV\n", battstat.pv);
+			len += sprintf(buffer + len, "Design Voltage:     %11d mV\n", battinfo.dv);
+			len += sprintf(buffer + len, "Remaining Capacity: %11d mAh\n", battstat.rc);
 			if (battstat.lc)
 				len +=
-				    sprintf(buffer + len,
-					    "Last Full Capacity: %11d mAh\n",
+				    sprintf(buffer + len, "Last Full Capacity: %11d mAh\n",
 					    battstat.lc);
+			len += sprintf(buffer + len, "Design Capacity:    %11d mAh\n", battinfo.dc);
 			len +=
-			    sprintf(buffer + len,
-				    "Design Capacity:    %11d mAh\n",
-				    battinfo.dc);
-			len +=
-			    sprintf(buffer + len,
-				    "Gauge:              %11d %%\n",
-				    battstat.gauge);
-			len +=
-			    sprintf(buffer + len, "Status:             %11s\n",
-				    statustr);
+			    sprintf(buffer + len, "Gauge:              %11d %%\n", battstat.gauge);
+			len += sprintf(buffer + len, "Status:             %11s\n", statustr);
 			len += sprintf(buffer + len, "\n");
 		}
 	}
@@ -550,16 +480,15 @@ static int omnibook_battery_read(char *buffer,struct omnibook_operation *io_op)
 }
 
 static struct omnibook_feature __declared_feature battery_driver = {
-	 .name = "battery",
+	.name = "battery",
 #ifdef CONFIG_OMNIBOOK_LEGACY
-	 .enabled = 1,
+	.enabled = 1,
 #else
-	 .enabled = 0,
+	.enabled = 0,
 #endif
-	 .read = omnibook_battery_read,
-	 .ectypes = XE3GF|XE3GC|AMILOD|TSP10|TSM30X, /* FIXME: OB500|OB6000|OB6100|XE4500 */
+	.read = omnibook_battery_read,
+	.ectypes = XE3GF | XE3GC | AMILOD | TSP10 | TSM30X,	/* FIXME: OB500|OB6000|OB6100|XE4500 */
 };
-
 
 module_param_named(battery, battery_driver.enabled, int, S_IRUGO);
 MODULE_PARM_DESC(battery, "Use 0 to disable, 1 to enable battery status monitoring");

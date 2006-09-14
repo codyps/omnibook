@@ -14,8 +14,6 @@
  * Written by Mathieu Bérard <mathieu.berard@crans.org>, 2006
  *
  */
- 
-
 
 #include "omnibook.h"
 #include "ec.h"
@@ -46,7 +44,6 @@
 #define	CRT_CSTE	0x2
 #define	TVO_CSTE	0x4
 
-
 static char ec_dev_list[][20] = {
 	"\\_SB.PCI0.LPCB.EC0",
 	"\\_SB.PCI0.LPC0.EC0",
@@ -58,28 +55,28 @@ static char ec_dev_list[][20] = {
  */
 static int omnibook_acpi_probe(const struct omnibook_operation *io_op)
 {
-	acpi_handle dev_handle;	
+	acpi_handle dev_handle;
 	int i;
-	
-	if(acpi_disabled) {
+
+	if (acpi_disabled) {
 		printk(O_ERR "ACPI is disabled: feature unavailable.\n");
 		return -ENODEV;
 	}
 
-	for(i = 0; i < ARRAY_SIZE(ec_dev_list); i++) {
-		if(acpi_get_handle(NULL, ec_dev_list[i], &dev_handle) == AE_OK) {
+	for (i = 0; i < ARRAY_SIZE(ec_dev_list); i++) {
+		if (acpi_get_handle(NULL, ec_dev_list[i], &dev_handle) == AE_OK) {
 			acpi_backend.data = dev_handle;
 			dprintk("ACPI probing was successfull\n");
 			return 0;
 		}
 	}
 
-	printk(O_ERR "Can't get handle on ACPI EC device.\n");	
+	printk(O_ERR "Can't get handle on ACPI EC device.\n");
 	return -ENODEV;
 }
 
 /*
- * Execute an ACPI method which return either integer or nothing
+ * Execute an ACPI method which return either an integer or nothing
  * (acpi_evaluate_object wrapper)
  */
 static int omnibook_acpi_execute(char *method, const int *param, int *result)
@@ -89,31 +86,31 @@ static int omnibook_acpi_execute(char *method, const int *param, int *result)
 	struct acpi_buffer buff;
 	union acpi_object arg, out_objs[1];
 
-	if(!(acpi_backend.data)) {
-		dprintk("no handle on EC ACPI device");	
+	if (!(acpi_backend.data)) {
+		dprintk("no handle on EC ACPI device");
 		return -ENODEV;
 	}
-	
-	if(param) {
+
+	if (param) {
 		args_list.count = 1;
 		args_list.pointer = &arg;
 		arg.type = ACPI_TYPE_INTEGER;
 		arg.integer.value = *param;
 	} else
 		args_list.count = 0;
-	
+
 	buff.length = sizeof(out_objs);
-        buff.pointer = out_objs;
-	
-	if(acpi_evaluate_object(acpi_backend.data, method, &args_list, &buff) != AE_OK) {
+	buff.pointer = out_objs;
+
+	if (acpi_evaluate_object(acpi_backend.data, method, &args_list, &buff) != AE_OK) {
 		printk(O_ERR "ACPI method execution failed\n");
 		return -EIO;
 	}
-	
-	if(!result) /* We don't care what the method returned here */
+
+	if (!result)		/* We don't care what the method returned here */
 		return 0;
-	
-	if(out_objs[0].type != ACPI_TYPE_INTEGER) {
+
+	if (out_objs[0].type != ACPI_TYPE_INTEGER) {
 		printk(O_ERR "ACPI method result is not a number\n");
 		return -EINVAL;
 	}
@@ -126,18 +123,18 @@ static int omnibook_acpi_get_wireless(const struct omnibook_operation *io_op, un
 {
 	int retval = 0;
 	int raw_state;
-	
-	if ((retval = omnibook_acpi_execute(GET_WIRELESS_METHOD,0,&raw_state)))
+
+	if ((retval = omnibook_acpi_execute(GET_WIRELESS_METHOD, 0, &raw_state)))
 		return retval;
 
 	dprintk("get_wireless raw_state: %x\n", raw_state);
 
-	*state = ( raw_state & WLEX_MASK ) ? WIFI_EX : 0;
-	*state |= ( raw_state & WLAT_MASK ) ? WIFI_STA : 0;
-	*state |= ( raw_state & KLSW_MASK ) ? KILLSWITCH : 0;
-	*state |= ( raw_state & BTEX_MASK ) ? BT_EX : 0;
-	*state |= ( raw_state & BTAT_MASK ) ? BT_STA : 0;
-	
+	*state = (raw_state & WLEX_MASK) ? WIFI_EX : 0;
+	*state |= (raw_state & WLAT_MASK) ? WIFI_STA : 0;
+	*state |= (raw_state & KLSW_MASK) ? KILLSWITCH : 0;
+	*state |= (raw_state & BTEX_MASK) ? BT_EX : 0;
+	*state |= (raw_state & BTAT_MASK) ? BT_STA : 0;
+
 	return retval;
 }
 
@@ -145,15 +142,15 @@ static int omnibook_acpi_set_wireless(const struct omnibook_operation *io_op, un
 {
 	int retval = 0;
 	int raw_state;
-	
-	raw_state = state & WIFI_STA; /* bit 0 */
-	raw_state |= (state & BT_STA) << 0x1; /* bit 1 */
+
+	raw_state = state & WIFI_STA;	/* bit 0 */
+	raw_state |= (state & BT_STA) << 0x1;	/* bit 1 */
 
 	dprintk("set_wireless raw_state: %x\n", raw_state);
 
-	if ((retval = omnibook_acpi_execute(SET_WIRELESS_METHOD,&raw_state,NULL)))
+	if ((retval = omnibook_acpi_execute(SET_WIRELESS_METHOD, &raw_state, NULL)))
 		return retval;
-	
+
 	return retval;
 }
 
@@ -162,32 +159,31 @@ static int omnibook_acpi_get_display(const struct omnibook_operation *io_op, uns
 	int retval = 0;
 	int raw_state = 0;
 
-	retval = omnibook_acpi_execute(GET_DISPLAY_METHOD, 0 , &raw_state);
-	if(retval < 0)
+	retval = omnibook_acpi_execute(GET_DISPLAY_METHOD, 0, &raw_state);
+	if (retval < 0)
 		return retval;
 
 	/* Backend specific to backend-neutral conversion */
-	*state =  ( raw_state & LCD_CSTE) ? DISPLAY_LCD_ON : 0; 
-	*state |= ( raw_state & CRT_CSTE) ? DISPLAY_CRT_ON : 0;
-	*state |= ( raw_state & TVO_CSTE) ? DISPLAY_TVO_ON : 0; 
+	*state = (raw_state & LCD_CSTE) ? DISPLAY_LCD_ON : 0;
+	*state |= (raw_state & CRT_CSTE) ? DISPLAY_CRT_ON : 0;
+	*state |= (raw_state & TVO_CSTE) ? DISPLAY_TVO_ON : 0;
 
-	*state |= ( raw_state & LCD_CADL) ? DISPLAY_LCD_DET : 0;
-	*state |= ( raw_state & CRT_CADL) ? DISPLAY_CRT_DET : 0;
-	*state |= ( raw_state & TVO_CADL) ? DISPLAY_TVO_DET : 0;
-	
+	*state |= (raw_state & LCD_CADL) ? DISPLAY_LCD_DET : 0;
+	*state |= (raw_state & CRT_CADL) ? DISPLAY_CRT_DET : 0;
+	*state |= (raw_state & TVO_CADL) ? DISPLAY_TVO_DET : 0;
 
-	return DISPLAY_LCD_ON|DISPLAY_CRT_ON|DISPLAY_TVO_ON|
-		DISPLAY_LCD_DET|DISPLAY_CRT_DET|DISPLAY_TVO_DET;
+	return DISPLAY_LCD_ON | DISPLAY_CRT_ON | DISPLAY_TVO_ON | DISPLAY_LCD_DET | DISPLAY_CRT_DET
+	    | DISPLAY_TVO_DET;
 }
 
 static const unsigned int acpi_display_mode_list[] = {
 	DISPLAY_LCD_ON,
 	DISPLAY_CRT_ON,
-	DISPLAY_LCD_ON|DISPLAY_CRT_ON,
+	DISPLAY_LCD_ON | DISPLAY_CRT_ON,
 	DISPLAY_TVO_ON,
-	DISPLAY_LCD_ON|DISPLAY_TVO_ON,
-	DISPLAY_CRT_ON|DISPLAY_TVO_ON,
-	DISPLAY_LCD_ON|DISPLAY_CRT_ON|DISPLAY_TVO_ON,
+	DISPLAY_LCD_ON | DISPLAY_TVO_ON,
+	DISPLAY_CRT_ON | DISPLAY_TVO_ON,
+	DISPLAY_LCD_ON | DISPLAY_CRT_ON | DISPLAY_TVO_ON,
 };
 
 static int omnibook_acpi_set_display(const struct omnibook_operation *io_op, unsigned int state)
@@ -195,22 +191,22 @@ static int omnibook_acpi_set_display(const struct omnibook_operation *io_op, uns
 	int retval = 0;
 	int i, matched;
 
-	for(i = 0; i < ARRAY_SIZE(acpi_display_mode_list); i++) {
-		if(acpi_display_mode_list[i] == state) {
-			matched = i + 1; /* raw state is array row number + 1 */
+	for (i = 0; i < ARRAY_SIZE(acpi_display_mode_list); i++) {
+		if (acpi_display_mode_list[i] == state) {
+			matched = i + 1;	/* raw state is array row number + 1 */
 			break;
-		}	
+		}
 	}
-	if(!matched) {
+	if (!matched) {
 		printk("Display mode %x is unsupported.\n", state);
 		return -EINVAL;
 	}
-	
-	retval = omnibook_acpi_execute(SET_DISPLAY_METHOD, &matched, NULL );
-	if(retval < 0)
+
+	retval = omnibook_acpi_execute(SET_DISPLAY_METHOD, &matched, NULL);
+	if (retval < 0)
 		return retval;
 
-	return DISPLAY_LCD_ON|DISPLAY_CRT_ON|DISPLAY_TVO_ON;
+	return DISPLAY_LCD_ON | DISPLAY_CRT_ON | DISPLAY_TVO_ON;
 }
 
 struct omnibook_backend acpi_backend = {
@@ -222,7 +218,7 @@ struct omnibook_backend acpi_backend = {
 	.display_set = omnibook_acpi_set_display,
 };
 
-#else /* CONFIG_ACPI */
+#else				/* CONFIG_ACPI */
 
 /* dummy backend for non-ACPI systems */
 static int _fail_probe(const struct omnibook_operation *io_op)
@@ -231,8 +227,8 @@ static int _fail_probe(const struct omnibook_operation *io_op)
 }
 
 struct omnibook_backend acpi_backend = {
-        .name = "acpi",
-        .init = _fail_probe,
+	.name = "acpi",
+	.init = _fail_probe,
 };
 
-#endif /* CONFIG_ACPI */
+#endif				/* CONFIG_ACPI */

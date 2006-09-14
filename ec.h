@@ -34,8 +34,8 @@ struct omnibook_operation {
 		int off_mask; /* mask to set (pos value) or unset (neg value) to put feature to off state */
 };
 
-#define COMMAND(backend,data_on,data_off) .io_op = { backend, 0, 0, 0, data_on, data_off }
-#define SIMPLE_BYTE(backend,addr,mask) .io_op = { backend, addr, addr, mask, 0, 0 }
+#define COMMAND(backend,data_on,data_off) { backend, 0, 0, 0, data_on, data_off }
+#define SIMPLE_BYTE(backend,addr,mask) { backend, addr, addr, mask, 0, 0 }
 
 struct omnibook_tbl {
 	enum omnibook_ectype_t ectypes;

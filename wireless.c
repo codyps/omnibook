@@ -18,44 +18,47 @@
 #include "omnibook.h"
 #include "ec.h"
 
-static int omnibook_wifi_read(char *buffer,struct omnibook_operation *io_op)
+static int omnibook_wifi_read(char *buffer, struct omnibook_operation *io_op)
 {
 	int len = 0;
 	int retval;
 	unsigned int state;
-	
-	if((retval = io_op->backend->aerial_get(io_op,&state)))
+
+	if ((retval = io_op->backend->aerial_get(io_op, &state)))
 		return retval;
-	
-	len += sprintf(buffer + len,"Wifi adapter is %s", (state & WIFI_EX) ? "present" : "absent");
+
+	len +=
+	    sprintf(buffer + len, "Wifi adapter is %s", (state & WIFI_EX) ? "present" : "absent");
 	if (state & WIFI_EX)
-		len += sprintf(buffer + len," and %s", (state & WIFI_STA) ? "enabled" : "disabled");
-	len += sprintf(buffer + len,".\n");
-	len += sprintf(buffer + len,"Wifi Kill switch is %s.\n", (state & KILLSWITCH) ? "on" : "off");
-	
+		len +=
+		    sprintf(buffer + len, " and %s", (state & WIFI_STA) ? "enabled" : "disabled");
+	len += sprintf(buffer + len, ".\n");
+	len +=
+	    sprintf(buffer + len, "Wifi Kill switch is %s.\n", (state & KILLSWITCH) ? "on" : "off");
+
 	return len;
-	
+
 }
 
-static int omnibook_wifi_write(char *buffer,struct omnibook_operation *io_op)
+static int omnibook_wifi_write(char *buffer, struct omnibook_operation *io_op)
 {
-	int retval = 0;	
+	int retval = 0;
 	unsigned int state;
-	
-	if((retval = io_op->backend->aerial_get(io_op,&state)))
+
+	if ((retval = io_op->backend->aerial_get(io_op, &state)))
 		return retval;
-	
-	if(*buffer == '0' )
+
+	if (*buffer == '0')
 		state &= ~WIFI_STA;
-	else if (*buffer == '1' )
+	else if (*buffer == '1')
 		state |= WIFI_STA;
 	else
 		return -EINVAL;
-	
-	if((retval = io_op->backend->aerial_set(io_op, state)))
+
+	if ((retval = io_op->backend->aerial_set(io_op, state)))
 		return retval;
 
-	return retval;	
+	return retval;
 }
 
 static struct omnibook_feature wifi_feature;
@@ -64,17 +67,17 @@ static int __init omnibook_wifi_init(struct omnibook_operation *io_op)
 {
 	int retval = 0;
 	unsigned int state;
-	
+
 /*
  *  Refuse enabling/disabling a non-existent device
  */
-	
-	if((retval = io_op->backend->aerial_get(io_op, &state)))
+
+	if ((retval = io_op->backend->aerial_get(io_op, &state)))
 		return retval;
-	
-	if(!(state & WIFI_EX))
-		wifi_feature.write = NULL;	
-	
+
+	if (!(state & WIFI_EX))
+		wifi_feature.write = NULL;
+
 	return retval;
 }
 
@@ -82,9 +85,9 @@ static int __init omnibook_wifi_init(struct omnibook_operation *io_op)
  * Shared with bluetooth.c
  */
 struct omnibook_tbl wireless_table[] __initdata = {
-	{ TSM30X, {ACPI,}}, /* stubs to select backend */
-	{ TSM40,  {SMI,}}, /* stubs to select backend */
-	{ 0,}
+	{TSM30X, {ACPI,}},	/* stubs to select backend */
+	{TSM40, {SMI,}},	/* stubs to select backend */
+	{0,}
 };
 
 static struct omnibook_feature __declared_feature wifi_driver = {
@@ -93,7 +96,7 @@ static struct omnibook_feature __declared_feature wifi_driver = {
 	.read = omnibook_wifi_read,
 	.write = omnibook_wifi_write,
 	.init = omnibook_wifi_init,
-	.ectypes = TSM30X|TSM40,
+	.ectypes = TSM30X | TSM40,
 	.tbl = wireless_table,
 };
 
