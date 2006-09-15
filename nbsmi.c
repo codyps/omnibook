@@ -578,7 +578,7 @@ static int omnibook_nbmsi_display_set(const struct omnibook_operation *io_op, un
 {
 	int retval;
 	int i;
-	u8 matched = 0;
+	u8 matched = 255;
 
 	for (i = 0; i < ARRAY_SIZE(nbsmi_display_mode_list); i++) {
 		if (nbsmi_display_mode_list[i] == state) {
@@ -586,7 +586,7 @@ static int omnibook_nbmsi_display_set(const struct omnibook_operation *io_op, un
 			break;
 		}
 	}
-	if (!matched) {
+	if(matched==255) {
 		printk("Display mode %x is unsupported.\n", state);
 		return -EINVAL;
 	}

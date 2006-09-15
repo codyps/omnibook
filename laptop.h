@@ -490,11 +490,11 @@ static struct  dmi_system_id omnibook_ids[] __initdata = {
 	},
 	{
 		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 2430",
 		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite 2430"),
 		},
-		.ident = "Toshiba Satellite 2430",
 		.driver_data = (void*) XE3GF
 	},
 	{

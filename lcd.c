@@ -94,8 +94,12 @@ static int omnibook_brightness_write(char *buffer, struct omnibook_operation *io
 		brgt = simple_strtoul(buffer, &endp, 10);
 		if ((endp == buffer) || (brgt < 0) || (brgt > omnibook_max_brightness))
 			return -EINVAL;
-		else
+		else {
 			io_op->backend->byte_write(io_op, brgt);
+#ifdef CONFIG_OMNIBOOK_BACKLIGHT
+			omnibookbl_data.brightness=brgt;
+#endif			
+		}
 	}
 	return 0;
 }
@@ -103,7 +107,7 @@ static int omnibook_brightness_write(char *buffer, struct omnibook_operation *io
 static int __init omnibook_brightness_init(struct omnibook_operation *io_op)
 {
 	/*
-	 * FIXME: What is exactly de max value for each model ?
+	 * FIXME: What is exactly the max value for each model ?
 	 * I know that it's 7 for the TSM30X, TSM40 and TSA105
 	 * and previous versions of this driver (wrongly) assumed it was 10 for
 	 * all models.

@@ -11,6 +11,7 @@ Bugs and problems in omnibook module code
   implementation.
 * Reenabling wifi adapter after previous disabling is broken on 
   Toshiba Satellite M100 (ipw3945)
+* Real support of ectype 14 is still missing 
 * See http://sourceforge.net/tracker/?atid=868542&group_id=174260&func=browse
   for sf.net bug tracking system.
 
