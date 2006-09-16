@@ -41,7 +41,12 @@
 #define BUFFER_SIZE	0x20
 #define INTEL_OFFSET	0x60
 #define	INTEL_SMI_PORT	0xb2	/* APM_CNT port in INTEL ICH specs */
-#define ATI_OFFSET	0xef
+/*
+ * Toshiba Specs state 0xef here but:
+ * -this would overflow (ef + 19 > ff)
+ * -code from Toshiba use e0, which make much more sense
+ */
+#define ATI_OFFSET	0xe0
 #define	ATI_SMI_PORT	0xb0
 
 #define	EC_INDEX_PORT	0x300
