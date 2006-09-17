@@ -45,7 +45,7 @@ extern enum omnibook_ectype_t {
 	AMILOD = (1<<9),  /* 10 Fujitsu Amilo D */
 	TSP10  = (1<<10), /* 11 Toshiba Satellite P10, P15, P20 and compatible */
 	TSM30X = (1<<11), /* 12 Toshiba Satellite M30X, M35X, M40X, M70 and compatible */
-	TSM40  = (1<<12), /* 13 Toshiba Satellite M40 */
+	TSM40  = (1<<12), /* 13 Toshiba Satellite M40 M45 Tecra S1 */
 	TSA105 = (1<<13)  /* 14 Toshiba Satellite A105 */
 } omnibook_ectype;
 
@@ -112,7 +112,7 @@ enum {
 	HKEY_ONETOUCH = (1<<0),		/* 1  Ontetouch button scancode generation */
 	HKEY_MULTIMEDIA = (1<<1),	/* 2  "Multimedia hotkeys" scancode generation */	
 	HKEY_FN = (1<<2),		/* 4  Fn + foo hotkeys scancode generation */
-	HKEY_STICK = (1<<3),		/* 8  Stick key (no clue what this is about) */
+	HKEY_STICK = (1<<3),		/* 8  Stick key (Fn locked/unlocked on keypress)  */
 	HKEY_TWICE_LOCK = (1<<4),	/* 16 Press Fn twice to lock */
 	HKEY_DOCK = (1<<5),		/* 32 (Un)Dock events scancode generation */
 	HKEY_FNF5 = (1<<6),		/* 64 Fn + F5 (toggle display) is enabled */
@@ -122,7 +122,7 @@ enum {
 /*
  * Display state backend neutral masks
  * _ON masks = port is powered up and running
- * _DET masks = a display have been detected to be plugged in the port 
+ * _DET masks = a plugged display have been detected 
  */
 
 enum {	

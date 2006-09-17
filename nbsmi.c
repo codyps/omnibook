@@ -505,8 +505,10 @@ static int omnibook_nbsmi_set_wireless(const struct omnibook_operation *io_op, u
 }
 
 /*
- * Hotkeys handling
+ * Hotkeys reading return completly unreliable results on a least Tecra S1
+ * It is therefore disabled
  */
+#if 0
 static int omnibook_nbmsi_hotkeys_get(const struct omnibook_operation *io_op, unsigned int *state)
 {
 	int retval;
@@ -527,6 +529,7 @@ static int omnibook_nbmsi_hotkeys_get(const struct omnibook_operation *io_op, un
 
 	return HKEY_FN | HKEY_STICK | HKEY_TWICE_LOCK | HKEY_DOCK;
 }
+#endif
 
 static int omnibook_nbmsi_hotkeys_set(const struct omnibook_operation *io_op, unsigned int state)
 {
@@ -611,7 +614,7 @@ struct omnibook_backend nbsmi_backend = {
 	.byte_write = nbsmi_smi_write_command,
 	.aerial_get = omnibook_nbsmi_get_wireless,
 	.aerial_set = omnibook_nbsmi_set_wireless,
-	.hotkeys_get = omnibook_nbmsi_hotkeys_get,
+/*	.hotkeys_get = omnibook_nbmsi_hotkeys_get, */
 	.hotkeys_set = omnibook_nbmsi_hotkeys_set,
 	.display_get = omnibook_nbmsi_display_get,
 	.display_set = omnibook_nbmsi_display_set,

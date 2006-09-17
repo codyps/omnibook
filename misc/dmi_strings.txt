@@ -153,6 +153,20 @@ Board Name:    BTR80
 Board Version: Null
 
 ---------------------------------------------
+Toshiba Satellite A70 -----------------------
+
+BIOS Vendor: TOSHIBA 
+BIOS Version: V1.50 
+BIOS Release: 11/16/2004 
+System Vendor: TOSHIBA 
+Product Name: Satellite A70 
+Version: PSA70C-KL100E 
+Serial Number: X4451615K 
+Board Vendor: TOSHIBA 
+Board Name: EDW10 
+Board Version: Null 
+
+---------------------------------------------
 Toshiba Satellite A105 ----------------------
 
 BIOS Vendor:   Phoenix Technologies LTD
