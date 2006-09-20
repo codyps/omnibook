@@ -337,6 +337,51 @@ static struct  dmi_system_id omnibook_ids[] __initdata = {
 	},
 	{
 		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1700-100",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "S1700-100"),
+		},
+		.driver_data = (void*) AMILOD
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1700-200",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "S1700-200"),
+		},
+		.driver_data = (void*) AMILOD
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1700-300",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "S1700-300"),
+		},
+		.driver_data = (void*) AMILOD
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1700-400",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "S1700-400"),
+		},
+		.driver_data = (void*) AMILOD
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1700-500",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "S1700-500"),
+		},
+		.driver_data = (void*) AMILOD
+	},
+	{
+		.callback = dmi_matched,
 		.ident = "Toshiba Satellite 1900",
 		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
