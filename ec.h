@@ -409,6 +409,8 @@ int omnibook_toggle(const struct omnibook_operation *io_op, int toggle);
 #define SMI_SET_FN_INTERFACE	0xa9
 #define SMI_GET_FN_INTERFACE	0xaa
 #define SMI_GET_FN_LAST_SCAN	0xab
+#define SMI_SET_DOCK		0xac	/* Undocumented */
+#define SMI_GET_DOCK		0xad	/* Undocumented */
 #define SMI_SET_FN_F5_INTERFACE	0xc2
 
 #define SMI_FN_KEYS_MASK	0x01
