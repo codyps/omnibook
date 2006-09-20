@@ -114,8 +114,7 @@ static inline u32 ati_do_smi_call( u16 function)
  * out:
  */
 
-	__asm__ __volatile__("movw  %1, %%ax;	\
-			      outw  %%ax, %2;	\
+	__asm__ __volatile__("outw  %%ax, %2;	\
 			      orw %%ax, %%ax;	\
 			      jz 1f;		\
 			      inw %3, %%ax;	\
@@ -124,8 +123,8 @@ static inline u32 ati_do_smi_call( u16 function)
 			      movl %4, %0;	\
 			      1:;"
 			     : "=m" (retval)
-			     : "g"(function), "N"(ATI_SMI_PORT), "N"(ATI_SMI_PORT+1), "i"(-EIO)
-			     : "memory", "eax", "ebx", "ecx", "edx", "esi", "edi", "cc");
+			     : "a"(function), "N"(ATI_SMI_PORT), "N"(ATI_SMI_PORT+1), "i"(-EIO)
+			     : "memory", "ebx", "ecx", "edx", "esi", "edi", "cc");
 
 	spin_unlock_irqrestore(&smi_spinlock,flags);
 	return retval;
@@ -160,15 +159,14 @@ static inline u32 intel_do_smi_call(u16 function)
  * retval = -EIO; [too bad]
  * out:
  */
-	__asm__ __volatile__("movw %1, %%ax;	\
-			      outw %%ax, %2;	\
+	__asm__ __volatile__("outw %%ax, %2;	\
 			      orw %%ax, %%ax;	\
 			      jz 1f;		\
 			      movl %3, %0;	\
 			      1:;"
 			     : "=m" (retval)
-			     : "g"(function), "N"(INTEL_SMI_PORT), "i"(-EIO)
-			     : "memory", "eax", "ebx", "ecx", "edx", "esi", "edi", "cc");
+			     : "a"(function), "N"(INTEL_SMI_PORT), "i"(-EIO)
+			     : "memory", "ebx", "ecx", "edx", "esi", "edi", "cc");
 
 	outl( state, sci_en );
 	spin_unlock_irqrestore(&smi_spinlock,flags);
