@@ -37,6 +37,7 @@ static struct omnibook_tbl dock_table[] __initdata = {
 	{XE3GF, SIMPLE_BYTE(EC, XE3GF_CSPR, XE3GF_CSPR_MASK)},
 	{OB500 | OB510 | OB6000 | OB6100, SIMPLE_BYTE(EC, OB500_STA1, OB500_DCKS_MASK)},
 	{OB4150, SIMPLE_BYTE(EC, OB4150_DCID, 0)},
+	{TSM40, {SMI, SMI_GET_DOCK, SMI_SET_DOCK, 0, 0, 0}},
 	{0,}
 };
 
@@ -44,7 +45,7 @@ static struct omnibook_feature __declared_feature dock_driver = {
 	.name = "dock",
 	.enabled = 0,
 	.read = omnibook_dock_read,
-	.ectypes = XE3GF | OB500 | OB510 | OB6000 | OB6100 | OB4150,
+	.ectypes = XE3GF | OB500 | OB510 | OB6000 | OB6100 | OB4150 | TSM40,
 	.tbl = dock_table,
 };
 
