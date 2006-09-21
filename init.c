@@ -223,7 +223,7 @@ static struct omnibook_operation *omnibook_backend_match(struct omnibook_tbl *tb
 				continue;
 			}
 			matched = &tbl[i].io_op;
-			dprintk("Returning table entry n°%i.\n", i);
+			dprintk("Returning table entry nr %i.\n", i);
 			break;
 		}
 	}
