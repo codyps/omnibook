@@ -1,7 +1,7 @@
 Changelog file for omnibook package:
 ------------------------------------
 
-2.XXXXXXXX Mathieu Bérard <math_b@users.sourceforge.net>
+2.20060921 Mathieu Bérard <math_b@users.sourceforge.net>
 * The minimal required kernel version is now 2.6.9 (kref API)
 * Convert semaphore to mutex with fallback for pre 2.6.16 kernel
 * Kill CONFIG_OMNIBOOK_APMEMU and introduce OMNIBOOK_LEGACY:
