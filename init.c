@@ -519,7 +519,7 @@ module_exit(omnibook_module_cleanup);
 
 MODULE_AUTHOR("Soós Péter, Mathieu Bérard");
 MODULE_DESCRIPTION
-    ("Kernel interface for HP OmniBook, HP Pavilion, Toshiba Satellite, Acer Aspire and Compal ACL00 laptops");
+    ("Kernel interface for HP OmniBook, HP Pavilion, Toshiba Satellite and Compal ACL00 laptops");
 MODULE_LICENSE("GPL");
 module_param_call(ectype, set_ectype_param, get_ectype_param, NULL, S_IRUGO);
 module_param_named(userset, omnibook_userset, int, S_IRUGO);

@@ -1,12 +1,12 @@
 Kernel Support for HP OmniBooks, Pavilions, Toshiba Satellites,
-            and some Acer Aspire and Compal laptops
+                       and Compal laptops
 ===============================================================
 
 
 This package intended to provide Linux kernel support for HP OmniBook
 and Pavilion machines. The state of this code is experimental but it
 wants to be a framework to extend the Linux support for HP OmniBook
-and Pavilion, Toshiba Satellite, Acer Aspire and Compal ACL00 laptops
+and Pavilion, Toshiba Satellite and Compal ACL00 laptops
 manufactured by Compal Electronics, Inc as ODM.
 
 How does it work?
@@ -46,7 +46,6 @@ How does it work?
        Toshiba Satellite 3005
        Compal ACL00
        Compal ACL10
-       Acer Aspire 1406 LC
     2. HP OmniBook XE3 GC
        HP OmniBook XE3 GD
        HP OmniBook XE3 GE
@@ -70,7 +69,6 @@ How does it work?
        HP Pavilion ze4125
        HP/Compaq nx9000
        HP/Compaq nx9010
-       Acer Aspire 1350
     8. HP OmniBook 4150
        HP OmniBook 900B
     9. HP OmniBook XE2

@@ -1,5 +1,5 @@
 This package intended to provide Linux kernel support for HP OmniBook,
-HP Pavilion, Toshiba Satellite and some Acer Aspire and Compal laptops.
+HP Pavilion, Toshiba Satellite and Compal laptops.
 The state of this code is experimental.
 
 This code was written using technical documentation provided by Toshiba about

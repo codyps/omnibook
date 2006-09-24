@@ -734,24 +734,6 @@ static struct  dmi_system_id omnibook_ids[] __initdata = {
 	},
 	{
 		.callback = dmi_matched,
-		.ident = "Acer Aspire 1400 series",
-		.matches = {
-			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
-			DMI_MATCH(DMI_PRODUCT_NAME, "Aspire 1400 series"),
-		},
-		.driver_data = (void*) XE3GF
-	},
-	{
-		.callback = dmi_matched,
-		.ident = "Acer Aspire 1350",
-		.matches = {
-			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
-			DMI_MATCH(DMI_PRODUCT_NAME, "Aspire 1350"),
-		},
-		.driver_data = (void*) XE4500
-	},
-	{
-		.callback = dmi_matched,
 		.ident = "Fujitsu-Siemens Amilo D series",
 		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "FUJITSU SIEMENS"),
