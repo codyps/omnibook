@@ -469,6 +469,8 @@ static int omnibook_nbsmi_get_wireless(const struct omnibook_operation *io_op, u
 	if ((retval = nbsmi_smi_read_command(&aerial_op, &data)))
 		goto out;
 
+	dprintk("get_wireless (kill switch) raw_state: %x\n", data);
+
 	*state = data ? KILLSWITCH : 0;
 
 	aerial_op.read_addr = SMI_GET_AERIAL;
@@ -476,6 +478,8 @@ static int omnibook_nbsmi_get_wireless(const struct omnibook_operation *io_op, u
 
 	if ((retval = nbsmi_smi_read_command(&aerial_op, &data)))
 		goto out;
+
+	dprintk("get_wireless (aerial) raw_state: %x\n", data);
 
 	*state |= (data & WLEX_MASK) ? WIFI_EX : 0;
 	*state |= (data & WLAT_MASK) ? WIFI_STA : 0;
@@ -489,13 +493,15 @@ static int omnibook_nbsmi_get_wireless(const struct omnibook_operation *io_op, u
 static int omnibook_nbsmi_set_wireless(const struct omnibook_operation *io_op, unsigned int state)
 {
 	int retval = 0;
-	u8 data = 0;
+	u8 data;
 	struct omnibook_operation aerial_op;
 
 	aerial_op.write_addr = SMI_SET_AERIAL;
 
-	data |= state & BT_STA;
-	data |= (state & WIFI_STA) << 0x1;
+	data = !!(state & BT_STA);
+	data |= !!(state & WIFI_STA) << 0x1;
+
+	dprintk("set_wireless raw_state: %x\n", data);
 
 	retval = nbsmi_smi_write_command(&aerial_op, data);
 
@@ -520,6 +526,8 @@ static int omnibook_nbmsi_hotkeys_get(const struct omnibook_operation *io_op, un
 	if (retval < 0)
 		return retval;
 
+	dprintk("get_hotkeys raw_state: %x\n", data);
+
 	*state = (data & SMI_FN_KEYS_MASK) ? HKEY_FN : 0;
 	*state |= (data & SMI_STICK_KEYS_MASK) ? HKEY_STICK : 0;
 	*state |= (data & SMI_FN_TWICE_LOCK_MASK) ? HKEY_TWICE_LOCK : 0;
@@ -541,12 +549,16 @@ static int omnibook_nbmsi_hotkeys_set(const struct omnibook_operation *io_op, un
 	data |= (state & HKEY_TWICE_LOCK) ? SMI_FN_TWICE_LOCK_MASK : 0;
 	data |= (state & HKEY_DOCK) ? SMI_FN_DOCK_MASK : 0;
 
+	dprintk("set_hotkeys (Fn interface) raw_state: %x\n", data);
+
 	retval = nbsmi_smi_write_command(&hotkeys_op, data);
 	if (retval < 0)
 		return retval;
 
 	hotkeys_op.write_addr = SMI_SET_FN_F5_INTERFACE;
 	data = !!(state & HKEY_FNF5);
+
+	dprintk("set_hotkeys (Fn F5) raw_state: %x\n", data);
 
 	retval = nbsmi_smi_write_command(&hotkeys_op, data);
 	if (retval < 0)

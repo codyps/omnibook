@@ -239,8 +239,8 @@ static int omnibook_acpi_set_wireless(const struct omnibook_operation *io_op, un
 	int raw_state;
 	struct acpi_backend_data *priv_data = io_op->backend->data;
 
-	raw_state = state & WIFI_STA;	/* bit 0 */
-	raw_state |= (state & BT_STA) << 0x1;	/* bit 1 */
+	raw_state = !!(state & WIFI_STA);	/* bit 0 */
+	raw_state |= !!(state & BT_STA) << 0x1;	/* bit 1 */
 
 	dprintk("set_wireless raw_state: %x\n", raw_state);
 
@@ -259,6 +259,8 @@ static int omnibook_acpi_get_display(const struct omnibook_operation *io_op, uns
 	retval = omnibook_acpi_execute(priv_data->ec_handle, GET_DISPLAY_METHOD, 0, &raw_state);
 	if (retval < 0)
 		return retval;
+
+	dprintk("get_display raw_state: %x\n", raw_state);
 
 	/* Backend specific to backend-neutral conversion */
 	*state = (raw_state & LCD_CSTE) ? DISPLAY_LCD_ON : 0;
@@ -300,6 +302,8 @@ static int omnibook_acpi_set_display(const struct omnibook_operation *io_op, uns
 		printk("Display mode %x is unsupported.\n", state);
 		return -EINVAL;
 	}
+
+	dprintk("set_display raw_state: %x\n", matched);
 
 	retval = omnibook_acpi_execute(priv_data->ec_handle, SET_DISPLAY_METHOD, &matched, NULL);
 	if (retval < 0)
