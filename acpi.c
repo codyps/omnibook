@@ -49,47 +49,122 @@ static char ec_dev_list[][20] = {
 	"\\_SB.PCI0.LPC0.EC0",
 };
 
+#define TOSHIBA_ACPI_BT_CLASS "bluetooth"
+#define TOSHIBA_ACPI_DEVICE_NAME "bluetooth adapter"
+
+/*
+ * ACPI driver for Toshiba Bluetooth device
+ */
+static int omnibook_acpi_bt_add(struct acpi_device *device);
+static int omnibook_acpi_bt_remove(struct acpi_device *device, int type);
+
+static struct acpi_driver omnibook_bt_driver = {
+	.name	= OMNIBOOK_MODULE_NAME,
+	.class	= TOSHIBA_ACPI_BT_CLASS,
+	.ids	= "TOS6205",
+	.ops	= {
+			.add	=  omnibook_acpi_bt_add,
+			.remove	=  omnibook_acpi_bt_remove,
+		  },
+};
+
+/*
+ * ACPI backend private data structure
+ */
+struct acpi_backend_data {
+	acpi_handle ec_handle;
+	struct kref refcount;	/* Reference counter of this backend */
+};
+
 /*
  * Probe for expected ACPI device
  * FIXME we check only the ACPI device and not the associated methods
  */
-static int omnibook_acpi_probe(const struct omnibook_operation *io_op)
+static int omnibook_acpi_init(const struct omnibook_operation *io_op)
 {
+	int retval = 0;	
 	acpi_handle dev_handle;
 	int i;
-
-	if (acpi_disabled) {
+	struct acpi_backend_data *priv_data = io_op->backend->data;
+	
+	if (unlikely(acpi_disabled)) {
 		printk(O_ERR "ACPI is disabled: feature unavailable.\n");
 		return -ENODEV;
 	}
 
-	for (i = 0; i < ARRAY_SIZE(ec_dev_list); i++) {
-		if (acpi_get_handle(NULL, ec_dev_list[i], &dev_handle) == AE_OK) {
-			acpi_backend.data = dev_handle;
-			dprintk("ACPI probing was successfull\n");
-			return 0;
+	if (!priv_data) {
+		dprintk("Try to init ACPI backend\n");	
+		
+		priv_data = kmalloc(sizeof(struct acpi_backend_data), GFP_KERNEL);
+		if (!priv_data) {
+			retval = -ENOMEM;
+			goto out;
 		}
-	}
 
-	printk(O_ERR "Can't get handle on ACPI EC device.\n");
-	return -ENODEV;
+		kref_init(&priv_data->refcount);
+
+		/* Locate ACPI EC device, acpi_get_handle set dev_handle to NULL if not found */
+		for (i = 0; i < ARRAY_SIZE(ec_dev_list); i++) {
+			if (acpi_get_handle(NULL, ec_dev_list[i], &dev_handle) == AE_OK) {
+				dprintk("ACPI EC device found\n");
+				priv_data->ec_handle = dev_handle;
+				break;
+			}
+		}
+		
+		if(!dev_handle) {
+			printk(O_ERR "Can't get handle on ACPI EC device.\n");
+			retval = -ENODEV;
+			goto err;
+		}
+		
+		/* attempt to register Toshiba bluetooth ACPI driver */
+		acpi_bus_register_driver(&omnibook_bt_driver);
+		
+		io_op->backend->data = (void *) priv_data;
+		dprintk("ACPI backend init OK\n");
+		goto out;
+
+	} else {
+		dprintk("ACPI backend has already been initialized\n");
+		kref_get(&priv_data->refcount);
+		return 0;
+	}
+		
+	err:
+	kfree(priv_data);
+	io_op->backend->data = NULL;
+	out:
+	return retval;
+}
+
+static void omnibook_acpi_free(struct kref *ref)
+{
+	struct acpi_backend_data *priv_data;
+	priv_data = container_of(ref, struct acpi_backend_data, refcount);
+	dprintk("ACPI backend not used anymore: disposing\n");
+	acpi_bus_unregister_driver(&omnibook_bt_driver);
+	kfree(priv_data);
+}
+
+static void omnibook_acpi_exit(const struct omnibook_operation *io_op)
+{
+	struct acpi_backend_data *priv_data;
+	dprintk("Trying to dispose ACPI backend\n");
+	priv_data = (struct acpi_backend_data *) io_op->backend->data;
+	kref_put(&priv_data->refcount, omnibook_acpi_free);
 }
 
 /*
  * Execute an ACPI method which return either an integer or nothing
  * (acpi_evaluate_object wrapper)
  */
-static int omnibook_acpi_execute(char *method, const int *param, int *result)
+static int omnibook_acpi_execute(acpi_handle dev_handle, char *method, const int *param, int *result)
 {
 
 	struct acpi_object_list args_list;
 	struct acpi_buffer buff;
 	union acpi_object arg, out_objs[1];
-
-	if (!(acpi_backend.data)) {
-		dprintk("no handle on EC ACPI device");
-		return -ENODEV;
-	}
 
 	if (param) {
 		args_list.count = 1;
@@ -102,7 +177,7 @@ static int omnibook_acpi_execute(char *method, const int *param, int *result)
 	buff.length = sizeof(out_objs);
 	buff.pointer = out_objs;
 
-	if (acpi_evaluate_object(acpi_backend.data, method, &args_list, &buff) != AE_OK) {
+	if (acpi_evaluate_object(dev_handle, method, &args_list, &buff) != AE_OK) {
 		printk(O_ERR "ACPI method execution failed\n");
 		return -EIO;
 	}
@@ -119,12 +194,31 @@ static int omnibook_acpi_execute(char *method, const int *param, int *result)
 	return 0;
 }
 
+static int omnibook_acpi_bt_add(struct acpi_device *device)
+{
+	dprintk("Enabling found Toshiba Bluetooth ACPI device.\n");
+	strcpy(acpi_device_name(device), TOSHIBA_ACPI_DEVICE_NAME);
+        strcpy(acpi_device_class(device), TOSHIBA_ACPI_BT_CLASS);
+	omnibook_acpi_execute(device->handle, "AUSB", NULL, NULL); /* Activate USB */
+	omnibook_acpi_execute(device->handle, "BTPO", NULL, NULL); /* Power On */
+	return 0;
+}
+
+static int omnibook_acpi_bt_remove(struct acpi_device *device, int type)
+{
+	dprintk("Disabling Toshiba Bluetooth ACPI device.\n");
+	omnibook_acpi_execute(device->handle, "DUSB", NULL, NULL); /* Diable USB */
+	omnibook_acpi_execute(device->handle, "BTPF", NULL, NULL); /* Power Off */
+	return 0;
+}
+
 static int omnibook_acpi_get_wireless(const struct omnibook_operation *io_op, unsigned int *state)
 {
 	int retval = 0;
 	int raw_state;
+	struct acpi_backend_data *priv_data = io_op->backend->data;
 
-	if ((retval = omnibook_acpi_execute(GET_WIRELESS_METHOD, 0, &raw_state)))
+	if ((retval = omnibook_acpi_execute(priv_data->ec_handle, GET_WIRELESS_METHOD, 0, &raw_state)))
 		return retval;
 
 	dprintk("get_wireless raw_state: %x\n", raw_state);
@@ -138,17 +232,19 @@ static int omnibook_acpi_get_wireless(const struct omnibook_operation *io_op, un
 	return retval;
 }
 
+
 static int omnibook_acpi_set_wireless(const struct omnibook_operation *io_op, unsigned int state)
 {
 	int retval = 0;
 	int raw_state;
+	struct acpi_backend_data *priv_data = io_op->backend->data;
 
 	raw_state = state & WIFI_STA;	/* bit 0 */
 	raw_state |= (state & BT_STA) << 0x1;	/* bit 1 */
 
 	dprintk("set_wireless raw_state: %x\n", raw_state);
 
-	if ((retval = omnibook_acpi_execute(SET_WIRELESS_METHOD, &raw_state, NULL)))
+	if ((retval = omnibook_acpi_execute(priv_data->ec_handle, SET_WIRELESS_METHOD, &raw_state, NULL)))
 		return retval;
 
 	return retval;
@@ -158,8 +254,9 @@ static int omnibook_acpi_get_display(const struct omnibook_operation *io_op, uns
 {
 	int retval = 0;
 	int raw_state = 0;
-
-	retval = omnibook_acpi_execute(GET_DISPLAY_METHOD, 0, &raw_state);
+	struct acpi_backend_data *priv_data = io_op->backend->data;
+	
+	retval = omnibook_acpi_execute(priv_data->ec_handle, GET_DISPLAY_METHOD, 0, &raw_state);
 	if (retval < 0)
 		return retval;
 
@@ -189,7 +286,9 @@ static const unsigned int acpi_display_mode_list[] = {
 static int omnibook_acpi_set_display(const struct omnibook_operation *io_op, unsigned int state)
 {
 	int retval = 0;
-	int i, matched;
+	int i; 
+	int matched = -1;
+	struct acpi_backend_data *priv_data = io_op->backend->data;
 
 	for (i = 0; i < ARRAY_SIZE(acpi_display_mode_list); i++) {
 		if (acpi_display_mode_list[i] == state) {
@@ -197,12 +296,12 @@ static int omnibook_acpi_set_display(const struct omnibook_operation *io_op, uns
 			break;
 		}
 	}
-	if (!matched) {
+	if (matched == -1) {
 		printk("Display mode %x is unsupported.\n", state);
 		return -EINVAL;
 	}
 
-	retval = omnibook_acpi_execute(SET_DISPLAY_METHOD, &matched, NULL);
+	retval = omnibook_acpi_execute(priv_data->ec_handle, SET_DISPLAY_METHOD, &matched, NULL);
 	if (retval < 0)
 		return retval;
 
@@ -211,7 +310,8 @@ static int omnibook_acpi_set_display(const struct omnibook_operation *io_op, uns
 
 struct omnibook_backend acpi_backend = {
 	.name = "acpi",
-	.init = omnibook_acpi_probe,
+	.init = omnibook_acpi_init,
+	.exit = omnibook_acpi_exit,
 	.aerial_get = omnibook_acpi_get_wireless,
 	.aerial_set = omnibook_acpi_set_wireless,
 	.display_get = omnibook_acpi_get_display,
