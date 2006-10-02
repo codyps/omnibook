@@ -268,6 +268,14 @@ static struct  dmi_system_id omnibook_ids[] __initdata = {
 	},
 	{
 		.callback = dmi_matched,
+		.ident = "HP Pavilion ze4500 series",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_NAME, "Pavilion ze4500"),
+		},
+		.driver_data = (void*) XE4500
+	},
+	{
+		.callback = dmi_matched,
 		.ident = "HP Pavilion ze8500 series",
 		.matches = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "Pavilion ze8500"),

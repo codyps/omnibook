@@ -591,6 +591,18 @@ Board Name:    002A
 Board Version: NS570 Version PQ1A74
 
 ---------------------------------------------
+HP Pavilion ze4500 --------------------------
+
+BIOS Vendor:   Phoenix Technologies Ltd.
+BIOS Version:  KAM1.57  
+BIOS Release:  02/19/2004
+System Vendor: Hewlett-Packard          
+Product Name:  Pavilion ze4500 (DP793E) 
+Version:       KAM1.57  
+Board Vendor:  Hewlett-Packard          
+Board Name:    PQ1A83
+
+---------------------------------------------
 HP Pavilion ZU1175 --------------------------
 
 BIOS Vendor:   Phoenix Technologies Ltd.
