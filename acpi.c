@@ -52,6 +52,11 @@ static char ec_dev_list[][20] = {
 #define TOSHIBA_ACPI_BT_CLASS "bluetooth"
 #define TOSHIBA_ACPI_DEVICE_NAME "bluetooth adapter"
 
+#define TOSH_BT_ACTIVATE_USB "AUSB"
+#define TOSH_BT_DISABLE_USB  "DUSB"
+#define TOSH_BT_POWER_ON     "BTPO"
+#define TOSH_BT_POWER_OFF    "BTPF"
+
 /*
  * ACPI driver for Toshiba Bluetooth device
  */
@@ -72,7 +77,8 @@ static struct acpi_driver omnibook_bt_driver = {
  * ACPI backend private data structure
  */
 struct acpi_backend_data {
-	acpi_handle ec_handle;
+	acpi_handle ec_handle;  /* Handle on ACPI EC device */
+	acpi_handle bt_handle;  /* Handle on ACPI BT device */
 	struct kref refcount;	/* Reference counter of this backend */
 };
 
@@ -194,23 +200,35 @@ static int omnibook_acpi_execute(acpi_handle dev_handle, char *method, const int
 	return 0;
 }
 
+/* forward declaration */
+struct omnibook_backend acpi_backend;
+
 static int omnibook_acpi_bt_add(struct acpi_device *device)
 {
+	struct acpi_backend_data *priv_data = acpi_backend.data;
+	
 	dprintk("Enabling found Toshiba Bluetooth ACPI device.\n");
 	strcpy(acpi_device_name(device), TOSHIBA_ACPI_DEVICE_NAME);
         strcpy(acpi_device_class(device), TOSHIBA_ACPI_BT_CLASS);
-	omnibook_acpi_execute(device->handle, "AUSB", NULL, NULL); /* Activate USB */
-	omnibook_acpi_execute(device->handle, "BTPO", NULL, NULL); /* Power On */
+	/* Save handle in backend private data structure. ugly. */
+	priv_data->bt_handle = device->handle;
+
+	omnibook_acpi_execute(device->handle, TOSH_BT_ACTIVATE_USB, NULL, NULL);
+	omnibook_acpi_execute(device->handle, TOSH_BT_POWER_ON, NULL, NULL);
 	return 0;
 }
 
 static int omnibook_acpi_bt_remove(struct acpi_device *device, int type)
 {
+	struct acpi_backend_data *priv_data = acpi_backend.data;	
+
 	dprintk("Disabling Toshiba Bluetooth ACPI device.\n");
-	omnibook_acpi_execute(device->handle, "DUSB", NULL, NULL); /* Diable USB */
-	omnibook_acpi_execute(device->handle, "BTPF", NULL, NULL); /* Power Off */
+	priv_data->bt_handle = NULL;
+	omnibook_acpi_execute(device->handle, TOSH_BT_DISABLE_USB, NULL, NULL);
+	omnibook_acpi_execute(device->handle, TOSH_BT_POWER_OFF, NULL, NULL);
 	return 0;
 }
+
 
 static int omnibook_acpi_get_wireless(const struct omnibook_operation *io_op, unsigned int *state)
 {
@@ -238,6 +256,7 @@ static int omnibook_acpi_set_wireless(const struct omnibook_operation *io_op, un
 	int retval = 0;
 	int raw_state;
 	struct acpi_backend_data *priv_data = io_op->backend->data;
+	char *method;
 
 	raw_state = !!(state & WIFI_STA);	/* bit 0 */
 	raw_state |= !!(state & BT_STA) << 0x1;	/* bit 1 */
@@ -246,6 +265,16 @@ static int omnibook_acpi_set_wireless(const struct omnibook_operation *io_op, un
 
 	if ((retval = omnibook_acpi_execute(priv_data->ec_handle, SET_WIRELESS_METHOD, &raw_state, NULL)))
 		return retval;
+
+	/* BT device appears to need more work*/
+	if(priv_data->bt_handle) {
+		method = (state & BT_STA) ? TOSH_BT_POWER_ON : TOSH_BT_POWER_OFF;
+		if ((retval = omnibook_acpi_execute(priv_data->bt_handle, method, NULL, NULL)))
+			return retval;
+		method = (state & BT_STA) ? TOSH_BT_ACTIVATE_USB : TOSH_BT_DISABLE_USB;
+		if ((retval = omnibook_acpi_execute(priv_data->bt_handle, method, NULL, NULL)))
+			return retval;
+	}	
 
 	return retval;
 }

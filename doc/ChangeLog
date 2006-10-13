@@ -6,6 +6,8 @@ Changelog file for omnibook package:
   support with a far more complete autodetection database
   (see http://www2.informatik.hu-berlin.de/~tauber/acerhk/)
 * Fix and improve bluetooth handling for TSM30X class laptops
+* DMI signature added:
+	HP Pavilion ze4500 (ectype 7)
 
 2.20060921 Mathieu Bérard <math_b@users.sourceforge.net>
 * The minimal required kernel version is now 2.6.9 (kref API)
