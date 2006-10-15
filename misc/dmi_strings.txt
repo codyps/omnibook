@@ -282,6 +282,18 @@ Board Name:    HAWAA
 Board Version: None
 
 ---------------------------------------------
+Toshiba Satellite M115 ----------------------
+
+Bios vender: Phoenix Tech. LTD
+Bios version: 1.00
+Bios release: 08/31/2006
+System Vendor: Toshiba
+Product Name: Satellite M115
+Version: PSMBOU-015007
+Board vendor Intel
+Board name: N/a
+
+---------------------------------------------
 Toshiba Equium A110 -------------------------
 
 BIOS Vendor:   TOSHIBA
