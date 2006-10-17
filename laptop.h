@@ -333,13 +333,22 @@ static struct  dmi_system_id omnibook_ids[] __initdata = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "S1110"),
 		},
 		.driver_data = (void*) XE3GF
-	},
+	},	
 	{
 		.callback = dmi_matched,
 		.ident = "Toshiba Satellite 1115",
 		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "S1115"),
+		},
+		.driver_data = (void*) XE3GF
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Satellite 1130",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite 1130"),
 		},
 		.driver_data = (void*) XE3GF
 	},

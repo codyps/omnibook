@@ -128,6 +128,19 @@ Board Name:    BTK20
 Board Version: Null
 
 ---------------------------------------------
+Toshiba Satellite 1130 ----------------------
+
+BIOS Vendor: TOSHIBA
+BIOS Version: V1.70A
+BIOS Release: 09/02/2003
+System Vendor: TOSHIBA
+Product Name: Satellite 1130
+Version: PS113E-05ZYF-GR
+Board Vendor: TOSHIBA
+Board Name: BTW30
+Board Version: Null
+
+---------------------------------------------
 Toshiba Satellite 1900-704 ------------------
 
 BIOS Vendor:   TOSHIBA
