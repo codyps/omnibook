@@ -386,7 +386,7 @@ static int omnibook_suspend(struct platform_device *dev, pm_message_t state)
 		feature = list_entry(p, struct omnibook_feature, list);
 		if (feature->suspend) {
 			retval = feature->suspend(feature->io_op);
-			if (!retval)
+			if (retval)
 				printk(O_ERR "Unable to suspend the %s feature (error %i).\n", feature->name, retval);
 		}
 	}
@@ -406,7 +406,7 @@ static int omnibook_resume(struct platform_device *dev)
 		feature = list_entry(p, struct omnibook_feature, list);
 		if (feature->resume) {
 			retval = feature->resume(feature->io_op);
-			if (!retval)
+			if (retval)
 				printk(O_ERR "Unable to resume the %s feature (error %i).\n", feature->name, retval);
 		}
 	}
