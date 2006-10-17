@@ -71,7 +71,9 @@ static int omnibook_hotkeys_resume(struct omnibook_operation *io_op)
 {
 	int retval;
 	retval = io_op->backend->hotkeys_set(io_op, saved_state);
-	return min(retval, 0);
+	if(retval < 0)
+		return retval;
+	return 0;
 }
 
 /*

@@ -387,7 +387,7 @@ static int omnibook_suspend(struct platform_device *dev, pm_message_t state)
 		if (feature->suspend) {
 			retval = feature->suspend(feature->io_op);
 			if (!retval)
-				printk(O_ERR "Unable to suspend the %s feature", feature->name);
+				printk(O_ERR "Unable to suspend the %s feature.\n", feature->name);
 		}
 	}
 	return 0;
@@ -407,7 +407,7 @@ static int omnibook_resume(struct platform_device *dev)
 		if (feature->resume) {
 			retval = feature->resume(feature->io_op);
 			if (!retval)
-				printk(O_ERR "Unable to resume the %s feature", feature->name);
+				printk(O_ERR "Unable to resume the %s feature.\n", feature->name);
 		}
 	}
 	return 0;
