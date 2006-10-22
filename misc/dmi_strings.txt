@@ -269,6 +269,18 @@ Board Name:	HTW00
 Board Version:	Null
 
 ---------------------------------------------
+Toshiba Satellite A75 -----------------------
+
+IOS Vendor:    TOSHIBA
+BIOS Version:  V1.50
+BIOS Release:  11/16/2004
+System Vendor: TOSHIBA
+Product Name:  Satellite A75
+Version:       PSA70U-004004B
+Board Vendor:  TOSHIBA
+Board Name:    Null
+
+---------------------------------------------
 Toshiba Satellite M100 ----------------------
 
 BIOS Vendor:    TOSHIBA
