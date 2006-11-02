@@ -124,10 +124,11 @@ static int omnibook_acpi_init(const struct omnibook_operation *io_op)
 			goto err;
 		}
 		
+		io_op->backend->data = (void *) priv_data;
+
 		/* attempt to register Toshiba bluetooth ACPI driver */
 		acpi_bus_register_driver(&omnibook_bt_driver);
 		
-		io_op->backend->data = (void *) priv_data;
 		dprintk("ACPI backend init OK\n");
 		goto out;
 
@@ -167,7 +168,6 @@ static void omnibook_acpi_exit(const struct omnibook_operation *io_op)
  */
 static int omnibook_acpi_execute(acpi_handle dev_handle, char *method, const int *param, int *result)
 {
-
 	struct acpi_object_list args_list;
 	struct acpi_buffer buff;
 	union acpi_object arg, out_objs[1];
