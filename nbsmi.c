@@ -94,7 +94,7 @@ extern const struct pci_device_id lpc_bridge_table[];
 
 static inline u32 ati_do_smi_call( u16 function)
 {
-	u32 flags;
+	unsigned long flags;
 	u32 retval = 0;
 	spin_lock_irqsave(&smi_spinlock,flags);
 	
@@ -132,7 +132,8 @@ static inline u32 ati_do_smi_call( u16 function)
 
 static inline u32 intel_do_smi_call(u16 function)
 {
-	u32 state, sci_en, flags;
+	u32 state, sci_en;
+	unsigned long flags;
 	u32 retval = 0;
 	spin_lock_irqsave(&smi_spinlock,flags);
 
