@@ -101,7 +101,7 @@ static int omnibook_acpi_init(const struct omnibook_operation *io_op)
 	if (!priv_data) {
 		dprintk("Try to init ACPI backend\n");	
 		
-		priv_data = kmalloc(sizeof(struct acpi_backend_data), GFP_KERNEL);
+		priv_data = kzalloc(sizeof(struct acpi_backend_data), GFP_KERNEL);
 		if (!priv_data) {
 			retval = -ENOMEM;
 			goto out;
