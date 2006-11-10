@@ -16,48 +16,60 @@
  */
 
 #include "omnibook.h"
-#include "ec.h"
-
-/*
- * Save state for suspend/resume operation
- */
-static unsigned int saved_state;
+#include "hardware.h"
 
 /* Predefined convinient on/off states */
 #define HKEY_ON  HKEY_ONETOUCH|HKEY_MULTIMEDIA|HKEY_FN|HKEY_DOCK|HKEY_FNF5
 #define HKEY_OFF 0
 
-static int omnibook_hotkeys_set(struct omnibook_operation *io_op, unsigned int state)
+/*
+ * Set hotkeys status and update recorded saved state
+ */
+static int hotkeys_set_save(struct omnibook_operation *io_op, unsigned int state)
 {
-	int write_capability;
+	int retval;
 
-	write_capability = io_op->backend->hotkeys_set(io_op, state);
-	if (write_capability < 0)
+	if(mutex_lock_interruptible(&io_op->backend->mutex))
+		return -ERESTARTSYS;
+
+	retval = __backend_hotkeys_set(io_op, state);
+	if (retval < 0)
 		goto out;
 
 	/* Update saved state */
-	saved_state = state & write_capability;
+	io_op->backend->hotkeys_state = state & io_op->backend->hotkeys_write_cap;
 
-      out:
-	return write_capability;
+	out:
+	mutex_unlock(&io_op->backend->mutex);
+	return retval;
 }
 
-static int omnibook_hotkeys_get(struct omnibook_operation *io_op, unsigned int *state)
+/*
+ * Read hotkeys status, fallback to reading saved state if real probing is not
+ * supported.
+ */
+static int hotkeys_get_save(struct omnibook_operation *io_op, unsigned int *state)
 {
 
 	unsigned int read_state = 0;
-	int read_capability = 0;
+	int retval = 0;
+
+	if(mutex_lock_interruptible(&io_op->backend->mutex))
+		return -ERESTARTSYS;
 
 	if (io_op->backend->hotkeys_get)
-		read_capability = io_op->backend->hotkeys_get(io_op, &read_state);
-	if (read_capability < 0)
+		retval = __backend_hotkeys_get(io_op, &read_state);
+	if (retval < 0)
 		goto out;
 
 	/* Return previously set state for the fields that are write only */
-	*state = (read_state & read_capability) + (saved_state & ~read_capability);
+	*state = (read_state & io_op->backend->hotkeys_read_cap) + 
+		 (io_op->backend->hotkeys_state & ~io_op->backend->hotkeys_read_cap);
 
-      out:
-	return read_capability;
+
+	out:
+	mutex_unlock(&io_op->backend->mutex);
+	return 0;
 }
 
 /*
@@ -70,28 +82,20 @@ static int omnibook_hotkeys_get(struct omnibook_operation *io_op, unsigned int *
 static int omnibook_hotkeys_resume(struct omnibook_operation *io_op)
 {
 	int retval;
-	retval = io_op->backend->hotkeys_set(io_op, saved_state);
-	if(retval < 0)
-		return retval;
-	return 0;
+	mutex_lock(&io_op->backend->mutex);
+	retval = __backend_hotkeys_set(io_op, io_op->backend->hotkeys_state);
+	mutex_unlock(&io_op->backend->mutex);
+	return retval;
 }
 
 /*
- * Save state and disable hotkeys upon suspend (FIXME is the disabling required ?)
+ * Disable hotkeys upon suspend (FIXME is the disabling required ?)
  */
 static int omnibook_hotkeys_suspend(struct omnibook_operation *io_op)
 {
 	int retval = 0;
-
-	retval = omnibook_hotkeys_get(io_op, &saved_state);
-	if (retval < 0)
-		return retval;
-
-	retval = io_op->backend->hotkeys_set(io_op, HKEY_OFF);
-	if (retval < 0)
-		return retval;
-
-	return 0;
+	retval = backend_hotkeys_set(io_op, HKEY_OFF);
+	return retval;
 }
 
 static const char pretty_name[][27] = {
@@ -101,30 +105,31 @@ static const char pretty_name[][27] = {
 	"Stick key is",
 	"Press Fn twice to lock is",
 	"Dock events are",
-	"Fn + F5 hotkey is"
+	"Fn + F5 hotkey is",
 };
 
 static int omnibook_hotkeys_read(char *buffer, struct omnibook_operation *io_op)
 {
 	int len = 0;
-	int read_capability, write_capability;
-	unsigned int read_state, mask;
+	int retval;
+	unsigned int read_state = 0; /* buggy gcc 4.1 warning fix */
+	unsigned int shift, mask;
 
-	read_capability = omnibook_hotkeys_get(io_op, &read_state);
-	if (read_capability < 0)
-		return read_capability;
+	retval = hotkeys_get_save(io_op, &read_state);
 
-	write_capability = omnibook_hotkeys_set(io_op, read_state);
-	if (write_capability < 0)
-		return write_capability;
+	if (retval < 0)
+		return retval;
 
-	for (mask = HKEY_ONETOUCH; mask <= HKEY_FNF5; mask = mask << 1) {
+	for (shift = 0; shift <= HKEY_LAST_SHIFT ; shift++) {
+		mask = 1 << shift;
 		/* we assume write capability or read capability imply support */
-		if ((read_capability | write_capability) & mask)
+		if ((io_op->backend->hotkeys_read_cap | io_op->backend->hotkeys_write_cap) & mask)
 			len +=
-			    sprintf(buffer + len, "%s %s.\n", pretty_name[ffs(mask) - 1],
+			    sprintf(buffer + len, "%s %s.\n", pretty_name[shift],
 				    (read_state & mask) ? "enabled" : "disabled");
 	}
+
+
 	return len;
 }
 
@@ -134,15 +139,15 @@ static int omnibook_hotkeys_write(char *buffer, struct omnibook_operation *io_op
 	char *endp;
 
 	if (strncmp(buffer, "off", 3) == 0)
-		omnibook_hotkeys_set(io_op, HKEY_OFF);
+		hotkeys_set_save(io_op, HKEY_OFF);
 	else if (strncmp(buffer, "on", 2) == 0)
-		omnibook_hotkeys_set(io_op, HKEY_ON);
+		hotkeys_set_save(io_op, HKEY_ON);
 	else {
 		state = simple_strtoul(buffer, &endp, 16);
 		if (endp == buffer)
 			return -EINVAL;
 		else
-			omnibook_hotkeys_set(io_op, state);
+			hotkeys_set_save(io_op, state);
 	}
 	return 0;
 }
@@ -150,18 +155,19 @@ static int omnibook_hotkeys_write(char *buffer, struct omnibook_operation *io_op
 static int __init omnibook_hotkeys_init(struct omnibook_operation *io_op)
 {
 	int retval;
+
 	printk(O_INFO "Enabling all hotkeys.\n");
-	retval = omnibook_hotkeys_set(io_op, HKEY_ON);
+	retval = hotkeys_set_save(io_op, HKEY_ON);
 	return retval < 0 ? retval : 0;
 }
 
 static void __exit omnibook_hotkeys_cleanup(struct omnibook_operation *io_op)
 {
 	printk(O_INFO "Disabling all hotkeys.\n");
-	omnibook_hotkeys_set(io_op, HKEY_OFF);
+	hotkeys_set_save(io_op, HKEY_OFF);
 }
 
-static struct omnibook_tbl hotkey_table[] __initdata = {
+static struct omnibook_tbl hotkeys_table[] __initdata = {
 	{XE3GF | XE3GC | OB500 | OB510 | OB6000 | OB6100 | XE4500 | AMILOD | TSP10, 
 	COMMAND(KBC,OMNIBOOK_KBC_CMD_ONETOUCH_ENABLE,OMNIBOOK_KBC_CMD_ONETOUCH_DISABLE)},
 	{TSM30X, {CDI,}},
@@ -181,7 +187,7 @@ static struct omnibook_feature __declared_feature hotkeys_driver = {
 	.ectypes =
 	    XE3GF | XE3GC | OB500 | OB510 | OB6000 | OB6100 | XE4500 | AMILOD | TSP10 | TSM30X |
 	    TSM40,
-	.tbl = hotkey_table,
+	.tbl = hotkeys_table,
 };
 
 module_param_named(hotkeys, hotkeys_driver.enabled, int, S_IRUGO);

@@ -16,8 +16,7 @@
  */
 
 #include "omnibook.h"
-
-#include "ec.h"
+#include "hardware.h"
 
 static int ec_read16(u8 addr, u16 * data)
 {
@@ -25,7 +24,6 @@ static int ec_read16(u8 addr, u16 * data)
 	u8 high;
 	u8 low;
 	u16 result;
-
 	retval = legacy_ec_read(addr, &low);
 	if (retval)
 		return retval;
@@ -197,7 +195,7 @@ static int omnibook_get_battery_info(int num, struct omnibook_battery_info *batt
  *    1 - Battery is not present
  *    2 - Not supported
  */
-int omnibook_get_battery_status(int num, struct omnibook_battery_state *battstat)
+static int omnibook_get_battery_status(int num, struct omnibook_battery_state *battstat)
 {
 	int retval;
 	u8 status;

@@ -23,8 +23,7 @@
 #include <linux/kref.h>
 
 #include <asm/io.h>
-#include "ec.h"
-#include "compat.h"
+#include "hardware.h"
 
 /*
  * ATI's IXP PCI-LPC bridge
@@ -57,22 +56,15 @@
 #define PIO_PORT_COMMAND2	0x2
 #define PIO_PORT_DATA		0x3
 
-/* 
- * We protect access to the Command/Data/Index interface by a Mutex
- */
-static DEFINE_MUTEX(compal_lock);
-
 /*
  * Private data of this backend
  */
-static struct kref *refcount;	/* Reference counter of this backend */
 static struct pci_dev *lpc_bridge;	/* Southbridge chip ISA bridge/LPC interface PCI device */
 static u32 ioport_base;		/* PIO base adress */
 static union {
 	u16 word;
 	u32 dword;
 } pci_reg_state;		/* Saved state of register in PCI config spave */
-static int already_failed = 0;	/* Backend init already failed at leat once */
 
 /*
  * Possible list of supported southbridges
@@ -310,26 +302,21 @@ static int omnibook_cdimode_init(const struct omnibook_operation *io_op)
 	int retval = 0;
 	int i;
 
-/* ectypes other than TSM30X have no business with this backend */
+	/* ectypes other than TSM30X have no business with this backend */
 	if (!(omnibook_ectype & TSM30X))
 		return -ENODEV;
 
-	if (already_failed) {
+	if (io_op->backend->already_failed) {
 		dprintk("CDI backend init already failed, skipping.\n");
 		return -ENODEV;
 	}
 
-	if (!refcount) {
+	if (!lpc_bridge) {
 		/* Fist use of the backend */
-		mutex_lock(&compal_lock);
 		dprintk("Try to init cdimode\n");
-		refcount = kmalloc(sizeof(struct kref), GFP_KERNEL);
-		if (!refcount) {
-			retval = -ENOMEM;
-			goto out;
-		}
-
-		kref_init(refcount);
+		mutex_init(&io_op->backend->mutex);
+		mutex_lock(&io_op->backend->mutex);
+		kref_init(&io_op->backend->kref);
 
 		/* PCI probing: find the LPC Super I/O bridge PCI device */
 		for (i = 0; !lpc_bridge && lpc_bridge_table[i].vendor; ++i)
@@ -377,10 +364,11 @@ static int omnibook_cdimode_init(const struct omnibook_operation *io_op)
 		clear_cdimode_pci();
 
 		dprintk("Cdimode init ok\n");
-		goto out;
+		mutex_unlock(&io_op->backend->mutex);
+		return 0;
 	} else {
 		dprintk("Cdimode has already been initialized\n");
-		kref_get(refcount);
+		kref_get(&io_op->backend->kref);
 		return 0;
 	}
 
@@ -391,32 +379,34 @@ static int omnibook_cdimode_init(const struct omnibook_operation *io_op)
 	pci_dev_put(lpc_bridge);
 	lpc_bridge = NULL;
       error1:
-	kfree(refcount);
-	refcount = NULL;
-	already_failed = 1;
-      out:
-	mutex_unlock(&compal_lock);
+	io_op->backend->already_failed = 1;
+	mutex_unlock(&io_op->backend->mutex);
+	mutex_destroy(&io_op->backend->mutex);
 	return retval;
 }
 
 static void cdimode_free(struct kref *ref)
 {
-	mutex_lock(&compal_lock);
+	struct omnibook_backend *backend;
+	
 	dprintk("Cdimode not used anymore: disposing\n");
+
+	backend = container_of(ref, struct omnibook_backend, kref);
+
+	mutex_lock(&backend->mutex);
 	pci_dev_put(lpc_bridge);
 	release_region(ioport_base, 4);
-	kfree(refcount);
 	lpc_bridge = NULL;
-	refcount = NULL;
-	mutex_unlock(&compal_lock);
+	mutex_unlock(&backend->mutex);
+	mutex_destroy(&backend->mutex);
 }
 
 static void omnibook_cdimode_exit(const struct omnibook_operation *io_op)
 {
-/* ectypes other than TSM30X have no business with this backend */
+	/* ectypes other than TSM30X have no business with this backend */
 	BUG_ON(!(omnibook_ectype & TSM30X));
 	dprintk("Trying to dispose cdimode\n");
-	kref_put(refcount, cdimode_free);
+	kref_put(&io_op->backend->kref, cdimode_free);
 }
 
 /* 
@@ -429,9 +419,6 @@ static int omnibook_cdimode_read(const struct omnibook_operation *io_op, u8 * va
 
 	if (!lpc_bridge)
 		return -ENODEV;
-
-	if (mutex_lock_interruptible(&compal_lock))
-		return -ERESTARTSYS;
 
 	retval = enable_cdimode();
 	if (retval)
@@ -448,7 +435,6 @@ static int omnibook_cdimode_read(const struct omnibook_operation *io_op, u8 * va
 	clear_cdimode();
       out:
 	clear_cdimode_pci();
-	mutex_unlock(&compal_lock);
 	return retval;
 }
 
@@ -463,9 +449,6 @@ static int omnibook_cdimode_write(const struct omnibook_operation *io_op, u8 val
 	if (!lpc_bridge)
 		return -ENODEV;
 
-	if (mutex_lock_interruptible(&compal_lock))
-		return -ERESTARTSYS;
-
 	retval = enable_cdimode();
 	if (retval)
 		goto out;
@@ -477,7 +460,6 @@ static int omnibook_cdimode_write(const struct omnibook_operation *io_op, u8 val
 	clear_cdimode();
       out:
 	clear_cdimode_pci();
-	mutex_unlock(&compal_lock);
 	return retval;
 
 }
@@ -492,23 +474,17 @@ static int omnibook_cdimode_hotkeys(const struct omnibook_operation *io_op, unsi
 		{ CDI, 0, TSM70_FN_INDEX, 0, TSM70_FN_ENABLE, TSM70_FN_DISABLE};
 
 	/* Fn+foo handling */
-	retval = omnibook_toggle(&hotkeys_op, !!(state & HKEY_FN));
+	retval = __omnibook_toggle(&hotkeys_op, !!(state & HKEY_FN));
 	if (retval < 0)
 		return retval;
 
 	/* Multimedia keys handling */
-	if (state & HKEY_MULTIMEDIA) {
-		hotkeys_op.write_addr = TSM70_HOTKEYS_INDEX;
-		retval = omnibook_cdimode_write(&hotkeys_op, TSM70_HOTKEYS_ENABLE);
-	} else {
-		/* FIXME: quirk use kbc backend */
-		retval = kbc_backend.byte_write(NULL, OMNIBOOK_KBC_CMD_ONETOUCH_DISABLE);
-	}
+	hotkeys_op.write_addr = TSM70_HOTKEYS_INDEX;
+	hotkeys_op.on_mask = TSM70_HOTKEYS_ENABLE;
+	hotkeys_op.off_mask = TSM70_HOTKEYS_DISABLE;
+	retval = __omnibook_toggle(&hotkeys_op, !!(state & HKEY_MULTIMEDIA));
 
-	if (retval < 0)
-		return retval;
-	else
-		return HKEY_MULTIMEDIA | HKEY_FN;
+	return retval;
 }
 
 /* Scan index space, this hard locks my machine */
@@ -535,6 +511,7 @@ static int compal_scan(char *buffer)
 
 struct omnibook_backend compal_backend = {
 	.name = "compal",
+	.hotkeys_write_cap = HKEY_MULTIMEDIA | HKEY_FN,
 	.init = omnibook_cdimode_init,
 	.exit = omnibook_cdimode_exit,
 	.byte_read = omnibook_cdimode_read,

@@ -18,30 +18,29 @@
 #include "omnibook.h"
 
 #include <asm/io.h>
-#include "ec.h"
+#include "hardware.h"
 
 static struct omnibook_feature blank_driver;
 
-static int omnibook_console_blank_enabled = 0;
-
-extern int (*console_blank_hook) (int);
-
-/*
- * We would need an io_op parameter,but we are bound to the crapy
- * console_blank_hook here
+/* 
+ * console_blank_hook pointer manipulation is lock protected
  */
+extern int (*console_blank_hook) (int);
+static DEFINE_SPINLOCK(blank_spinlock);
+
 
 int omnibook_lcd_blank(int blank)
 {
+	struct omnibook_feature *blank_feature = omnibook_find_feature("blank");
 	int retval = 0;
 
-	if(!blank_driver.io_op)
+	if(!blank_feature)
 		return -ENODEV;
 
-	if (blank_driver.io_op->backend == PIO)
-		omnibook_apply_write_mask(blank_driver.io_op, blank);
-	else if (blank_driver.io_op->backend == KBC || blank_driver.io_op->backend == CDI)
-		omnibook_toggle(blank_driver.io_op, blank);
+	if (blank_feature->io_op->backend == PIO)
+		omnibook_apply_write_mask(blank_feature->io_op, blank);
+	else if (blank_feature->io_op->backend == KBC || blank_feature->io_op->backend == CDI)
+		omnibook_toggle(blank_feature->io_op, blank);
 	else {
 		retval = -ENODEV;
 	}
@@ -51,42 +50,46 @@ int omnibook_lcd_blank(int blank)
 
 static int console_blank_register_hook(void)
 {
-	if (omnibook_console_blank_enabled == 0) {
+	spin_lock(&blank_spinlock);
+	if (console_blank_hook != omnibook_lcd_blank) {
 		if (console_blank_hook == NULL) {
 			console_blank_hook = omnibook_lcd_blank;
 			printk(O_INFO "LCD backlight turn off at console blanking is enabled.\n");
-
-			omnibook_console_blank_enabled = 1;
-		} else {
+		} else 
 			printk(O_INFO "There is a console blanking solution already registered.\n");
-		}
 	}
+	spin_unlock(&blank_spinlock);
 	return 0;
 }
 
 static int console_blank_unregister_hook(void)
 {
+	int retval;
+	spin_lock(&blank_spinlock);
 	if (console_blank_hook == omnibook_lcd_blank) {
 		console_blank_hook = NULL;
 		printk(O_INFO "LCD backlight turn off at console blanking is disabled.\n");
-		omnibook_console_blank_enabled = 0;
 	} else if (console_blank_hook) {
 		printk(O_WARN "You can not disable another console blanking solution.\n");
-		return -EBUSY;
+		retval = -EBUSY;
 	} else {
 		printk(O_INFO "Console blanking already disabled.\n");
-		return 0;
 	}
-	return 0;
+	spin_unlock(&blank_spinlock);
+	return retval;
 }
 
 static int omnibook_console_blank_read(char *buffer, struct omnibook_operation *io_op)
 {
 	int len = 0;
 
+	spin_lock(&blank_spinlock);
+
 	len +=
 	    sprintf(buffer + len, "LCD console blanking hook is %s\n",
-		    (omnibook_console_blank_enabled) ? "enabled" : "disabled");
+		    (console_blank_hook == omnibook_lcd_blank) ? "enabled" : "disabled");
+
+	spin_unlock(&blank_spinlock);
 
 	return len;
 }
@@ -97,17 +100,15 @@ static int omnibook_console_blank_write(char *buffer, struct omnibook_operation 
 
 	switch (*buffer) {
 	case '0':
-		if ((retval = console_blank_unregister_hook()))
-			return retval;
+		retval = console_blank_unregister_hook();
 		break;
 	case '1':
-		if ((retval = console_blank_register_hook()))
-			return retval;
+		retval = console_blank_register_hook();
 		break;
 	default:
-		return -EINVAL;
+		retval = -EINVAL;
 	}
-	return 0;
+	return retval;
 }
 
 static int __init omnibook_console_blank_init(struct omnibook_operation *io_op)

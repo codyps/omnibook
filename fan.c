@@ -19,7 +19,7 @@
 
 #include <linux/delay.h>
 #include <asm/io.h>
-#include "ec.h"
+#include "hardware.h"
 
 static const struct omnibook_operation ctmp_io_op = { EC, XE3GF_CTMP, 0, 0, 0, 0 };
 static const struct omnibook_operation fot_io_op = { EC, XE3GF_FOT, XE3GF_FOT, 0, 0, 0 };
@@ -29,7 +29,7 @@ static int omnibook_get_fan(struct omnibook_operation *io_op)
 	u8 fan;
 	int retval;
 
-	if ((retval = io_op->backend->byte_read(io_op, &fan)))
+	if ((retval = backend_byte_read(io_op, &fan)))
 		return retval;
 
 	/*
@@ -57,39 +57,49 @@ static int omnibook_fan_off(struct omnibook_operation *io_op)
 {
 	int i, retval = 0;
 
-/*
- * Special handling for XE3GF & TSP10
- */
-	if (omnibook_ectype & (XE3GF | TSP10)) {
-		u8 fot, temp;
-		retval = omnibook_get_fan(io_op);
+	if (!(omnibook_ectype & (XE3GF | TSP10))) {
+		retval = omnibook_apply_write_mask(io_op, 0);
+		return retval;
+	} else {
+	/*
+ 	 * Special handling for XE3GF & TSP10
+	 */
+		u8 fot, temp, fan;
+
+		if(mutex_lock_interruptible(&io_op->backend->mutex))
+			return -ERESTARTSYS;	
+
+		retval = __backend_byte_read(io_op, &fan);
 
 		/* error or fan is already off */
-		if (retval <= 0)
-			return retval;
+		if (retval || !fan)
+			goto out;
 
 		/* now we set FOT to current temp, then reset to initial value */
-		if ((retval = fot_io_op.backend->byte_read(&fot_io_op, &fot)))
-			return retval;
-		if ((retval = ctmp_io_op.backend->byte_read(&ctmp_io_op, &temp)))
-			return retval;
+		if ((retval = __backend_byte_read(&fot_io_op, &fot)))
+			goto out;
+		if ((retval = __backend_byte_read(&ctmp_io_op, &temp)))
+			goto out;
 
-/*
- * Wait for no longer than 250ms, this is arbitrary
- */
+		/* Wait for no longer than 250ms (this is arbitrary). */
 		for (i = 0; i < 250; i++) {
-			fot_io_op.backend->byte_write(&fot_io_op, temp);
+			__backend_byte_write(&fot_io_op, temp);
 			mdelay(1);
-			if (omnibook_get_fan(io_op) == 0) {
-				retval = fot_io_op.backend->byte_write(&fot_io_op, fot);
-				return retval;
-			}
+			__backend_byte_read(io_op, &fan);
+			if (!fan) /* Fan is off */
+				break;
 		}
-		fot_io_op.backend->byte_write(&fot_io_op, fot);
-		printk(O_ERR "Attempt to switch off the fan failed.\n");
-		return -EIO;
-	} else
-		retval = omnibook_apply_write_mask(io_op, 0);
+		__backend_byte_write(&fot_io_op, fot);
+
+		if(i == 250 ) {
+			printk(O_ERR "Attempt to switch off the fan failed.\n");
+			retval = -EIO;
+		}
+
+		out:		
+		mutex_unlock(&io_op->backend->mutex);
+	}
+		
 
 	return retval;
 }
@@ -119,20 +129,18 @@ static int omnibook_fan_write(char *buffer, struct omnibook_operation *io_op)
 
 	switch (*buffer) {
 	case '0':
-		if ((retval = omnibook_fan_off(io_op)))
-			return retval;
+		retval = omnibook_fan_off(io_op);
 		break;
 	case '1':
-		if ((retval = omnibook_fan_on(io_op)))
-			return retval;
+		retval = omnibook_fan_on(io_op);
 		break;
 	default:
-		return -EINVAL;
+		retval = -EINVAL;
 	}
-	return 0;
+	return retval;
 }
 
-static struct omnibook_feature fan_feature;
+static struct omnibook_feature fan_driver;
 
 static int __init omnibook_fan_init(struct omnibook_operation *io_op)
 {
@@ -143,7 +151,7 @@ static int __init omnibook_fan_init(struct omnibook_operation *io_op)
 	 * They only support fan reading 
 	 */
 	if (omnibook_ectype & (OB4150 | XE2 | AMILOD))
-		fan_feature.write = NULL;
+		fan_driver.write = NULL;
 	return 0;
 }
 
@@ -170,6 +178,6 @@ static struct omnibook_feature __declared_feature fan_driver = {
 	.tbl = fan_table,
 };
 
-module_param_named(fan, fan_feature.enabled, int, S_IRUGO);
+module_param_named(fan, fan_driver.enabled, int, S_IRUGO);
 MODULE_PARM_DESC(fan, "Use 0 to disable, 1 to enable fan status monitor and control");
 /* End of file */

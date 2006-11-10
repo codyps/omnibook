@@ -23,12 +23,11 @@
 #include <linux/backlight.h>
 #endif
 
-#include "ec.h"
+#include "hardware.h"
 
-static unsigned int omnibook_max_brightness;
+unsigned int omnibook_max_brightness;
 
 #ifdef CONFIG_OMNIBOOK_BACKLIGHT
-
 static struct backlight_device *omnibook_backlight_device;
 
 static int omnibook_get_backlight(struct backlight_device *bd);
@@ -40,9 +39,6 @@ static struct backlight_properties omnibookbl_data = {
 	.update_status = omnibook_set_backlight,
 };
 
-#endif
-
-#ifdef CONFIG_OMNIBOOK_BACKLIGHT
 static int omnibook_get_backlight(struct backlight_device *bd)
 {
 	int retval = 0;
@@ -50,7 +46,7 @@ static int omnibook_get_backlight(struct backlight_device *bd)
 	u8 brgt;
 
 	io_op = class_get_devdata(&bd->class_dev);
-	retval = io_op->backend->byte_read(io_op, &brgt);
+	retval = backend_byte_read(io_op, &brgt);
 	if (!retval)
 		retval = brgt;
 
@@ -63,16 +59,16 @@ static int omnibook_set_backlight(struct backlight_device *bd)
 	struct omnibook_operation *io_op;
 
 	io_op = class_get_devdata(&bd->class_dev);
-	return io_op->backend->byte_write(io_op, intensity);
+	return backend_byte_write(io_op, intensity);
 }
-#endif
+#endif /* CONFIG_OMNIBOOK_BACKLIGHT */
 
 static int omnibook_brightness_read(char *buffer, struct omnibook_operation *io_op)
 {
 	int len = 0;
 	u8 brgt;
 
-	io_op->backend->byte_read(io_op, &brgt);
+	backend_byte_read(io_op, &brgt);
 
 	len +=
 	    sprintf(buffer + len, "LCD brightness: %2d (max value: %d)\n", brgt,
@@ -83,7 +79,7 @@ static int omnibook_brightness_read(char *buffer, struct omnibook_operation *io_
 
 static int omnibook_brightness_write(char *buffer, struct omnibook_operation *io_op)
 {
-	int brgt = 0;
+	unsigned int brgt = 0;
 	char *endp;
 
 	if (strncmp(buffer, "off", 3) == 0)
@@ -92,12 +88,12 @@ static int omnibook_brightness_write(char *buffer, struct omnibook_operation *io
 		omnibook_lcd_blank(0);
 	else {
 		brgt = simple_strtoul(buffer, &endp, 10);
-		if ((endp == buffer) || (brgt < 0) || (brgt > omnibook_max_brightness))
+		if ((endp == buffer) || (brgt > omnibook_max_brightness))
 			return -EINVAL;
 		else {
-			io_op->backend->byte_write(io_op, brgt);
+			backend_byte_write(io_op, brgt);
 #ifdef CONFIG_OMNIBOOK_BACKLIGHT
-			omnibookbl_data.brightness=brgt;
+			omnibookbl_data.brightness = brgt;
 #endif			
 		}
 	}
@@ -127,7 +123,7 @@ static int __init omnibook_brightness_init(struct omnibook_operation *io_op)
 	}
 
 #ifdef CONFIG_OMNIBOOK_BACKLIGHT
-	io_op->backend->byte_read(io_op, (u8*) &omnibookbl_data.brightness);
+	backend_byte_read(io_op, (u8*) &omnibookbl_data.brightness);
 	omnibookbl_data.max_brightness = omnibook_max_brightness;
 	omnibook_backlight_device =
 	    backlight_device_register(OMNIBOOK_MODULE_NAME, (void *)io_op, &omnibookbl_data);

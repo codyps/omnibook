@@ -18,6 +18,7 @@
 
 #include <linux/module.h>
 #include <linux/moduleparam.h>
+#include <linux/input.h>
 #include <linux/version.h>
 
 /*
@@ -25,7 +26,7 @@
  */
 
 #define OMNIBOOK_MODULE_NAME		"omnibook"
-#define OMNIBOOK_MODULE_VERSION		"2.20060000"
+#define OMNIBOOK_MODULE_VERSION		"2.20060000-exp"
 
 /*
  * EC types
@@ -57,7 +58,6 @@ struct omnibook_operation;
 
 struct omnibook_feature {
 	char *name;		/* Name */
-	char *proc_entry; 	/* Specify proc entry relative to /proc (will be omnibook/name otherwise) */
 	int enabled;		/* Set from module parameter */
 	int (*read) (char *,struct omnibook_operation *);	/* Procfile read function */
 	int (*write) (char *,struct omnibook_operation *);/* Procfile write function */
@@ -118,6 +118,16 @@ enum {
 	HKEY_FNF5 = (1<<6),		/* 64 Fn + F5 (toggle display) is enabled */
 };
 
+#define HKEY_LAST_SHIFT 6
+
+/*
+ * Various status bits
+ */
+enum {
+	MUTELED = (1<<0), /* Mute LED status */
+	TOUCHPAD = (1<<1), /* Touchpad status */
+};
+
 
 /*
  * Display state backend neutral masks
@@ -136,12 +146,11 @@ enum {
 	DISPLAY_DVI_DET = (1<<7),	/* 128 External DVI port */
 };
 
-
-
-int omnibook_lcd_blank(int blank);
-int omnibook_get_ac(struct omnibook_operation *io_op);
-int omnibook_get_battery_status(int num, struct omnibook_battery_state *battstat);
+extern unsigned int omnibook_max_brightness;
 int set_omnibook_param(const char *val, struct kernel_param *kp);
+int omnibook_lcd_blank(int blank);
+struct omnibook_feature *omnibook_find_feature(char *name);
+void omnibook_report_key(struct input_dev *dev, unsigned int keycode);
 
 
 #define __declared_feature __attribute__ (( __section__(".features"),  __aligned__(__alignof__ (struct omnibook_feature)))) __attribute_used__
@@ -161,14 +170,17 @@ int set_omnibook_param(const char *val, struct kernel_param *kp);
 #define dprintk_simple(fmt, args...) do { } while(0)
 #endif
 
+
+
+
 /* 
  * Configuration for standalone compilation: 
  * -Register as backlight depends on kernel config (requires 2.6.17+ interface)
- * -APM emulation is disabled by default
+ * -Legacy features disbled by default
  */
 
 #ifdef  OMNIBOOK_STANDALONE
-#if     (defined (CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE) || defined(CONFIG_BACKLIGHT_CLASS_DEVICE)) && (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,16))
+#if     (defined (CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE) || defined(CONFIG_BACKLIGHT_CLASS_DEVICE)) && (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,16)) && (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19))
 #define CONFIG_OMNIBOOK_BACKLIGHT
 #else
 #undef  CONFIG_OMNIBOOK_BACKLIGHT

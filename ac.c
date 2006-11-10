@@ -16,29 +16,19 @@
  */
 
 #include "omnibook.h"
-#include "ec.h"
-
-int omnibook_get_ac(struct omnibook_operation *io_op)
-{
-	u8 ac;
-	int retval;
-
-	retval = io_op->backend->byte_read(io_op, &ac);
-	if (!retval)
-		retval = !!ac;
-	return retval;
-}
+#include "hardware.h"
 
 static int omnibook_ac_read(char *buffer, struct omnibook_operation *io_op)
 {
 	int len = 0;
-	int ac;
+	u8 ac;
+	int retval;
 
-	ac = omnibook_get_ac(io_op);
-	if (ac < 0)
-		return ac;
+	retval = backend_byte_read(io_op, &ac);
+	if (retval < 0)
+		return retval;
 
-	len += sprintf(buffer + len, "AC %s\n", (ac) ? "on-line" : "off-line");
+	len += sprintf(buffer + len, "AC %s\n", (!!ac) ? "on-line" : "off-line");
 
 	return len;
 }

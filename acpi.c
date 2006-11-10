@@ -16,7 +16,7 @@
  */
 
 #include "omnibook.h"
-#include "ec.h"
+#include "hardware.h"
 
 #ifdef CONFIG_ACPI
 
@@ -79,7 +79,6 @@ static struct acpi_driver omnibook_bt_driver = {
 struct acpi_backend_data {
 	acpi_handle ec_handle;  /* Handle on ACPI EC device */
 	acpi_handle bt_handle;  /* Handle on ACPI BT device */
-	struct kref refcount;	/* Reference counter of this backend */
 };
 
 /*
@@ -99,15 +98,15 @@ static int omnibook_acpi_init(const struct omnibook_operation *io_op)
 	}
 
 	if (!priv_data) {
-		dprintk("Try to init ACPI backend\n");	
-		
+		dprintk("Try to init ACPI backend\n");
+		mutex_init(&io_op->backend->mutex);
+		mutex_lock(&io_op->backend->mutex);
+		kref_init(&io_op->backend->kref);
 		priv_data = kzalloc(sizeof(struct acpi_backend_data), GFP_KERNEL);
 		if (!priv_data) {
 			retval = -ENOMEM;
-			goto out;
+			goto error0;
 		}
-
-		kref_init(&priv_data->refcount);
 
 		/* Locate ACPI EC device, acpi_get_handle set dev_handle to NULL if not found */
 		for (i = 0; i < ARRAY_SIZE(ec_dev_list); i++) {
@@ -121,45 +120,46 @@ static int omnibook_acpi_init(const struct omnibook_operation *io_op)
 		if(!dev_handle) {
 			printk(O_ERR "Can't get handle on ACPI EC device.\n");
 			retval = -ENODEV;
-			goto err;
+			goto error1;
 		}
-		
-		io_op->backend->data = (void *) priv_data;
 
+		io_op->backend->data = (void *) priv_data;
+		
 		/* attempt to register Toshiba bluetooth ACPI driver */
 		acpi_bus_register_driver(&omnibook_bt_driver);
-		
+
 		dprintk("ACPI backend init OK\n");
-		goto out;
+		mutex_unlock(&io_op->backend->mutex);
+		return 0;
 
 	} else {
 		dprintk("ACPI backend has already been initialized\n");
-		kref_get(&priv_data->refcount);
+		kref_get(&io_op->backend->kref);
 		return 0;
 	}
 		
-	err:
+	error1:
 	kfree(priv_data);
 	io_op->backend->data = NULL;
-	out:
+	error0:
+	mutex_unlock(&io_op->backend->mutex);
+	mutex_destroy(&io_op->backend->mutex);
 	return retval;
 }
 
 static void omnibook_acpi_free(struct kref *ref)
 {
-	struct acpi_backend_data *priv_data;
-	priv_data = container_of(ref, struct acpi_backend_data, refcount);
+	struct omnibook_backend *backend;
+	backend = container_of(ref, struct omnibook_backend, kref);
 	dprintk("ACPI backend not used anymore: disposing\n");
 	acpi_bus_unregister_driver(&omnibook_bt_driver);
-	kfree(priv_data);
+	kfree(backend->data);
 }
 
 static void omnibook_acpi_exit(const struct omnibook_operation *io_op)
 {
-	struct acpi_backend_data *priv_data;
 	dprintk("Trying to dispose ACPI backend\n");
-	priv_data = (struct acpi_backend_data *) io_op->backend->data;
-	kref_put(&priv_data->refcount, omnibook_acpi_free);
+	kref_put(&io_op->backend->kref, omnibook_acpi_free);
 }
 
 /*
@@ -168,10 +168,11 @@ static void omnibook_acpi_exit(const struct omnibook_operation *io_op)
  */
 static int omnibook_acpi_execute(acpi_handle dev_handle, char *method, const int *param, int *result)
 {
+
 	struct acpi_object_list args_list;
 	struct acpi_buffer buff;
 	union acpi_object arg, out_objs[1];
-
+	
 	if (param) {
 		args_list.count = 1;
 		args_list.pointer = &arg;
@@ -210,6 +211,7 @@ static int omnibook_acpi_bt_add(struct acpi_device *device)
 	dprintk("Enabling found Toshiba Bluetooth ACPI device.\n");
 	strcpy(acpi_device_name(device), TOSHIBA_ACPI_DEVICE_NAME);
         strcpy(acpi_device_class(device), TOSHIBA_ACPI_BT_CLASS);
+
 	/* Save handle in backend private data structure. ugly. */
 	priv_data->bt_handle = device->handle;
 

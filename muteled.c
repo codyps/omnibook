@@ -16,18 +16,26 @@
  */
 
 #include "omnibook.h"
-#include "ec.h"
-
-/* There is no information about reading MUTE LED status */
-static int omnibook_muteled_enabled = 0;
+#include "hardware.h"
 
 static int omnibook_muteled_set(struct omnibook_operation *io_op, int status)
 {
-	if (omnibook_toggle(io_op, !!status)) {
+	int retval = 0;
+
+	if(mutex_lock_interruptible(&io_op->backend->mutex))
+		return -ERESTARTSYS;
+
+	if((retval = __omnibook_toggle(io_op, !!status))) {
 		printk(O_ERR "Failed muteled %s command.\n", status ? "on" : "off");
-		return -EIO;
+		goto out;
 	}
-	return 0;
+
+	io_op->backend->misc_state = 
+		(io_op->backend->misc_state & ~MUTELED) | (MUTELED * !!status);
+
+	out:
+	mutex_unlock(&io_op->backend->mutex);
+	return retval;
 }
 
 /*
@@ -37,10 +45,13 @@ static int omnibook_muteled_read(char *buffer, struct omnibook_operation *io_op)
 {
 	int len = 0;
 
+	if(mutex_lock_interruptible(&io_op->backend->mutex))
+		return -ERESTARTSYS;
 	len +=
 	    sprintf(buffer + len, "Last mute LED action was an %s command.\n",
-		    (omnibook_muteled_enabled) ? "on" : "off");
+		    (io_op->backend->misc_state & MUTELED) ? "on" : "off");
 
+	mutex_unlock(&io_op->backend->mutex);
 	return len;
 }
 
@@ -51,8 +62,7 @@ static int omnibook_muteled_write(char *buffer, struct omnibook_operation *io_op
 	if (*buffer == '0' || *buffer == '1') {
 		cmd = *buffer - '0';
 		if (!omnibook_muteled_set(io_op, cmd)) {
-			omnibook_muteled_enabled = cmd;
-			printk(O_INFO "Switching mute LED to %s state.\n", cmd ? "on" : "off");
+			dprintk("Switching mute LED to %s state.\n", cmd ? "on" : "off");
 		}
 	} else {
 		return -EINVAL;
@@ -60,9 +70,24 @@ static int omnibook_muteled_write(char *buffer, struct omnibook_operation *io_op
 	return 0;
 }
 
+/*
+ * May re-enable muteled upon resume
+ */
 static int omnibook_muteled_resume(struct omnibook_operation *io_op)
+{	
+	int retval;
+	mutex_lock(&io_op->backend->mutex);
+	retval = __omnibook_toggle(io_op, !!(io_op->backend->misc_state & MUTELED));
+	mutex_unlock(&io_op->backend->mutex);
+	return retval;
+}
+
+/*
+ * Switch muteled off upon exit
+ */
+static void __exit omnibook_muteled_cleanup(struct omnibook_operation *io_op)
 {
-	return omnibook_muteled_set(io_op, omnibook_muteled_enabled);
+	omnibook_muteled_set(io_op, 0);
 }
 
 static struct omnibook_tbl muteled_table[] __initdata = {
@@ -75,6 +100,7 @@ static struct omnibook_feature __declared_feature muteled_driver = {
 	.enabled = 1,
 	.read = omnibook_muteled_read,
 	.write = omnibook_muteled_write,
+	.exit = omnibook_muteled_cleanup,
 	.resume = omnibook_muteled_resume,
 	.ectypes = XE4500,
 	.tbl = muteled_table,

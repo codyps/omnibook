@@ -16,7 +16,7 @@
  */
 
 #include "omnibook.h"
-#include "ec.h"
+#include "hardware.h"
 
 static const char display_name[][16] = {
 	"Internal LCD",
@@ -31,7 +31,7 @@ static int omnibook_display_read(char *buffer, struct omnibook_operation *io_op)
 	int retval;
 	unsigned int sta, en_mask, det_mask;
 
-	retval = io_op->backend->display_get(io_op, &sta);
+	retval = backend_display_get(io_op, &sta);
 	if (retval < 0)
 		return retval;
 
@@ -64,7 +64,7 @@ static int omnibook_display_write(char *buffer, struct omnibook_operation *io_op
 	if (endp == buffer)
 		return -EINVAL;
 	else
-		retval = io_op->backend->display_set(io_op, state);
+		retval = backend_display_set(io_op, state);
 
 	return retval;
 }

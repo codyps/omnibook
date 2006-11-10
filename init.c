@@ -22,9 +22,8 @@
 #include <linux/version.h>
 #include <asm/uaccess.h>
 
-#include "ec.h"
+#include "hardware.h"
 #include "laptop.h"
-#include "compat.h"
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,15))
 #include <linux/platform_device.h>
@@ -86,6 +85,8 @@ enum omnibook_ectype_t omnibook_ectype = NONE;
 static char *laptop_model __initdata;
 
 static int omnibook_userset = 0;
+
+struct input_dev *omnibook_input_dev;
 
 /*
  * The platform_driver interface was added in linux 2.6.15
@@ -278,13 +279,8 @@ static int __init omnibook_init(struct omnibook_feature *feature)
 			if (omnibook_userset)
 				pmode |= S_IWUGO;
 		}
-		/*
-		 * FIXME: Special case for apmemu (not under /proc/omnibook)
-		 */
-		if (feature->proc_entry)
-			proc_entry = create_proc_entry(feature->proc_entry, pmode, NULL);
-		else
-			proc_entry = create_proc_entry(feature->name, pmode, omnibook_proc_root);
+
+		proc_entry = create_proc_entry(feature->name, pmode, omnibook_proc_root);
 
 		if (!proc_entry) {
 			printk(O_ERR "Unable to create proc entry %s\n", feature->name);
@@ -315,8 +311,12 @@ static int __init omnibook_init(struct omnibook_feature *feature)
 static int __init omnibook_probe(struct platform_device *dev)
 {
 	int i;
-	struct list_head *p;
 	struct omnibook_feature *feature;
+
+	/* temporary hack */
+	mutex_init(&kbc_backend.mutex);
+	mutex_init(&pio_backend.mutex);
+	mutex_init(&ec_backend.mutex);
 
 	omnibook_available_feature = kzalloc(sizeof(struct omnibook_feature), GFP_KERNEL);
 	if (!omnibook_available_feature)
@@ -335,8 +335,7 @@ static int __init omnibook_probe(struct platform_device *dev)
 	}
 
 	printk(O_INFO "Enabled features:");
-	list_for_each(p, &omnibook_available_feature->list) {
-		feature = list_entry(p, struct omnibook_feature, list);
+	list_for_each_entry(feature, &omnibook_available_feature->list, list) {
 		if (feature->name)
 			printk(" %s", feature->name);
 	}
@@ -350,21 +349,17 @@ static int __init omnibook_probe(struct platform_device *dev)
  */
 static int __exit omnibook_remove(struct platform_device *dev)
 {
-	struct list_head *p, *n;
-	struct omnibook_feature *feature;
+	struct omnibook_feature *feature, *temp;
 
-	list_for_each_safe(p, n, &omnibook_available_feature->list) {
-		feature = list_entry(p, struct omnibook_feature, list);
-		list_del(p);
+	list_for_each_entry_safe(feature, temp, &omnibook_available_feature->list, list) {
+		list_del(&feature->list);
 		/* Feature specific cleanup */
 		if (feature->exit)
 			feature->exit(feature->io_op);
 		/* Generic backend cleanup */
 		if (feature->io_op && feature->io_op->backend->exit)
 			feature->io_op->backend->exit(feature->io_op);
-		if (feature->proc_entry)
-			remove_proc_entry(feature->proc_entry, NULL);
-		else if (feature->name)
+		if (feature->name)
 			remove_proc_entry(feature->name, omnibook_proc_root);
 		kfree(feature->io_op);
 	}
@@ -379,11 +374,9 @@ static int __exit omnibook_remove(struct platform_device *dev)
 static int omnibook_suspend(struct platform_device *dev, pm_message_t state)
 {
 	int retval;
-	struct list_head *p;
 	struct omnibook_feature *feature;
 
-	list_for_each(p, &omnibook_available_feature->list) {
-		feature = list_entry(p, struct omnibook_feature, list);
+	list_for_each_entry(feature, &omnibook_available_feature->list, list) {
 		if (feature->suspend) {
 			retval = feature->suspend(feature->io_op);
 			if (retval)
@@ -399,11 +392,9 @@ static int omnibook_suspend(struct platform_device *dev, pm_message_t state)
 static int omnibook_resume(struct platform_device *dev)
 {
 	int retval;
-	struct list_head *p;
 	struct omnibook_feature *feature;
 
-	list_for_each(p, &omnibook_available_feature->list) {
-		feature = list_entry(p, struct omnibook_feature, list);
+	list_for_each_entry(feature, &omnibook_available_feature->list, list) {
 		if (feature->resume) {
 			retval = feature->resume(feature->io_op);
 			if (retval)
@@ -411,6 +402,20 @@ static int omnibook_resume(struct platform_device *dev)
 		}
 	}
 	return 0;
+}
+
+/* 
+ * Find a given available feature by its name
+ */
+struct omnibook_feature *omnibook_find_feature(char *name)
+{
+	struct omnibook_feature *feature;
+
+	list_for_each_entry(feature, &omnibook_available_feature->list, list) {
+		if (!strcmp(feature->name, name))
+			return feature;
+	}
+	return NULL;
 }
 
 /*

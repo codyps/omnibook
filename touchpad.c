@@ -16,27 +16,37 @@
  */
 
 #include "omnibook.h"
-#include "ec.h"
-
-/* Touchpad is assumed to be enabled by default */
-static int omnibook_touchpad_enabled = 1;
+#include "hardware.h"
 
 static int omnibook_touchpad_set(struct omnibook_operation *io_op, int status)
 {
 	int retval = 0;
-	if ((retval = omnibook_toggle(io_op, !!status))) {
+
+	if(mutex_lock_interruptible(&io_op->backend->mutex))
+		return -ERESTARTSYS;
+
+	if ((retval = __omnibook_toggle(io_op, !!status))) {
 		printk(O_ERR "Failed touchpad %sable command.\n", status ? "en" : "dis");
+		goto out;
 	}
+
+	io_op->backend->misc_state = 
+		(io_op->backend->misc_state & ~TOUCHPAD) | (TOUCHPAD * !!status);
+
+	out:
+	mutex_unlock(&io_op->backend->mutex);
 	return retval;
 }
 
 /*
- * Power management handlers: redisable touchpad on resume (if requested)
+ * Power management handlers: redisable touchpad on resume (if necessary)
  */
 static int omnibook_touchpad_resume(struct omnibook_operation *io_op)
 {
 	int retval;
-	retval = (omnibook_touchpad_enabled ? 0 : omnibook_touchpad_set(io_op, 0));
+	mutex_lock(&io_op->backend->mutex);
+	retval = __omnibook_toggle(io_op, !!(io_op->backend->misc_state & TOUCHPAD));
+	mutex_unlock(&io_op->backend->mutex);
 	return retval;
 }
 
@@ -47,10 +57,14 @@ static int omnibook_touchpad_read(char *buffer, struct omnibook_operation *io_op
 {
 	int len = 0;
 
+	if(mutex_lock_interruptible(&io_op->backend->mutex))
+		return -ERESTARTSYS;
+
 	len +=
 	    sprintf(buffer + len, "Last touchpad action was an %s command.\n",
-		    (omnibook_touchpad_enabled) ? "enable" : "disable");
+		    (io_op->backend->misc_state & TOUCHPAD) ? "enable" : "disable");
 
+	mutex_unlock(&io_op->backend->mutex);
 	return len;
 }
 
@@ -61,12 +75,21 @@ static int omnibook_touchpad_write(char *buffer, struct omnibook_operation *io_o
 	if (*buffer == '0' || *buffer == '1') {
 		cmd = *buffer - '0';
 		if (!omnibook_touchpad_set(io_op, cmd)) {
-			omnibook_touchpad_enabled = cmd;
-			printk(O_INFO "%sabling touchpad.\n", cmd ? "En" : "Dis");
+			dprintk("%sabling touchpad.\n", cmd ? "En" : "Dis");
 		}
 	} else {
 		return -EINVAL;
 	}
+	return 0;
+}
+
+
+static int __init omnibook_touchpad_init(struct omnibook_operation *io_op)
+{
+	mutex_lock(&io_op->backend->mutex);
+	/* Touchpad is assumed to be enabled by default */
+	io_op->backend->misc_state |= TOUCHPAD;
+	mutex_unlock(&io_op->backend->mutex);
 	return 0;
 }
 
@@ -91,6 +114,7 @@ static struct omnibook_feature __declared_feature touchpad_driver = {
 	.enabled = 1,
 	.read = omnibook_touchpad_read,
 	.write = omnibook_touchpad_write,
+	.init = omnibook_touchpad_init,
 	.exit = omnibook_touchpad_cleanup,
 	.resume = omnibook_touchpad_resume,
 	.ectypes = XE3GF | XE3GC | TSP10 | TSM30X,

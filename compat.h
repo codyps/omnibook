@@ -1,5 +1,5 @@
 /*
- * compat.h -- Older kernel (=> 2.6.9) support 
+ * compat.h -- Older kernel (=> 2.6.11) support 
  * 
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,13 +21,14 @@
  * Mutex to Semaphore fallback
  */
 
-
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16))
 #include <asm/semaphore.h>
 #define DEFINE_MUTEX(lock)		DECLARE_MUTEX(lock)
+#define	mutex_init(lock)		init_MUTEX(lock)
 #define mutex_lock(lock)		down(lock)
 #define mutex_lock_interruptible(lock)	down_interruptible(lock)
 #define mutex_unlock(lock)		up(lock)
+#define mutex_destroy(lock)		do { } while(0)
 #else
 #include <linux/mutex.h>
 #endif

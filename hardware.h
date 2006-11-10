@@ -1,5 +1,5 @@
 /*
- * ec.h -- low level definitions to access Embedded Controller and co.
+ * hardware.h -- low level definitions to access Embedded Controller and co.
  * 
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,6 +16,7 @@
  */
 
 #include <linux/acpi.h>
+#include "compat.h"
 
 /*
  * Quite ugly:
@@ -30,8 +31,8 @@ struct omnibook_operation {
 		unsigned long read_addr; /* address for data reading */
 		unsigned long write_addr; /* address for data writing */
 		u8 read_mask; /* read mask */
-		int on_mask; /* mask to set (pos value) or unset (neg value) to put feature to on state */
-		int off_mask; /* mask to set (pos value) or unset (neg value) to put feature to off state */
+		int on_mask; /* mask to set (pos value) or unset (neg value) to put feature in on state */
+		int off_mask; /* mask to set (pos value) or unset (neg value) to put feature in off state */
 };
 
 #define COMMAND(backend,data_on,data_off) { backend, 0, 0, 0, data_on, data_off }
@@ -44,16 +45,19 @@ struct omnibook_tbl {
 
 /*
  * Backend interface definition
- *
- * Note:
- * display_get/set and hotkey_set/get return a positive value on success 
- * which set bits corresponds to the actual supported states 
- * (see omnibook.h for the DISPLAY_* masks)  
  */
 
 struct omnibook_backend {
 	const char *name;	/* backend name */
-	void *data;		/* backend private data pointer */
+	struct mutex mutex;	/* serializes all access to backend functions */
+	const unsigned int hotkeys_read_cap; /* hotkey probing mask */
+	const unsigned int hotkeys_write_cap; /* hotkey setting mask */
+
+	/* Public data fields, access with mutex held */
+	unsigned int hotkeys_state;	/* saved hotkeys state */
+	unsigned int misc_state;	/* various status bit: touchpad and muteled */
+
+	/* Public function pointers */
 	int (*init) (const struct omnibook_operation *); 
 	void (*exit) (const struct omnibook_operation *);
 	int (*byte_read) (const struct omnibook_operation *, u8 *); 
@@ -64,6 +68,11 @@ struct omnibook_backend {
 	int (*hotkeys_set) (const struct omnibook_operation *, unsigned int); 
 	int (*display_get) (const struct omnibook_operation *, unsigned int *);
 	int (*display_set) (const struct omnibook_operation *, unsigned int);
+
+	/* Private fields, never to be accessed outside backend code */
+	struct kref kref;	/* Reference counter of this backend */
+	void *data;		/* private data pointer */
+	int already_failed;	/* Backend init already failed at least once */
 };
 
 extern struct omnibook_backend kbc_backend;
@@ -82,8 +91,113 @@ extern struct omnibook_backend compal_backend;
 
 int legacy_ec_read(u8 addr, u8 *data);
 int legacy_ec_write(u8 addr, u8 data);
-int omnibook_apply_write_mask(const struct omnibook_operation *io_op, int toggle);
-int omnibook_toggle(const struct omnibook_operation *io_op, int toggle);
+int __omnibook_apply_write_mask(const struct omnibook_operation *io_op, int toggle);
+int __omnibook_toggle(const struct omnibook_operation *io_op, int toggle);
+
+/*
+ * Lock helper functions. Defines locking and __prefixed non locking variants.
+ */
+
+#define helper_func(func) \
+static inline int backend_##func##_get(const struct omnibook_operation *io_op, unsigned int *data) \
+{ \
+	int retval; \
+	if(mutex_lock_interruptible(&io_op->backend->mutex)) \
+		return -ERESTARTSYS; \
+	retval = io_op->backend->func##_get(io_op, data); \
+	mutex_unlock(&io_op->backend->mutex); \
+	return retval; \
+} \
+static inline int backend_##func##_set(const struct omnibook_operation *io_op, unsigned int data) \
+{ \
+	int retval; \
+	if(mutex_lock_interruptible(&io_op->backend->mutex)) \
+		return -ERESTARTSYS; \
+	retval = io_op->backend->func##_set(io_op, data); \
+	mutex_unlock(&io_op->backend->mutex); \
+	return retval; \
+}\
+static inline int __backend_##func##_get(const struct omnibook_operation *io_op, unsigned int *data) \
+{ \
+	int retval; \
+	WARN_ON(!mutex_is_locked(&io_op->backend->mutex)); \
+	retval = io_op->backend->func##_get(io_op, data); \
+	return retval; \
+} \
+static inline int __backend_##func##_set(const struct omnibook_operation *io_op, unsigned int data) \
+{ \
+	int retval; \
+	WARN_ON(!mutex_is_locked(&io_op->backend->mutex)); \
+	retval = io_op->backend->func##_set(io_op, data); \
+	return retval; \
+}
+
+helper_func(aerial)
+helper_func(hotkeys)
+helper_func(display)
+
+static inline int backend_byte_read(const struct omnibook_operation *io_op, u8 *data)
+{
+	int retval;
+	if(mutex_lock_interruptible(&io_op->backend->mutex))
+		return -ERESTARTSYS;
+	retval = io_op->backend->byte_read(io_op, data);
+	mutex_unlock(&io_op->backend->mutex);
+	return retval;
+}
+
+static inline int backend_byte_write(const struct omnibook_operation *io_op, u8 data)
+{
+	int retval;
+	if(mutex_lock_interruptible(&io_op->backend->mutex))
+		return -ERESTARTSYS;
+	retval = io_op->backend->byte_write(io_op, data);
+	mutex_unlock(&io_op->backend->mutex);
+	return retval;
+}
+
+static inline int __backend_byte_read(const struct omnibook_operation *io_op, u8 *data)
+{
+	int retval;
+	WARN_ON(!mutex_is_locked(&io_op->backend->mutex));
+	retval = io_op->backend->byte_read(io_op, data);
+	return retval;
+}
+
+static inline int __backend_byte_write(const struct omnibook_operation *io_op, u8 data)
+{
+	int retval;
+	WARN_ON(!mutex_is_locked(&io_op->backend->mutex));
+	retval = io_op->backend->byte_write(io_op, data);
+	return retval;
+}
+
+static inline int omnibook_apply_write_mask(const struct omnibook_operation *io_op, int toggle)
+{
+	int retval;
+	if(mutex_lock_interruptible(&io_op->backend->mutex))
+		return -ERESTARTSYS;
+	retval = __omnibook_apply_write_mask(io_op, toggle);
+	mutex_unlock(&io_op->backend->mutex);
+	return retval;
+}
+
+static inline int omnibook_toggle(const struct omnibook_operation *io_op, int toggle)
+{
+	int retval;
+	if(mutex_lock_interruptible(&io_op->backend->mutex))
+		return -ERESTARTSYS;
+	retval = __omnibook_toggle(io_op, toggle);
+	mutex_unlock(&io_op->backend->mutex);
+	return retval;
+}
+
+/*
+ * Timeout in ms for sending to controller
+ */
+
+#define OMNIBOOK_TIMEOUT                250
+
 
 /*
  *	Embedded controller adresses
@@ -206,14 +320,6 @@ int omnibook_toggle(const struct omnibook_operation *io_op, int toggle);
 #define XE3GC_CNTR_MASK		0x20	/* Fn+F3/Fn+F4 - Contrast up or down pressed */
 #define XE3GC_BRGT_MASK		0x40	/* Fn+F1/Fn+F2 - Brightness up or down pressed */
 #define XE3GC_BTVL_MASK		0x0F	/* LCD brightness */
-
-/*
- * Emulated scancodes
- */
-
-#define XE3GC_VOLD_SCAN		0x2E	/* Volume down button scancode */
-#define XE3GC_VOLU_SCAN		0x30	/* Volume up button scancode */
-#define XE3GC_MUTE_SCAN		0x20	/* Volume up button scancode */
 
 /*
  * Toshiba Satellite A105 values and mask
@@ -382,6 +488,7 @@ int omnibook_toggle(const struct omnibook_operation *io_op, int toggle);
 
 /*
  * Index and values for Command/Data/Index interface
+ * Notice similitudes with commands code for kbc
  */
 
 #define TSM70_FN_INDEX		0x45
@@ -389,6 +496,7 @@ int omnibook_toggle(const struct omnibook_operation *io_op, int toggle);
 #define TSM70_FN_DISABLE	0x74
 #define TSM70_HOTKEYS_INDEX	0x59
 #define TSM70_HOTKEYS_ENABLE	0x90
+#define TSM70_HOTKEYS_DISABLE	0x91
 #define TSM70_LCD_READ		0x5C
 #define TSM70_LCD_WRITE		0x5D
 #define TSM70_TOUCHPAD_ON 	0x80
@@ -397,8 +505,8 @@ int omnibook_toggle(const struct omnibook_operation *io_op, int toggle);
 #define	TSM100_LCD_ON		0xe1
 #define	TSM100_LCD_OFF		0xe2
 
-/* Toshiba SMI funtion */
-#define SMI_FN_PRESSED		0x00
+/* Toshiba SMI funtions and constants*/
+#define SMI_FN_PRESSED		0x8f
 #define SMI_SET_LCD_BRIGHTNESS	0xa2
 #define SMI_GET_LCD_BRIGHTNESS	0xa3
 #define SMI_GET_KILL_SWITCH	0xa4
@@ -417,3 +525,6 @@ int omnibook_toggle(const struct omnibook_operation *io_op, int toggle);
 #define SMI_STICK_KEYS_MASK	0x02
 #define SMI_FN_TWICE_LOCK_MASK	0x04
 #define SMI_FN_DOCK_MASK	0x08
+
+#define SMI_FN_SCAN		0x6d	/* Fn key scancode */
+#define	SMI_DOCK_SCAN		0x6e	/* Dock scancode */

@@ -20,7 +20,7 @@
  */
 
 #include "omnibook.h"
-#include "ec.h"
+#include "hardware.h"
 
 static u8 ecdump_regs[256];
 

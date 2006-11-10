@@ -16,7 +16,7 @@
  */
 
 #include "omnibook.h"
-#include "ec.h"
+#include "hardware.h"
 
 static int omnibook_temperature_read(char *buffer, struct omnibook_operation *io_op)
 {
@@ -24,7 +24,7 @@ static int omnibook_temperature_read(char *buffer, struct omnibook_operation *io
 	int retval;
 	u8 temp;
 
-	if ((retval = io_op->backend->byte_read(io_op, &temp)))
+	if ((retval = backend_byte_read(io_op, &temp)))
 		return retval;
 
 	len += sprintf(buffer + len, "CPU temperature:            %2d C\n", temp);

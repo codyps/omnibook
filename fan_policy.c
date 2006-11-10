@@ -18,7 +18,7 @@
 #include "omnibook.h"
 
 #include <linux/ctype.h>
-#include "ec.h"
+#include "hardware.h"
 
 /*
  * Default temperature limits.

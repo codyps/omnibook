@@ -16,8 +16,7 @@
  */
 
 #include "omnibook.h"
-
-#include "ec.h"
+#include "hardware.h"
 
 static int omnibook_dock_read(char *buffer, struct omnibook_operation *io_op)
 {
@@ -25,12 +24,41 @@ static int omnibook_dock_read(char *buffer, struct omnibook_operation *io_op)
 	u8 dock;
 	int retval;
 
-	if ((retval = io_op->backend->byte_read(io_op, &dock)))
+	if ((retval = backend_byte_read(io_op, &dock)))
 		return retval;
 
 	len += sprintf(buffer + len, "Laptop is %s\n", (dock) ? "docked" : "undocked");
 
 	return len;
+}
+
+static int omnibook_dock_write(char *buffer, struct omnibook_operation *io_op)
+{
+	int retval;
+
+	switch (*buffer) {
+	case '0':
+		retval = backend_byte_write(io_op, 0);
+		break;
+	case '1':
+		retval = backend_byte_write(io_op, 1);
+		break;
+	default:
+		retval = -EINVAL;
+	}
+
+	return retval;
+}
+
+static struct omnibook_feature dock_driver;
+
+static int __init omnibook_dock_init(struct omnibook_operation *io_op)
+{
+	/* writing is only supported on ectype 13 */
+	if(!(omnibook_ectype & TSM40))
+		dock_driver.write = NULL;
+	
+	return 0;
 }
 
 static struct omnibook_tbl dock_table[] __initdata = {
@@ -44,7 +72,9 @@ static struct omnibook_tbl dock_table[] __initdata = {
 static struct omnibook_feature __declared_feature dock_driver = {
 	.name = "dock",
 	.enabled = 0,
+	.init = omnibook_dock_init,
 	.read = omnibook_dock_read,
+	.write = omnibook_dock_write,
 	.ectypes = XE3GF | OB500 | OB510 | OB6000 | OB6100 | OB4150 | TSM40,
 	.tbl = dock_table,
 };

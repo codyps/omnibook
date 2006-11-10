@@ -47,10 +47,10 @@ EXTRA_CFLAGS += -D OMNIBOOK_STANDALONE $(DEBUG)
 EXTRA_LDFLAGS +=  $(src)/sections.lds
 
 
-OBJS	= init.o ec.o compal.o acpi.o nbsmi.o \
-          ac.o apmemu.o battery.o blank.o bluetooth.o display.o dock.o dump.o \
-	  fan.o fan_policy.o hotkeys.o info.o lcd.o muteled.o temperature.o \
-          touchpad.o wireless.o
+OBJS	= init.o lib.o ec.o kbc.o pio.o compal.o acpi.o nbsmi.o \
+          ac.o battery.o blank.o bluetooth.o display.o dock.o dump.o \
+	  fan.o fan_policy.o hotkeys.o info.o lcd.o muteled.o polling.o \
+	  temperature.o touchpad.o wireless.o
 
 obj-m         += $(MODULE_NAME).o
 omnibook-objs := $(OBJS)
