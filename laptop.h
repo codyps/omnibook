@@ -740,6 +740,15 @@ static struct  dmi_system_id omnibook_ids[] __initdata = {
 		.driver_data = (void*) TSM30X
 	},
 	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Tecra A4",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Tecra A4"),
+		},
+		.driver_data = (void*) TSM40
+	},
+	{
                 .callback = dmi_matched,
                 .ident = "Toshiba Equium A110",
                 .matches = {

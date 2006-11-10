@@ -331,6 +331,19 @@ Board Vendor:  TOSHIBA
 Board Name:    Null
 
 ---------------------------------------------
+Toshiba Tecra A4 ----------------------------
+
+
+BIOS Vendor:   TOSHIBA
+BIOS Version:  Version 1.70
+BIOS Release:  10/14/2005
+System Vendor: TOSHIBA
+Product Name:  Tecra A4
+Version:       PTA40E-0UN00FSP
+Board Vendor:  TOSHIBA
+Board Name:    Version A0
+
+---------------------------------------------
 Toshiba Tecra S2 ----------------------------
 
 BIOS Vendor:   TOSHIBA
