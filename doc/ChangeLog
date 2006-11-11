@@ -14,6 +14,7 @@ Changelog file for omnibook package:
 	HP Pavilion ze4500 (ectype 7)
 	Toshiba Satellite 1130 (ectype 1)
 	Toshiba Satellite A75 (ectype 12)
+	Toshiba Tecra A4 (ectype 13)
 
 2.20060921 Mathieu Bérard <math_b@users.sourceforge.net>
 * The minimal required kernel version is now 2.6.9 (kref API)

@@ -56,6 +56,7 @@ static char ec_dev_list[][20] = {
 #define TOSH_BT_DISABLE_USB  "DUSB"
 #define TOSH_BT_POWER_ON     "BTPO"
 #define TOSH_BT_POWER_OFF    "BTPF"
+#define TOSH_BT_STATUS	     "BTST"
 
 /*
  * ACPI driver for Toshiba Bluetooth device
@@ -79,16 +80,16 @@ static struct acpi_driver omnibook_bt_driver = {
 struct acpi_backend_data {
 	acpi_handle ec_handle;  /* Handle on ACPI EC device */
 	acpi_handle bt_handle;  /* Handle on ACPI BT device */
+	unsigned has_antr_antw:1; /* Are there ANTR/ANTW methods in the EC device ? */
 };
 
 /*
- * Probe for expected ACPI device
- * FIXME we check only the ACPI device and not the associated methods
+ * Probe for expected ACPI devices
  */
 static int omnibook_acpi_init(const struct omnibook_operation *io_op)
 {
 	int retval = 0;	
-	acpi_handle dev_handle;
+	acpi_handle dev_handle, method_handle;
 	int i;
 	struct acpi_backend_data *priv_data = io_op->backend->data;
 	
@@ -122,6 +123,10 @@ static int omnibook_acpi_init(const struct omnibook_operation *io_op)
 			retval = -ENODEV;
 			goto error1;
 		}
+
+		if((acpi_get_handle( dev_handle, "ANTR", &method_handle) == AE_OK) &&
+		    (acpi_get_handle( dev_handle, "ANTW", &method_handle) == AE_OK))
+			priv_data->has_antr_antw = 1;
 
 		io_op->backend->data = (void *) priv_data;
 		
@@ -162,6 +167,9 @@ static void omnibook_acpi_exit(const struct omnibook_operation *io_op)
 	kref_put(&io_op->backend->kref, omnibook_acpi_free);
 }
 
+/* forward declaration */
+struct omnibook_backend acpi_backend;
+
 /*
  * Execute an ACPI method which return either an integer or nothing
  * (acpi_evaluate_object wrapper)
@@ -173,6 +181,8 @@ static int omnibook_acpi_execute(acpi_handle dev_handle, char *method, const int
 	struct acpi_buffer buff;
 	union acpi_object arg, out_objs[1];
 	
+	WARN_ON(!mutex_is_locked(&acpi_backend.mutex));
+
 	if (param) {
 		args_list.count = 1;
 		args_list.pointer = &arg;
@@ -201,8 +211,31 @@ static int omnibook_acpi_execute(acpi_handle dev_handle, char *method, const int
 	return 0;
 }
 
-/* forward declaration */
-struct omnibook_backend acpi_backend;
+/*
+ * Set Bluetooth device state using the Toshiba BT device
+ */
+static int set_bt_status(const struct acpi_backend_data *priv_data, unsigned int state)
+{
+	int retval = 0;
+
+	if(state) {
+		retval = omnibook_acpi_execute(priv_data->bt_handle, TOSH_BT_ACTIVATE_USB, NULL, NULL);
+		if(retval)
+			goto out;
+		retval = omnibook_acpi_execute(priv_data->bt_handle, TOSH_BT_POWER_ON, NULL, NULL);
+		if(retval)
+			goto out;
+	} else {
+		retval = omnibook_acpi_execute(priv_data->bt_handle, TOSH_BT_DISABLE_USB, NULL, NULL);
+		if(retval)
+			goto out;
+		retval = omnibook_acpi_execute(priv_data->bt_handle, TOSH_BT_POWER_OFF, NULL, NULL);
+		if(retval)
+			goto out;
+	}
+	out:
+	return retval;
+}
 
 static int omnibook_acpi_bt_add(struct acpi_device *device)
 {
@@ -215,28 +248,47 @@ static int omnibook_acpi_bt_add(struct acpi_device *device)
 	/* Save handle in backend private data structure. ugly. */
 	priv_data->bt_handle = device->handle;
 
-	omnibook_acpi_execute(device->handle, TOSH_BT_ACTIVATE_USB, NULL, NULL);
-	omnibook_acpi_execute(device->handle, TOSH_BT_POWER_ON, NULL, NULL);
-	return 0;
+	return set_bt_status(priv_data, 1);
 }
 
 static int omnibook_acpi_bt_remove(struct acpi_device *device, int type)
 {
+	int retval;	
 	struct acpi_backend_data *priv_data = acpi_backend.data;	
 
 	dprintk("Disabling Toshiba Bluetooth ACPI device.\n");
+	retval = set_bt_status(priv_data, 0);
 	priv_data->bt_handle = NULL;
-	omnibook_acpi_execute(device->handle, TOSH_BT_DISABLE_USB, NULL, NULL);
-	omnibook_acpi_execute(device->handle, TOSH_BT_POWER_OFF, NULL, NULL);
-	return 0;
+	return retval;
 }
 
-
-static int omnibook_acpi_get_wireless(const struct omnibook_operation *io_op, unsigned int *state)
+/*
+ * Get Bluetooth status using the BTST method
+ */
+static int get_bt_status(const struct acpi_backend_data *priv_data, unsigned int *state)
 {
 	int retval = 0;
 	int raw_state;
-	struct acpi_backend_data *priv_data = io_op->backend->data;
+
+	if ((retval = omnibook_acpi_execute(priv_data->bt_handle, TOSH_BT_STATUS, 0, &raw_state)))
+		return retval;
+
+	printk(O_INFO "BTST raw_state: %x\n", raw_state);
+
+	/* FIXME: raw_state => state translation */
+	*state = BT_EX;
+
+	return retval;
+}
+
+/*
+ * Get the Bluetooth + Wireless status using the ANTR method
+ * FIXME: what if ANTR and BTST disagree ? we thrust ANTR for now
+ */
+static int get_wireless_status(const struct acpi_backend_data *priv_data, unsigned int *state)
+{
+	int retval = 0;
+	int raw_state;
 
 	if ((retval = omnibook_acpi_execute(priv_data->ec_handle, GET_WIRELESS_METHOD, 0, &raw_state)))
 		return retval;
@@ -252,31 +304,51 @@ static int omnibook_acpi_get_wireless(const struct omnibook_operation *io_op, un
 	return retval;
 }
 
-
-static int omnibook_acpi_set_wireless(const struct omnibook_operation *io_op, unsigned int state)
+static int omnibook_acpi_get_wireless(const struct omnibook_operation *io_op, unsigned int *state)
 {
-	int retval = 0;
-	int raw_state;
+	int retval;
 	struct acpi_backend_data *priv_data = io_op->backend->data;
-	char *method;
+
+	/* use BTST (BT device) if we don't have ANTR/ANTW (EC device) */
+	if(priv_data->has_antr_antw)
+		retval = get_wireless_status(priv_data, state);
+	else if(priv_data->bt_handle)
+		retval = get_bt_status(priv_data, state);
+	else
+		retval = -ENODEV;
+
+	return retval;
+}
+
+/*
+ * Set the Bluetooth + Wireless status using the ANTW method
+ */
+static int set_wireless_status(const struct acpi_backend_data *priv_data, unsigned int state)
+{
+	int retval;
+	int raw_state;
 
 	raw_state = !!(state & WIFI_STA);	/* bit 0 */
 	raw_state |= !!(state & BT_STA) << 0x1;	/* bit 1 */
 
 	dprintk("set_wireless raw_state: %x\n", raw_state);
 
-	if ((retval = omnibook_acpi_execute(priv_data->ec_handle, SET_WIRELESS_METHOD, &raw_state, NULL)))
-		return retval;
+	retval = omnibook_acpi_execute(priv_data->ec_handle, SET_WIRELESS_METHOD, &raw_state, NULL);
 
-	/* BT device appears to need more work*/
-	if(priv_data->bt_handle) {
-		method = (state & BT_STA) ? TOSH_BT_POWER_ON : TOSH_BT_POWER_OFF;
-		if ((retval = omnibook_acpi_execute(priv_data->bt_handle, method, NULL, NULL)))
-			return retval;
-		method = (state & BT_STA) ? TOSH_BT_ACTIVATE_USB : TOSH_BT_DISABLE_USB;
-		if ((retval = omnibook_acpi_execute(priv_data->bt_handle, method, NULL, NULL)))
-			return retval;
-	}	
+	return retval;
+}
+
+static int omnibook_acpi_set_wireless(const struct omnibook_operation *io_op, unsigned int state)
+{
+	int retval;
+	struct acpi_backend_data *priv_data = io_op->backend->data;
+	
+	if(priv_data->has_antr_antw)
+		retval = set_wireless_status(priv_data, state);
+	else if(priv_data->bt_handle)
+		retval = set_bt_status(priv_data, (state & BT_STA));
+	else
+		retval = -ENODEV;
 
 	return retval;
 }

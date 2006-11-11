@@ -652,14 +652,14 @@ static int adjust_brighness(int delta)
 static const struct omnibook_operation last_scan_op = SIMPLE_BYTE(SMI,SMI_GET_FN_LAST_SCAN,0);
 
 /*
- * Workqueue hanlder for Fn hotkeys
+ * Workqueue handler for Fn hotkeys
  */
 static void omnibook_handle_fnkey(void* data)
 {
 	int i;
 	u8 gen_scan;
 
-	if(nbsmi_smi_read_command(&last_scan_op, &gen_scan))
+	if(backend_byte_read(&last_scan_op, &gen_scan))
 		return;
 
 	dprintk("detected scancode %x.\n", gen_scan);

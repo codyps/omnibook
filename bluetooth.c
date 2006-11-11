@@ -84,10 +84,11 @@ static int __init omnibook_bt_init(struct omnibook_operation *io_op)
 	return retval;
 }
 
-/*
- * To avoid duplication the table is in wireless.c
- */
-extern struct omnibook_tbl wireless_table[];
+static struct omnibook_tbl wireless_table[] __initdata = {
+	{TSM30X | TSA105, {ACPI,}},	/* stubs to select backend */
+	{TSM40, {SMI,}},		/* stubs to select backend */
+	{0,}
+};
 
 static struct omnibook_feature __declared_feature bt_driver = {
 	.name = "bluetooth",
@@ -95,7 +96,7 @@ static struct omnibook_feature __declared_feature bt_driver = {
 	.read = omnibook_bt_read,
 	.write = omnibook_bt_write,
 	.init = omnibook_bt_init,
-	.ectypes = TSM30X | TSM40,
+	.ectypes = TSM30X | TSM40 | TSA105,
 	.tbl = wireless_table,
 };
 
