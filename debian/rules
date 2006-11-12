@@ -64,7 +64,7 @@ install: patch build
 		debian/$(psource)/usr/src/modules/$(sname)/debian
 	cp Makefile *.c *.h *.lds debian/$(psource)/usr/src/modules/$(sname)
 
-	cd debian/$(psource)/usr/src && tar c modules | gzip -9 > $(sname).tar.gz && rm -rf modules
+	cd debian/$(psource)/usr/src && tar c modules | bzip2 -9 > $(sname).tar.bz2 && rm -rf modules
 	dh_install
 
 # Build architecture-independent files here.
