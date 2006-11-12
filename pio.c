@@ -35,25 +35,25 @@
  * only at module init/exit time so there is no need for a lock.
  */
 
-struct pio_private_data_t {
+struct pio_priv_data_t {
 	unsigned long addr;
 	struct kref refcount;
 	struct list_head list;
 };
 
-static struct pio_private_data_t pio_private_data = {
+static struct pio_priv_data_t pio_priv_data = {
 	.addr = 0,
-	.list = LIST_HEAD_INIT(pio_private_data.list),
+	.list = LIST_HEAD_INIT(pio_priv_data.list),
 };
 
 /*
  * Match an entry in the linked list helper function: see if we have and entry
  * whose addr field match maddr
  */
-static struct pio_private_data_t *omnibook_match_port(struct pio_private_data_t *data,
+static struct pio_priv_data_t *omnibook_match_port(struct pio_priv_data_t *data,
 						      unsigned long maddr)
 {
-	struct pio_private_data_t *cursor;
+	struct pio_priv_data_t *cursor;
 
 	list_for_each_entry(cursor, &data->list, list) {
 		if (cursor->addr == maddr) {
@@ -66,9 +66,9 @@ static struct pio_private_data_t *omnibook_match_port(struct pio_private_data_t 
 /*
  * See if we have to request raddr
  */
-static int omnibook_claim_port(struct pio_private_data_t *data, unsigned long raddr)
+static int omnibook_claim_port(struct pio_priv_data_t *data, unsigned long raddr)
 {
-	struct pio_private_data_t *match, *new;
+	struct pio_priv_data_t *match, *new;
 
 	match = omnibook_match_port(data, raddr);
 	if (match) {
@@ -83,7 +83,7 @@ static int omnibook_claim_port(struct pio_private_data_t *data, unsigned long ra
 		return -ENODEV;
 	}
 
-	new = kmalloc(sizeof(struct pio_private_data_t), GFP_KERNEL);
+	new = kmalloc(sizeof(struct pio_priv_data_t), GFP_KERNEL);
 	if (!new) {
 		release_region(raddr, 1);
 		return -ENOMEM;
@@ -119,9 +119,9 @@ static int omnibook_pio_init(const struct omnibook_operation *io_op)
  */
 static void omnibook_free_port(struct kref *ref)
 {
-	struct pio_private_data_t *data;
+	struct pio_priv_data_t *data;
 
-	data = container_of(ref, struct pio_private_data_t, refcount);
+	data = container_of(ref, struct pio_priv_data_t, refcount);
 	release_region(data->addr, 1);
 	list_del(&data->list);
 	kfree(data);
@@ -132,7 +132,7 @@ static void omnibook_free_port(struct kref *ref)
  */
 static void omnibook_pio_exit(const struct omnibook_operation *io_op)
 {
-	struct pio_private_data_t *match;
+	struct pio_priv_data_t *match;
 
 	match = omnibook_match_port(io_op->backend->data, io_op->read_addr);
 	if (match)
@@ -164,7 +164,7 @@ static int omnibook_io_write(const struct omnibook_operation *io_op, u8 value)
  */
 struct omnibook_backend pio_backend = {
 	.name = "pio",
-	.data = &pio_private_data,
+	.data = &pio_priv_data,
 	.init = omnibook_pio_init,
 	.exit = omnibook_pio_exit,
 	.byte_read = omnibook_io_read,

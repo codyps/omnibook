@@ -36,11 +36,11 @@
  */
 static struct workqueue_struct *omnibook_wq;  
 static int key_polling_enabled;
-DEFINE_MUTEX(poll_mutex);
+static DEFINE_MUTEX(poll_mutex);
 
 static void omnibook_key_poller(void *data);
 static struct omnibook_feature key_polling_driver;
-DECLARE_WORK(omnibook_poll_work, *omnibook_key_poller, &key_polling_driver.io_op);
+static DECLARE_WORK(omnibook_poll_work, *omnibook_key_poller, &key_polling_driver.io_op);
 
 static struct input_dev *poll_input_dev;
 

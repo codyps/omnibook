@@ -26,7 +26,7 @@
  * Do not change these values unless you exactly know what you do.
  */
 
-#define OMNIBOOK_FAN_LEVELS			7
+#define OMNIBOOK_FAN_LEVELS			8
 #define OMNIBOOK_FAN_MIN			25	/* Minimal value of fan off temperature */
 #define OMNIBOOK_FOT_MAX			75	/* Maximal value of fan off temperature */
 #define OMNIBOOK_FAN_MAX			95	/* Maximal value of fan on temperature */
@@ -39,67 +39,7 @@
 #define OMNIBOOK_FAN6_DEFAULT			95	/* Default value of fan level 6 temperature */
 #define OMNIBOOK_FAN7_DEFAULT			95	/* Default value of fan level 7 temperature */
 
-static u8 omnibook_fan_policy[OMNIBOOK_FAN_LEVELS];
-
-static int omnibook_get_fan_policy(void)
-{
-	int retval = 0;
-	int i;
-	u8 tmp;
-
-	/*
-	 * XE3GF
-	 */
-	if (omnibook_ectype & (XE3GF)) {
-		for (i = 0; i <= OMNIBOOK_FAN_LEVELS; i++) {
-			if ((retval = legacy_ec_read(XE3GF_FOT + i, &tmp)))
-				return retval;
-			omnibook_fan_policy[i] = tmp;
-		}
-	} else {
-		printk(O_INFO "Fan policy is unsupported on this machine.\n");
-		retval = -ENODEV;
-	}
-
-	return retval;
-}
-
-static int omnibook_set_fan_policy(void)
-{
-	int retval;
-	int i;
-
-	/*
-	 * XE3GF
-	 */
-	if (omnibook_ectype & (XE3GF)) {
-		if (omnibook_fan_policy[0] > OMNIBOOK_FOT_MAX)
-			return -EINVAL;
-		for (i = 0; i < OMNIBOOK_FAN_LEVELS; i++) {
-			if ((omnibook_fan_policy[i] > omnibook_fan_policy[i + 1])
-			    || (omnibook_fan_policy[i] < OMNIBOOK_FAN_MIN)
-			    || (omnibook_fan_policy[i] > OMNIBOOK_FAN_MAX))
-				return -EINVAL;
-			if (omnibook_fan_policy[i + 1] > OMNIBOOK_FAN_MAX)
-				return -EINVAL;
-		}
-		for (i = 0; i <= OMNIBOOK_FAN_LEVELS; i++) {
-			if ((retval = legacy_ec_write(XE3GF_FOT + i, omnibook_fan_policy[i])))
-				return retval;
-		}
-	} else {
-		printk(O_INFO "Fan policy is unsupported on this machine.\n");
-		retval = -ENODEV;
-	}
-
-	return retval;
-}
-
-static int omnibook_set_fan_policy_defaults(void)
-{
-	int retval;
-	int i;
-	u8 fan_defaults[] = {
+static const u8 fan_defaults[] = {
 		OMNIBOOK_FOT_DEFAULT,
 		OMNIBOOK_FAN1_DEFAULT,
 		OMNIBOOK_FAN2_DEFAULT,
@@ -108,22 +48,43 @@ static int omnibook_set_fan_policy_defaults(void)
 		OMNIBOOK_FAN5_DEFAULT,
 		OMNIBOOK_FAN6_DEFAULT,
 		OMNIBOOK_FAN7_DEFAULT,
-	};
+};
 
-	/*
-	 * XE3GF
-	 */
-	if (omnibook_ectype & (XE3GF)) {
-		for (i = 0; i <= OMNIBOOK_FAN_LEVELS; i++) {
-			if ((retval = legacy_ec_write(XE3GF_FOT + i, fan_defaults[i])))
-				return retval;
-		}
-	} else {
-		printk(O_INFO "Fan policy is unsupported on this machine.\n");
-		retval = -ENODEV;
+static int omnibook_get_fan_policy(struct omnibook_operation *io_op, u8 *fan_policy)
+{
+	int retval ;
+	int i;
+
+	for (i = 0; i < OMNIBOOK_FAN_LEVELS; i++) {
+		io_op->read_addr = XE3GF_FOT + i;
+		if ((retval = __backend_byte_read(io_op, &fan_policy[i])))
+			return retval;
 	}
 
-	return retval;
+	return 0;
+}
+
+static int omnibook_set_fan_policy(struct omnibook_operation *io_op, const u8 *fan_policy)
+{
+	int retval;
+	int i;
+
+	if (fan_policy[0] > OMNIBOOK_FOT_MAX)
+		return -EINVAL;
+
+	for (i = 0; i < OMNIBOOK_FAN_LEVELS; i++) {
+		if ((fan_policy[i] > fan_policy[i + 1])
+		    || (fan_policy[i] < OMNIBOOK_FAN_MIN)
+		    || (fan_policy[i] > OMNIBOOK_FAN_MAX))
+			return -EINVAL;
+	}
+	for (i = 0; i < OMNIBOOK_FAN_LEVELS; i++) {
+		io_op->write_addr = XE3GF_FOT + i;
+		if ((retval = __backend_byte_write(io_op, fan_policy[i])))
+			return retval;
+	}
+
+	return 0;
 }
 
 static int omnibook_fan_policy_read(char *buffer, struct omnibook_operation *io_op)
@@ -131,16 +92,24 @@ static int omnibook_fan_policy_read(char *buffer, struct omnibook_operation *io_
 	int retval;
 	int len = 0;
 	u8 i;
+	u8 fan_policy[OMNIBOOK_FAN_LEVELS];
 
-	if ((retval = omnibook_get_fan_policy()))
+	if(mutex_lock_interruptible(&io_op->backend->mutex))
+		return -ERESTARTSYS;
+
+	retval = omnibook_get_fan_policy(io_op, &fan_policy[0]);
+
+	mutex_unlock(&io_op->backend->mutex);
+
+	if(retval)
 		return retval;
 
-	len += sprintf(buffer + len, "Fan off temperature:        %2d C\n", omnibook_fan_policy[0]);
-	len += sprintf(buffer + len, "Fan on temperature:         %2d C\n", omnibook_fan_policy[1]);
-	for (i = 2; i <= OMNIBOOK_FAN_LEVELS; i++) {
+	len += sprintf(buffer + len, "Fan off temperature:        %2d C\n", fan_policy[0]);
+	len += sprintf(buffer + len, "Fan on temperature:         %2d C\n", fan_policy[1]);
+	for (i = 2; i < OMNIBOOK_FAN_LEVELS; i++) {
 		len +=
 		    sprintf(buffer + len, "Fan level %1d temperature:    %2d C\n", i,
-			    omnibook_fan_policy[i]);
+			    fan_policy[i]);
 	}
 	len += sprintf(buffer + len, "Minimal temperature to set: %2d C\n", OMNIBOOK_FAN_MIN);
 	len += sprintf(buffer + len, "Maximal temperature to set: %2d C\n", OMNIBOOK_FAN_MAX);
@@ -155,9 +124,13 @@ static int omnibook_fan_policy_write(char *buffer, struct omnibook_operation *io
 	char *endp;
 	int retval;
 	int temp;
+	u8 fan_policy[OMNIBOOK_FAN_LEVELS];
 
-	if ((retval = omnibook_get_fan_policy()))
-		return retval;
+	if(mutex_lock_interruptible(&io_op->backend->mutex))
+		return -ERESTARTSYS;
+
+	if ((retval = omnibook_get_fan_policy(io_op, &fan_policy[0])))
+		goto out;
 
 	/* 
 	 * Could also be done much simpler using sscanf(,"%u %u ... 
@@ -168,27 +141,38 @@ static int omnibook_fan_policy_write(char *buffer, struct omnibook_operation *io
 	b = buffer;
 	do {
 		dprintk("n=[%i] b=[%s]\n", n, b);
-		if (n > OMNIBOOK_FAN_LEVELS)
-			return -EINVAL;
+		if (n > OMNIBOOK_FAN_LEVELS) {
+			retval = -EINVAL;
+			goto out;
+		}
 		if (!isspace(*b)) {
 			temp = simple_strtoul(b, &endp, 10);
 			if (endp != b) {	/* there was a match */
-				omnibook_fan_policy[n++] = temp;
+				fan_policy[n++] = temp;
 				b = endp;
-			} else
-				return -EINVAL;
+			} else {
+				retval = -EINVAL;
+				goto out;
+			}
 		} else
 			b++;
 	} while ((*b != '\0') && (*b != '\n'));
 
 	/* A zero value set the defaults */
-	if ((omnibook_fan_policy[0] == 0) && (n == 1)) {
-		if ((retval = omnibook_set_fan_policy_defaults()))
-			return retval;
-	} else if ((retval = omnibook_set_fan_policy()))
-		return retval;
-	return 0;
+	if ((fan_policy[0] == 0) && (n == 1))
+		retval = omnibook_set_fan_policy(io_op, &fan_defaults[0]);
+	else
+		retval = omnibook_set_fan_policy(io_op, &fan_policy[0]);
+
+	out:
+	mutex_unlock(&io_op->backend->mutex);
+	return retval;
 }
+
+static struct omnibook_tbl fan_policy_table[] __initdata = {
+	{XE3GF, {EC,}},
+	{0,}
+};
 
 static struct omnibook_feature __declared_feature fan_policy_driver = {
 	.name = "fan_policy",
@@ -196,6 +180,7 @@ static struct omnibook_feature __declared_feature fan_policy_driver = {
 	.read = omnibook_fan_policy_read,
 	.write = omnibook_fan_policy_write,
 	.ectypes = XE3GF,
+	.tbl = fan_policy_table,
 };
 
 module_param_named(fan_policy, fan_policy_driver.enabled, int, S_IRUGO);

@@ -21,11 +21,19 @@
 #include "compat.h"
 #include <linux/input.h>
 
+/*
+ * Generic funtion for applying a mask on a value
+ * Hack: degenerate to omnibook_toggle if there is no read method 
+ * of if the read address is 0, this is used in blank.c 
+ */
 int __omnibook_apply_write_mask(const struct omnibook_operation *io_op, int toggle)
 {
 	int retval = 0;
 	int mask;
 	u8 data;
+
+	if(!(io_op->backend->byte_read  && io_op->read_addr))
+		return __omnibook_toggle(io_op,toggle);
 
 	if ((retval = __backend_byte_read(io_op, &data)))
 		return retval;

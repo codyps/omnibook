@@ -57,6 +57,9 @@ static char ec_dev_list[][20] = {
 #define TOSH_BT_POWER_ON     "BTPO"
 #define TOSH_BT_POWER_OFF    "BTPF"
 #define TOSH_BT_STATUS	     "BTST"
+#define	TOSH_BT_KSST_MASK	0x1
+#define	TOSH_BT_USB_MASK	0x40
+#define	TOSH_BT_POWER_MASK	0x80
 
 /*
  * ACPI driver for Toshiba Bluetooth device
@@ -91,14 +94,14 @@ static int omnibook_acpi_init(const struct omnibook_operation *io_op)
 	int retval = 0;	
 	acpi_handle dev_handle, method_handle;
 	int i;
-	struct acpi_backend_data *priv_data = io_op->backend->data;
+	struct acpi_backend_data *priv_data;
 	
 	if (unlikely(acpi_disabled)) {
 		printk(O_ERR "ACPI is disabled: feature unavailable.\n");
 		return -ENODEV;
 	}
 
-	if (!priv_data) {
+	if (!io_op->backend->data) {
 		dprintk("Try to init ACPI backend\n");
 		mutex_init(&io_op->backend->mutex);
 		mutex_lock(&io_op->backend->mutex);
@@ -273,10 +276,10 @@ static int get_bt_status(const struct acpi_backend_data *priv_data, unsigned int
 	if ((retval = omnibook_acpi_execute(priv_data->bt_handle, TOSH_BT_STATUS, 0, &raw_state)))
 		return retval;
 
-	printk(O_INFO "BTST raw_state: %x\n", raw_state);
+	dprintk("BTST raw_state: %x\n", raw_state);
 
-	/* FIXME: raw_state => state translation */
 	*state = BT_EX;
+	*state |= ((raw_state & TOSH_BT_USB_MASK) && (raw_state & TOSH_BT_POWER_MASK)) ? BT_STA : 0;
 
 	return retval;
 }

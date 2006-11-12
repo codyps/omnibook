@@ -50,6 +50,8 @@ extern enum omnibook_ectype_t {
 	TSA105 = (1<<13)  /* 14 Toshiba Satellite A105 */
 } omnibook_ectype;
 
+#define ALL_ECTYPES XE3GF|XE3GC|OB500|OB510|OB6000|OB6100|XE4500|OB4150|XE2|AMILOD|TSP10|TSM30X|TSM40|TSA105
+
 /*
  * This represent a feature provided by this module
  */
@@ -70,29 +72,6 @@ struct omnibook_feature {
 	struct omnibook_operation *io_op;
 	struct list_head list;
 };
-
-struct omnibook_battery_info {
-	u8 type;		/* 1 - Li-Ion, 2 NiMH */
-	u16 sn;			/* Serial number */
-	u16 dv;			/* Design Voltage */
-	u16 dc;			/* Design Capacity */
-};
-struct omnibook_battery_state {
-	u16 pv;			/* Present Voltage */
-	u16 rc;			/* Remaining Capacity */
-	u16 lc;			/* Last Full Capacity */
-	u8 gauge;		/* Gauge in % */
-	u8 status;		/* 0 - unknown, 1 - charged, 2 - discharging, 3 - charging, 4 - critical) */
-};
-
-enum {
-	OMNIBOOK_BATTSTAT_UNKNOWN,
-	OMNIBOOK_BATTSTAT_CHARGED,
-	OMNIBOOK_BATTSTAT_DISCHARGING,
-	OMNIBOOK_BATTSTAT_CHARGING,
-	OMNIBOOK_BATTSTAT_CRITICAL
-};
-
 
 /*
  * State of a Wifi/Bluetooth adapter
@@ -176,7 +155,7 @@ void omnibook_report_key(struct input_dev *dev, unsigned int keycode);
 /* 
  * Configuration for standalone compilation: 
  * -Register as backlight depends on kernel config (requires 2.6.17+ interface)
- * -Legacy features disbled by default
+ * -Legacy features disabled for ACPI enabled system
  */
 
 #ifdef  OMNIBOOK_STANDALONE
@@ -185,7 +164,11 @@ void omnibook_report_key(struct input_dev *dev, unsigned int keycode);
 #else
 #undef  CONFIG_OMNIBOOK_BACKLIGHT
 #endif /* BACKLIGHT_CLASS_DEVICE */
-#undef	CONFIG_OMNIBOOK_LEGACY
+#ifdef CONFIG_ACPI_EC
+#undef CONFIG_OMNIBOOK_LEGACY
+#else
+#define CONFIG_OMNIBOOK_LEGACY
+#endif /* CONFIG_ACPI_EC */
 #endif /* OMNIBOOK_STANDALONE */
 
 /* End of file */

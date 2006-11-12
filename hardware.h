@@ -89,8 +89,6 @@ extern struct omnibook_backend compal_backend;
 #define SMI   &nbsmi_backend
 #define CDI   &compal_backend
 
-int legacy_ec_read(u8 addr, u8 *data);
-int legacy_ec_write(u8 addr, u8 data);
 int __omnibook_apply_write_mask(const struct omnibook_operation *io_op, int toggle);
 int __omnibook_toggle(const struct omnibook_operation *io_op, int toggle);
 

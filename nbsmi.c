@@ -28,6 +28,7 @@
 #include <asm/io.h>
 #include <asm/mc146818rtc.h>
 #include <linux/workqueue.h>
+#include <linux/delay.h>
 
 /* copied from drivers/input/serio/i8042-io.h */
 #define I8042_KBD_PHYS_DESC "isa0060/serio0"
@@ -43,11 +44,13 @@
 #define BUFFER_SIZE	0x20
 #define INTEL_OFFSET	0x60
 #define	INTEL_SMI_PORT	0xb2	/* APM_CNT port in INTEL ICH specs */
+
 /*
  * Toshiba Specs state 0xef here but:
  * -this would overflow (ef + 19 > ff)
  * -code from Toshiba use e0, which make much more sense
  */
+
 #define ATI_OFFSET	0xe0
 #define	ATI_SMI_PORT	0xb0
 
@@ -60,17 +63,15 @@
 #define BTEX_MASK	0x1
 #define BTAT_MASK	0x2
 
-/* 
- * Crital sections around #SMI triggering are run atomically using a spinlock 
- */
-static DEFINE_SPINLOCK(smi_spinlock);
-
 /*
  * Private data of this backend
  */
-static struct pci_dev *lpc_bridge;	/* Southbridge chip ISA bridge/LPC interface PCI device */
-static u8 start_offset;
-static struct input_dev *nbsmi_input_dev;
+struct nbsmi_backend_data {
+	struct pci_dev *lpc_bridge;	/* Southbridge chip ISA bridge/LPC interface PCI device */
+	u8 start_offset;		/* Start offset in CMOS memory */
+	struct input_dev *nbsmi_input_dev;
+	struct work_struct fnkey_work;
+};
 
 /*
  * Possible list of supported southbridges
@@ -86,12 +87,13 @@ extern const struct pci_device_id lpc_bridge_table[];
  * process. 
  * We also disable preemtion and IRQs upon SMI call.
  */
-
-static inline u32 ati_do_smi_call( u16 function)
+static inline u32 ati_do_smi_call(u16 function)
 {
 	unsigned long flags;
 	u32 retval = 0;
-	spin_lock_irqsave(&smi_spinlock,flags);
+
+	local_irq_save(flags);
+	preempt_disable();
 	
 /*
  * eflags, eax, ebx, ecx, edx, esi and edi are clobbered upon writing to SMI_PORT
@@ -108,7 +110,6 @@ static inline u32 ati_do_smi_call( u16 function)
  * retval = -EIO; [too bad]
  * out:
  */
-
 	__asm__ __volatile__("outw  %%ax, %2;	\
 			      orw %%ax, %%ax;	\
 			      jz 1f;		\
@@ -121,16 +122,19 @@ static inline u32 ati_do_smi_call( u16 function)
 			     : "a"(function), "N"(ATI_SMI_PORT), "N"(ATI_SMI_PORT+1), "i"(-EIO)
 			     : "memory", "ebx", "ecx", "edx", "esi", "edi", "cc");
 
-	spin_unlock_irqrestore(&smi_spinlock,flags);
+	local_irq_restore(flags);
+	preempt_enable_no_resched();
 	return retval;
 }
 
-static inline u32 intel_do_smi_call(u16 function)
+static inline u32 intel_do_smi_call(u16 function, struct pci_dev *lpc_bridge)
 {
 	u32 state, sci_en;
 	unsigned long flags;
 	u32 retval = 0;
-	spin_lock_irqsave(&smi_spinlock,flags);
+
+	local_irq_save(flags);
+	preempt_disable();
 
 /* 
  * We get the PMBASE offset ( bits 15:7 at 0x40 offset of PCI config space )
@@ -141,7 +145,7 @@ static inline u32 intel_do_smi_call(u16 function)
 	sci_en = sci_en & 0xff80; /* Keep bits 15:7 */
 	sci_en += INTEL_GPE0_EN;  /* GPEO_EN offset */
 	state = inl(sci_en);
-	outl(0,sci_en);
+	outl(0, sci_en);
 
 /*
  * eflags, eax, ebx, ecx, edx, esi and edi are clobbered upon writing to SMI_PORT
@@ -165,18 +169,22 @@ static inline u32 intel_do_smi_call(u16 function)
 			     : "a"(function), "N"(INTEL_SMI_PORT), "i"(-EIO)
 			     : "memory", "ebx", "ecx", "edx", "esi", "edi", "cc");
 
-	outl( state, sci_en );
-	spin_unlock_irqrestore(&smi_spinlock,flags);
+	outl(state, sci_en);
+	local_irq_restore(flags);
+	preempt_enable_no_resched();
 	return retval;
 }
 
-static int nbsmi_smi_command(u16 function, const u8 * inputbuffer, u8 * outputbuffer)
+static int nbsmi_smi_command(u16 function, 
+			     const u8 * inputbuffer,
+			     u8 * outputbuffer,
+			     struct nbsmi_backend_data *priv_data)
 {
 	int count;
 	u32 retval = 0;
 
 	for (count = 0; count < BUFFER_SIZE; count++) {
-		outb(count + start_offset, RTC_PORT(2));
+		outb(count + priv_data->start_offset, RTC_PORT(2));
 		outb(*(inputbuffer + count), RTC_PORT(3));
 	}
 
@@ -187,9 +195,9 @@ static int nbsmi_smi_command(u16 function, const u8 * inputbuffer, u8 * outputbu
 	function = (function & 0xff) << 8;
 	function |= 0xe4;
 
-	switch (lpc_bridge->vendor) {
+	switch (priv_data->lpc_bridge->vendor) {
 	case PCI_VENDOR_ID_INTEL:
-		retval = intel_do_smi_call(function);
+		retval = intel_do_smi_call(function, priv_data->lpc_bridge);
 		break;
 	case PCI_VENDOR_ID_ATI:
 		retval = ati_do_smi_call(function);
@@ -202,7 +210,7 @@ static int nbsmi_smi_command(u16 function, const u8 * inputbuffer, u8 * outputbu
 		printk(O_ERR "smi_command failed with error %u.\n", retval);
 
 	for (count = 0; count < BUFFER_SIZE; count++) {
-		outb(count + start_offset, RTC_PORT(2));
+		outb(count + priv_data->start_offset, RTC_PORT(2));
 		*(outputbuffer + count) = inb(RTC_PORT(3));
 	}
 
@@ -214,8 +222,9 @@ static int nbsmi_smi_read_command(const struct omnibook_operation *io_op, u8 * d
 	int retval;
 	u8 *inputbuffer;
 	u8 *outputbuffer;
+	struct nbsmi_backend_data *priv_data = io_op->backend->data;
 
-	if (!lpc_bridge)
+	if (!priv_data)
 		return -ENODEV;
 
 	inputbuffer = kcalloc(BUFFER_SIZE, sizeof(u8), GFP_KERNEL);
@@ -230,7 +239,7 @@ static int nbsmi_smi_read_command(const struct omnibook_operation *io_op, u8 * d
 		goto error2;
 	}
 
-	retval = nbsmi_smi_command((u16) io_op->read_addr, inputbuffer, outputbuffer);
+	retval = nbsmi_smi_command((u16) io_op->read_addr, inputbuffer, outputbuffer, priv_data);
 	if (retval)
 		goto out;
 
@@ -252,8 +261,9 @@ static int nbsmi_smi_write_command(const struct omnibook_operation *io_op, u8 da
 	int retval;
 	u8 *inputbuffer;
 	u8 *outputbuffer;
+	struct nbsmi_backend_data *priv_data = io_op->backend->data;
 
-	if (!lpc_bridge)
+	if (!priv_data)
 		return -ENODEV;
 
 	inputbuffer = kcalloc(BUFFER_SIZE, sizeof(u8), GFP_KERNEL);
@@ -270,7 +280,7 @@ static int nbsmi_smi_write_command(const struct omnibook_operation *io_op, u8 da
 
 	inputbuffer[0] = data;
 
-	retval = nbsmi_smi_command((u16) io_op->write_addr, inputbuffer, outputbuffer);
+	retval = nbsmi_smi_command((u16) io_op->write_addr, inputbuffer, outputbuffer, priv_data);
 
 	kfree(outputbuffer);
       error2:
@@ -282,21 +292,17 @@ static int nbsmi_smi_write_command(const struct omnibook_operation *io_op, u8 da
 /*
  * Read/Write to INDEX/DATA interface at port 0x300 (SMSC Mailbox registers)
  */
-void nbsmi_ec_read_command(u8 index, u8 * data)
+static inline void nbsmi_ec_read_command(u8 index, u8 * data)
 {
-	spin_lock_irq(&smi_spinlock);
 	outb(index, EC_INDEX_PORT);
 	*data = inb(EC_DATA_PORT);
-	spin_unlock_irq(&smi_spinlock);
 }
 
 #if 0
-static void nbsmi_ec_write_command(u8 index, u8 data)
+static inline void nbsmi_ec_write_command(u8 index, u8 data)
 {
-	spin_lock_irq(&smi_spinlock);
 	outb(index, EC_INDEX_PORT);
 	outb(data, EC_DATA_PORT);
-	spin_unlock_irq(&smi_spinlock);
 }
 #endif
 
@@ -348,6 +354,7 @@ static struct input_handle *hook_connect(struct input_handler *handler,
 	handle->dev = dev;
 	handle->handler = handler;
 	handle->name = "omnibook_scancode_hook";
+	handle->private = handler->private;
 
 	input_open_device(handle);
 
@@ -366,14 +373,11 @@ static void hook_disconnect(struct input_handle *handle)
  * the nbsmi backend might sleep.
  */
 
-static void omnibook_handle_fnkey(void* data);
-DECLARE_WORK(omnibook_fnkey_work, *omnibook_handle_fnkey, NULL);
-
 static void hook_event(struct input_handle *handle, unsigned int event_type,
 		      unsigned int event_code, int value)
 {
-	if (event_type == EV_MSC && event_code == MSC_SCAN && value == SMI_FN_SCAN )
-		schedule_work(&omnibook_fnkey_work);
+	if (event_type == EV_MSC && event_code == MSC_SCAN && value == SMI_FN_SCAN)
+		schedule_work(&((struct nbsmi_backend_data *)handle->private)->fnkey_work);
 }
 
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,18))
@@ -406,7 +410,7 @@ static struct input_handler hook_handler = {
 /*
  * Detected scancode to keycode table
  */
-static struct {
+static const struct {
 	unsigned int scancode;
 	unsigned int keycode;
 } nbsmi_scan_table[] = {
@@ -424,13 +428,16 @@ static struct {
 	{ 0,0},
 };
 
+static void omnibook_handle_fnkey(void* data);
+
 /*
  * Register the input handler and the input device in the input subsystem
  */
-static int register_input_subsystem(void)
+static int register_input_subsystem(struct nbsmi_backend_data *priv_data)
 {
 	int i, retval = 0;
-	
+	struct input_dev *nbsmi_input_dev;
+
 	nbsmi_input_dev = input_allocate_device();
 	if (!nbsmi_input_dev) {
 		retval = -ENOMEM;
@@ -447,7 +454,16 @@ static int register_input_subsystem(void)
 		set_bit(nbsmi_scan_table[i].keycode, nbsmi_input_dev->keybit);
 
 	retval = input_register_device(nbsmi_input_dev);
+	if(retval) {
+		input_free_device(nbsmi_input_dev);
+		goto out;
+	}
 
+	priv_data->nbsmi_input_dev = nbsmi_input_dev;
+
+	INIT_WORK(&priv_data->fnkey_work, *omnibook_handle_fnkey, priv_data);
+	
+	hook_handler.private = priv_data;
 
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,18))
 	retval = input_register_handler(&hook_handler);
@@ -460,7 +476,6 @@ static int register_input_subsystem(void)
 	return retval;
 }
 
-
 /*
  * Try to init the backend
  * This function can be called blindly as it use a kref
@@ -472,6 +487,7 @@ static int omnibook_nbsmi_init(const struct omnibook_operation *io_op)
 	int i;
 	u8 ec_data;
 	u32 smi_port = 0;
+	struct nbsmi_backend_data *priv_data;
 
 	/* ectypes other than TSM40 have no business with this backend */
 	if (!(omnibook_ectype & TSM40))
@@ -482,37 +498,43 @@ static int omnibook_nbsmi_init(const struct omnibook_operation *io_op)
 		return -ENODEV;
 	}
 
-	if (!lpc_bridge) {
+	if (!io_op->backend->data) {
 		/* Fist use of the backend */
 		dprintk("Try to init NbSmi\n");
 		mutex_init(&io_op->backend->mutex);
 		mutex_lock(&io_op->backend->mutex);
 		kref_init(&io_op->backend->kref);
 
+		priv_data = kzalloc(sizeof(struct nbsmi_backend_data), GFP_KERNEL);
+		if (!priv_data) {
+			retval = -ENOMEM;
+			goto error0;
+		}
+
 		/* PCI probing: find the LPC Super I/O bridge PCI device */
-		for (i = 0; !lpc_bridge && lpc_bridge_table[i].vendor; ++i)
-			lpc_bridge =
+		for (i = 0; !priv_data->lpc_bridge && lpc_bridge_table[i].vendor; ++i)
+			priv_data->lpc_bridge =
 			    pci_get_device(lpc_bridge_table[i].vendor, lpc_bridge_table[i].device,
 					   NULL);
 
-		if (!lpc_bridge) {
+		if (!priv_data->lpc_bridge) {
 			printk(O_ERR "Fail to find a supported LPC I/O bridge, please report\n");
 			retval = -ENODEV;
 			goto error1;
 		}
 
-		if ((retval = pci_enable_device(lpc_bridge))) {
+		if ((retval = pci_enable_device(priv_data->lpc_bridge))) {
 			printk(O_ERR "Unable to enable PCI device.\n");
 			goto error2;
 		}
 
-		switch (lpc_bridge->vendor) {
+		switch (priv_data->lpc_bridge->vendor) {
 		case PCI_VENDOR_ID_INTEL:
-			start_offset = INTEL_OFFSET;
+			priv_data->start_offset = INTEL_OFFSET;
 			smi_port = INTEL_SMI_PORT;
 			break;
 		case PCI_VENDOR_ID_ATI:
-			start_offset = ATI_OFFSET;
+			priv_data->start_offset = ATI_OFFSET;
 			smi_port = ATI_SMI_PORT;
 			break;
 		default:
@@ -544,7 +566,12 @@ static int omnibook_nbsmi_init(const struct omnibook_operation *io_op)
 			goto error4;
 		}
 
-		register_input_subsystem();
+		retval = register_input_subsystem(priv_data);
+		if(retval)
+			goto error4;
+
+		io_op->backend->data = priv_data;
+
 		dprintk("NbSmi init ok\n");
 		mutex_unlock(&io_op->backend->mutex);
 		return 0;
@@ -558,9 +585,11 @@ static int omnibook_nbsmi_init(const struct omnibook_operation *io_op)
       error3:
 	release_region(smi_port, 2);
       error2:
-	pci_dev_put(lpc_bridge);
-	lpc_bridge = NULL;
+	pci_dev_put(priv_data->lpc_bridge);
       error1:
+	kfree(priv_data);
+	io_op->backend->data = NULL;
+      error0:
 	io_op->backend->already_failed = 1;
 	mutex_unlock(&io_op->backend->mutex);
 	mutex_destroy(&io_op->backend->mutex);
@@ -574,18 +603,20 @@ static void nbsmi_free(struct kref *ref)
 {
 	u32 smi_port = 0;
 	struct omnibook_backend *backend;
+	struct nbsmi_backend_data *priv_data;
 
 	dprintk("NbSmi not used anymore: disposing\n");
 
+	backend = container_of(ref, struct omnibook_backend, kref);
+	priv_data = backend->data;
+
 	flush_scheduled_work();
 	input_unregister_handler(&hook_handler);
-	input_unregister_device(nbsmi_input_dev);
-
-	backend = container_of(ref, struct omnibook_backend, kref);
+	input_unregister_device(priv_data->nbsmi_input_dev);
 
 	mutex_lock(&backend->mutex);
 
-	switch (lpc_bridge->vendor) {
+	switch (priv_data->lpc_bridge->vendor) {
 	case PCI_VENDOR_ID_INTEL:
 		smi_port = INTEL_SMI_PORT;
 		break;
@@ -596,10 +627,11 @@ static void nbsmi_free(struct kref *ref)
 		BUG();
 	}
 
-	pci_dev_put(lpc_bridge);
+	pci_dev_put(priv_data->lpc_bridge);
 	release_region(smi_port, 2);
 	release_region(EC_INDEX_PORT, 2);
-	lpc_bridge = NULL;
+	kfree(priv_data);
+	backend->data = NULL;
 	mutex_unlock(&backend->mutex);
 	mutex_destroy(&backend->mutex);
 }
@@ -641,7 +673,7 @@ static int adjust_brighness(int delta)
 		brgt = omnibook_max_brightness;
 	else
 		brgt += delta;
-	
+
 	retval = __backend_byte_write(io_op, brgt);
 
 	out:
@@ -658,6 +690,7 @@ static void omnibook_handle_fnkey(void* data)
 {
 	int i;
 	u8 gen_scan;
+	struct input_dev *input_dev;
 
 	if(backend_byte_read(&last_scan_op, &gen_scan))
 		return;
@@ -671,10 +704,12 @@ static void omnibook_handle_fnkey(void* data)
 		adjust_brighness(+1);
 		break;
 	}
-	for(i=0 ; i < ARRAY_SIZE(nbsmi_scan_table); i++) {
+
+	for(i = 0 ; i < ARRAY_SIZE(nbsmi_scan_table); i++) {
 		if( gen_scan == nbsmi_scan_table[i].scancode) {
 			dprintk("generating keycode %i.\n", nbsmi_scan_table[i].keycode);
-			omnibook_report_key(nbsmi_input_dev, nbsmi_scan_table[i].keycode);
+			input_dev = ((struct nbsmi_backend_data *) data)->nbsmi_input_dev;
+			omnibook_report_key(input_dev, nbsmi_scan_table[i].keycode);
 			break;
 		}
 	}
@@ -683,11 +718,8 @@ static void omnibook_handle_fnkey(void* data)
 static int omnibook_nbsmi_get_wireless(const struct omnibook_operation *io_op, unsigned int *state)
 {
 	int retval = 0;
-	struct omnibook_operation aerial_op;
+	struct omnibook_operation aerial_op = SIMPLE_BYTE(SMI, SMI_GET_KILL_SWITCH, 0);
 	u8 data;
-
-	aerial_op.read_addr = SMI_GET_KILL_SWITCH;
-	aerial_op.read_mask = 0;
 
 	if ((retval = nbsmi_smi_read_command(&aerial_op, &data)))
 		goto out;
@@ -697,7 +729,6 @@ static int omnibook_nbsmi_get_wireless(const struct omnibook_operation *io_op, u
 	*state = data ? KILLSWITCH : 0;
 
 	aerial_op.read_addr = SMI_GET_AERIAL;
-	aerial_op.read_mask = 0;
 
 	if ((retval = nbsmi_smi_read_command(&aerial_op, &data)))
 		goto out;
@@ -717,9 +748,7 @@ static int omnibook_nbsmi_set_wireless(const struct omnibook_operation *io_op, u
 {
 	int retval = 0;
 	u8 data;
-	struct omnibook_operation aerial_op;
-
-	aerial_op.write_addr = SMI_SET_AERIAL;
+	struct omnibook_operation aerial_op = SIMPLE_BYTE(SMI, SMI_SET_AERIAL, 0);
 
 	data = !!(state & BT_STA);
 	data |= !!(state & WIFI_STA) << 0x1;
@@ -731,19 +760,11 @@ static int omnibook_nbsmi_set_wireless(const struct omnibook_operation *io_op, u
 	return retval;
 }
 
-/*
- * Hotkeys reading return completly unreliable results on a least Tecra S1
- * It is therefore disabled
- */
-#if 0
 static int omnibook_nbmsi_hotkeys_get(const struct omnibook_operation *io_op, unsigned int *state)
 {
 	int retval;
 	u8 data = 0;
-	struct omnibook_operation hotkeys_op;
-
-	hotkeys_op.read_addr = SMI_GET_FN_INTERFACE;
-	hotkeys_op.read_mask = 0;
+	struct omnibook_operation hotkeys_op = SIMPLE_BYTE(SMI, SMI_GET_FN_INTERFACE, 0);
 
 	retval = nbsmi_smi_read_command(&hotkeys_op, &data);
 	if (retval < 0)
@@ -758,33 +779,52 @@ static int omnibook_nbmsi_hotkeys_get(const struct omnibook_operation *io_op, un
 
 	return 0;
 }
-#endif
+
 
 static int omnibook_nbmsi_hotkeys_set(const struct omnibook_operation *io_op, unsigned int state)
 {
-	int retval;
-	u8 data = 0;
-	struct omnibook_operation hotkeys_op;
+	int i, retval;
+	u8 data, rdata;
+	struct omnibook_operation hotkeys_op = SIMPLE_BYTE(SMI, SMI_SET_FN_F5_INTERFACE, 0);
+
+	data = !!(state & HKEY_FNF5);
+
+	dprintk("set_hotkeys (Fn F5) raw_state: %x\n", data);
+
+	retval = nbsmi_smi_write_command(&hotkeys_op, data);
+	if (retval < 0)
+		return retval;
 
 	hotkeys_op.write_addr = SMI_SET_FN_INTERFACE;
-	data |= (state & HKEY_FN) ? SMI_FN_KEYS_MASK : 0;
+	hotkeys_op.read_addr =	SMI_GET_FN_INTERFACE;
+
+	data = (state & HKEY_FN) ? SMI_FN_KEYS_MASK : 0;
 	data |= (state & HKEY_STICK) ? SMI_STICK_KEYS_MASK : 0;
 	data |= (state & HKEY_TWICE_LOCK) ? SMI_FN_TWICE_LOCK_MASK : 0;
 	data |= (state & HKEY_DOCK) ? SMI_FN_DOCK_MASK : 0;
 
 	dprintk("set_hotkeys (Fn interface) raw_state: %x\n", data);
 
-	retval = nbsmi_smi_write_command(&hotkeys_op, data);
-	if (retval < 0)
-		return retval;
+	/*
+	 * Hardware seems to be quite stubborn and multiple retries may be
+	 * required. The criteria here is simple: retry until probed state match
+	 * the requested one (with timeout).
+	 */
+	for (i = 0; i < 250; i++) {
+		retval = nbsmi_smi_write_command(&hotkeys_op, data);
+		if (retval)
+			return retval;
+		mdelay(1);
+		retval = nbsmi_smi_read_command(&hotkeys_op, &rdata);
+		if(retval)
+			return retval;
+		if(rdata == data) {
+			dprintk("check loop ok after %i iters\n.",i);
+			return 0;
+		}
+	}
+	dprintk("error or check loop timeout !!\n");
 
-	hotkeys_op.write_addr = SMI_SET_FN_F5_INTERFACE;
-	data = !!(state & HKEY_FNF5);
-
-	dprintk("set_hotkeys (Fn F5) raw_state: %x\n", data);
-
-	retval = nbsmi_smi_write_command(&hotkeys_op, data);
-	
 	return retval;
 }
 
@@ -825,8 +865,9 @@ static int omnibook_nbmsi_display_set(const struct omnibook_operation *io_op, un
 			break;
 		}
 	}
-	if(matched==255) {
-		printk("Display mode %x is unsupported.\n", state);
+
+	if(matched == 255) {
+		printk(O_ERR "Display mode %x is unsupported.\n", state);
 		return -EINVAL;
 	}
 
@@ -839,7 +880,7 @@ static int omnibook_nbmsi_display_set(const struct omnibook_operation *io_op, un
 
 struct omnibook_backend nbsmi_backend = {
 	.name = "nbsmi",
-/*	.hotkey_read_cap = HKEY_FN | HKEY_STICK | HKEY_TWICE_LOCK | HKEY_DOCK, */
+	.hotkeys_read_cap = HKEY_FN | HKEY_STICK | HKEY_TWICE_LOCK | HKEY_DOCK,
 	.hotkeys_write_cap = HKEY_FN | HKEY_STICK | HKEY_TWICE_LOCK | HKEY_DOCK | HKEY_FNF5,
 	.init = omnibook_nbsmi_init,
 	.exit = omnibook_nbsmi_exit,
@@ -847,7 +888,7 @@ struct omnibook_backend nbsmi_backend = {
 	.byte_write = nbsmi_smi_write_command,
 	.aerial_get = omnibook_nbsmi_get_wireless,
 	.aerial_set = omnibook_nbsmi_set_wireless,
-/*	.hotkeys_get = omnibook_nbmsi_hotkeys_get, */
+	.hotkeys_get = omnibook_nbmsi_hotkeys_get,
 	.hotkeys_set = omnibook_nbmsi_hotkeys_set,
 	.display_get = omnibook_nbmsi_display_get,
 	.display_set = omnibook_nbmsi_display_set,

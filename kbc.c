@@ -105,7 +105,7 @@ static int omnibook_kbc_write_data(u8 data)
 	spin_lock_irq(&omnibook_kbc_lock);
 	retval = omnibook_kbc_wait(OMNIBOOK_KBC_STAT_IBF);
 	if (retval)
-		goto end;;
+		goto end;
 	outb(data, OMNIBOOK_KBC_DATA);
 	retval = omnibook_kbc_wait(OMNIBOOK_KBC_STAT_IBF);
       end:
@@ -142,9 +142,6 @@ static int omnibook_kbc_hotkeys(const struct omnibook_operation *io_op, unsigned
 /*
  * Backend interface declarations
  */
-
-struct mutex kbc_mutex;
-
 struct omnibook_backend kbc_backend = {
 	.name = "i8042",
 	.hotkeys_write_cap = HKEY_ONETOUCH,

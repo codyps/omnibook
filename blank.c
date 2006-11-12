@@ -32,20 +32,11 @@ static DEFINE_SPINLOCK(blank_spinlock);
 int omnibook_lcd_blank(int blank)
 {
 	struct omnibook_feature *blank_feature = omnibook_find_feature("blank");
-	int retval = 0;
 
 	if(!blank_feature)
 		return -ENODEV;
 
-	if (blank_feature->io_op->backend == PIO)
-		omnibook_apply_write_mask(blank_feature->io_op, blank);
-	else if (blank_feature->io_op->backend == KBC || blank_feature->io_op->backend == CDI)
-		omnibook_toggle(blank_feature->io_op, blank);
-	else {
-		retval = -ENODEV;
-	}
-
-	return retval;
+	return omnibook_apply_write_mask(blank_feature->io_op, blank);
 }
 
 static int console_blank_register_hook(void)

@@ -30,7 +30,7 @@
 +config OMNIBOOK_LEGACY
 +       bool "HP omnibook legacy features"
 +       depends on OMNIBOOK
-+       default y if !ACPI 
++       default y if !ACPI
 +       ---help---
 +	 This option enable support for some legacy features of the omnibook
 +         driver, including:

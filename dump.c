@@ -37,7 +37,8 @@ static int ecdump_read(char *buffer, struct omnibook_operation *io_op)
 	for (i = 0; i < 255; i += 16) {
 		len += sprintf(buffer + len, "EC 0x%02x:", i);
 		for (j = 0; j < 16; j++) {
-			if (legacy_ec_read(i + j, &v))
+			io_op->read_addr = i +j;
+			if (backend_byte_read(io_op, &v))
 				break;
 			if (v != ecdump_regs[i + j])
 				len += sprintf(buffer + len, " *%02x", v);
@@ -74,19 +75,25 @@ static int ecdump_write(char *buffer, struct omnibook_operation *io_op)
 	} else
 		return -EINVAL;
 	if (i >= 0 && i < 256 && v >= 0 && v < 256) {
-		if (legacy_ec_write(i, v))
-			return -EIO;
+		io_op->write_addr = i;
+		return backend_byte_write(io_op, v);
 	} else
 		return -EINVAL;
 
 	return 0;
 }
 
+static struct omnibook_tbl dump_table[] __initdata = {
+	{ALL_ECTYPES, {EC,}},
+	{0,}
+};
+
 static struct omnibook_feature __declared_feature dump_driver = {
 	.name = "dump",
 	.enabled = 0,
 	.read = ecdump_read,
 	.write = ecdump_write,
+	.tbl = dump_table,
 };
 
 module_param_named(dump, dump_driver.enabled, int, S_IRUGO);

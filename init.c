@@ -86,8 +86,6 @@ static char *laptop_model __initdata;
 
 static int omnibook_userset = 0;
 
-struct input_dev *omnibook_input_dev;
-
 /*
  * The platform_driver interface was added in linux 2.6.15
  */

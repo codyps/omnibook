@@ -161,30 +161,6 @@ static int omnibook_ec_write(const struct omnibook_operation *io_op, u8 data)
 	return retval;
 }
 
-/*
- * legacy access function for unconverted old code who expect old omnibook_ec_read
- */
-
-int legacy_ec_read(u8 addr, u8 * data)
-{
-	int retval;
-	struct omnibook_operation io_op = SIMPLE_BYTE(EC, addr, 0);
-	retval = omnibook_ec_read(&io_op, data);
-	return retval;
-}
-
-/*
- * legacy access function for unconverted old code who expect old omnibook_ec_write
- */
-
-int legacy_ec_write(u8 addr, u8 data)
-{
-	int retval;
-	struct omnibook_operation io_op = SIMPLE_BYTE(EC, addr, 0);
-	retval = omnibook_ec_write(&io_op, data);
-	return retval;
-}
-
 static int omnibook_ec_display(const struct omnibook_operation *io_op, unsigned int *state)
 {
 	int retval;
