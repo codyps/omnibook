@@ -36,8 +36,6 @@
 /*
  * ATI's IXP PCI-LPC bridge
  */
-#define PCI_DEVICE_ID_ATI_SB400 0x4377
-
 #define INTEL_PMBASE	0x40
 #define INTEL_GPE0_EN	0x2c
 
@@ -178,10 +176,11 @@ static inline u32 intel_do_smi_call(u16 function, struct pci_dev *lpc_bridge)
 static int nbsmi_smi_command(u16 function, 
 			     const u8 * inputbuffer,
 			     u8 * outputbuffer,
-			     struct nbsmi_backend_data *priv_data)
+			     const struct nbsmi_backend_data *priv_data)
 {
 	int count;
 	u32 retval = 0;
+	
 
 	for (count = 0; count < BUFFER_SIZE; count++) {
 		outb(count + priv_data->start_offset, RTC_PORT(2));
@@ -466,8 +465,7 @@ static int register_input_subsystem(struct nbsmi_backend_data *priv_data)
 	hook_handler.private = priv_data;
 
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,18))
-	retval = input_register_handler(&hook_handler);
-	
+	retval = input_register_handler(&hook_handler);	
 #else
 	input_register_handler(&hook_handler);
 #endif
@@ -785,7 +783,8 @@ static int omnibook_nbmsi_hotkeys_set(const struct omnibook_operation *io_op, un
 {
 	int i, retval;
 	u8 data, rdata;
-	struct omnibook_operation hotkeys_op = SIMPLE_BYTE(SMI, SMI_SET_FN_F5_INTERFACE, 0);
+	struct omnibook_operation hotkeys_op = SIMPLE_BYTE(SMI, SMI_SET_FN_F5_INTERFACE, 0);	
+	u8* data_array;
 
 	data = !!(state & HKEY_FNF5);
 
@@ -810,21 +809,32 @@ static int omnibook_nbmsi_hotkeys_set(const struct omnibook_operation *io_op, un
 	 * required. The criteria here is simple: retry until probed state match
 	 * the requested one (with timeout).
 	 */
+
+	data_array = kcalloc(250, sizeof(u8), GFP_KERNEL);
+	if(!data_array)
+		return -ENODEV;
+
 	for (i = 0; i < 250; i++) {
 		retval = nbsmi_smi_write_command(&hotkeys_op, data);
 		if (retval)
-			return retval;
+			goto out;
 		mdelay(1);
 		retval = nbsmi_smi_read_command(&hotkeys_op, &rdata);
 		if(retval)
-			return retval;
+			goto out;
 		if(rdata == data) {
 			dprintk("check loop ok after %i iters\n.",i);
-			return 0;
+			retval = 0;
+			goto out;
 		}
 	}
 	dprintk("error or check loop timeout !!\n");
-
+	dprintk("forensics datas: ");
+	for (i = 0; i < 250; i++)
+		dprintk_simple("%x ", data_array[i]);
+	dprintk_simple("\n");
+out:
+	kfree(data_array);
 	return retval;
 }
 

@@ -19,10 +19,6 @@
 #include "hardware.h"
 #include <linux/workqueue.h>
 
-/* Predefined convinient on/off states */
-#define HKEY_ON  HKEY_ONETOUCH|HKEY_MULTIMEDIA|HKEY_FN|HKEY_DOCK|HKEY_FNF5|HKEY_VOL
-#define HKEY_OFF 0
-
 /*
  * XE3GC type key_polling polling:
  *

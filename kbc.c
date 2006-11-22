@@ -42,7 +42,7 @@ extern int omnibook_key_polling_disable(void);
 
 #define OMNIBOOK_KBC_STAT_OBF		0x01	/* Output buffer full */
 #define OMNIBOOK_KBC_STAT_IBF		0x02	/* Input buffer full */
-#define OMNIBOOK_KBC_STAT_CMD		0x08	/* Last write was a command write (0=data) */
+
 
 /*
  * Interrupt control

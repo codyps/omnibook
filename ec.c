@@ -45,7 +45,7 @@ static DEFINE_SPINLOCK(omnibook_ec_lock);
 
 #define OMNIBOOK_EC_STAT_OBF		0x01	/* Output buffer full */
 #define OMNIBOOK_EC_STAT_IBF		0x02	/* Input buffer full */
-#define OMNIBOOK_EC_STAT_CMD		0x08	/* Last write was a command write (0=data) */
+
 
 /*
  * Embedded controller commands
@@ -53,7 +53,6 @@ static DEFINE_SPINLOCK(omnibook_ec_lock);
 
 #define OMNIBOOK_EC_CMD_READ		0x80
 #define OMNIBOOK_EC_CMD_WRITE		0x81
-#define OMNIBOOK_EC_CMD_QUERY		0x84
 
 /*
  * Wait for embedded controller buffer
