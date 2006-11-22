@@ -822,6 +822,7 @@ static int omnibook_nbmsi_hotkeys_set(const struct omnibook_operation *io_op, un
 		retval = nbsmi_smi_read_command(&hotkeys_op, &rdata);
 		if(retval)
 			goto out;
+		data_array[i] = rdata;
 		if(rdata == data) {
 			dprintk("check loop ok after %i iters\n.",i);
 			retval = 0;
