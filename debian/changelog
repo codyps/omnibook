@@ -1,3 +1,9 @@
+omnibook (2:2.20060921+svn20061202-1) unstable; urgency=low
+
+  * New SVN snapshot (r228)
+
+ -- Julien Valroff <julien@kirya.net>  Sat,  2 Dec 2006 10:17:07 +0100
+
 omnibook (2:2.20060921+svn20061112-1) unstable; urgency=low
 
   * SVN snapshot:
