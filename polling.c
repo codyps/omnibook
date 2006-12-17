@@ -34,24 +34,30 @@ static struct workqueue_struct *omnibook_wq;
 static int key_polling_enabled;
 static DEFINE_MUTEX(poll_mutex);
 
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,19))
+static void omnibook_key_poller(struct work_struct *work);
+DECLARE_DELAYED_WORK(omnibook_poll_work, *omnibook_key_poller);
+#else
 static void omnibook_key_poller(void *data);
-static struct omnibook_feature key_polling_driver;
-static DECLARE_WORK(omnibook_poll_work, *omnibook_key_poller, &key_polling_driver.io_op);
+DECLARE_WORK(omnibook_poll_work, *omnibook_key_poller, NULL);
+#endif
 
+static struct omnibook_feature key_polling_driver;
 static struct input_dev *poll_input_dev;
 
-static void omnibook_key_poller(void *data)
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,19))
+	static void omnibook_key_poller(struct work_struct *work)
+#else
+	static void omnibook_key_poller(void *data)
+#endif
 {
 	u8 q0a;
 	int retval;
-	struct omnibook_operation *io_op;
 
-	io_op = *( (struct omnibook_operation **) data);
-
-	mutex_lock(&io_op->backend->mutex);
-	__backend_byte_read(io_op, &q0a);
-	__backend_byte_write(io_op, 0);
-	mutex_unlock(&io_op->backend->mutex);
+	mutex_lock(&key_polling_driver.io_op->backend->mutex);
+	__backend_byte_read(key_polling_driver.io_op, &q0a);
+	__backend_byte_write(key_polling_driver.io_op, 0);
+	mutex_unlock(&key_polling_driver.io_op->backend->mutex);
 
 #ifdef OMNIBOOK_DEBUG
 	if (unlikely(q0a & XE3GC_SLPB_MASK))
