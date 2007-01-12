@@ -467,7 +467,7 @@ static int register_input_subsystem(struct nbsmi_backend_data *priv_data)
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,19))
 	INIT_WORK(&priv_data->fnkey_work, *omnibook_handle_fnkey);
 #else
-	INIT_WORK(&priv_data->fnkey_work, *omnibook_handle_fnkey, NULL);
+	INIT_WORK(&priv_data->fnkey_work, *omnibook_handle_fnkey, priv_data);
 #endif
 
 

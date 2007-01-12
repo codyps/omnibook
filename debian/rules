@@ -118,7 +118,7 @@ binary-modules: kdist_config prep-deb-files
 	$(MAKE) KSRC=$(KSRC) KVERS=$(KVERS)
 
 	# Install the module
-	$(MAKE) install KSRC=$(KSRC) DESTDIR=$(CURDIR)/debian/$(PKGNAME) INSTDIR=extra DEPMOD=""
+	$(MAKE) install KSRC=$(KSRC) DESTDIR=$(CURDIR)/debian/$(PKGNAME) INSTDIR=extra DEPMOD="/bin/true"
 
 	dh_installdocs
 	dh_compress
