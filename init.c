@@ -418,7 +418,7 @@ struct omnibook_feature *omnibook_find_feature(char *name)
 
 /*
  * Maintain compatibility with the old ectype numbers:
- * ex: The user set/get ectype=12 for TSM30X=2^(12-1)
+ * ex: The user set/get ectype=12 for TSM70=2^(12-1)
  */
 static int __init set_ectype_param(const char *val, struct kernel_param *kp)
 {

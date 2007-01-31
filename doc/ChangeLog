@@ -15,6 +15,16 @@ Changelog file for omnibook package:
 	Toshiba Satellite 1130 (ectype 1)
 	Toshiba Satellite A75 (ectype 12)
 	Toshiba Tecra A4 (ectype 13)
+* Split TSM30X (ectype 12) : this ectype was reimplemented and if the
+  new implementation works with Toshiba M40X, M70, M100... it does not
+  (and will never, due to hardware) with Toshiba M30X, the only way
+  to fix this is to split TSM30X (ectype 12) in :
+  -TSM70 (ectype 12) => new implementation (compal.c & acpi.c backends)
+  -TSM30X (ectype 15) => old implementation (legacy backends)
+  This is done by renaming TSM30X to TSM40 and restore old TSM30X
+  The state of the Toshiba M35X is unknown and is assigned to TSM70, one
+  should send a bug report if that fail.
+  Fix bugs 1617818 and 1605278
 
 2.20060921 Mathieu Bérard <math_b@users.sourceforge.net>
 * The minimal required kernel version is now 2.6.9 (kref API)

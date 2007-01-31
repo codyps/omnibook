@@ -34,7 +34,7 @@ static int omnibook_ac_read(char *buffer, struct omnibook_operation *io_op)
 }
 
 static struct omnibook_tbl ac_table[] __initdata = {
-	{XE3GF | TSP10 | TSM30X, SIMPLE_BYTE(EC, XE3GF_ADP, XE3GF_ADP_MASK)},
+	{XE3GF | TSP10 | TSM30X | TSM70, SIMPLE_BYTE(EC, XE3GF_ADP, XE3GF_ADP_MASK)},
 	{XE3GC | AMILOD, SIMPLE_BYTE(EC, XE3GC_STA1, XE3GC_ADP_MASK)},
 	{OB500 | OB510 | OB6000 | OB6100 | XE4500, SIMPLE_BYTE(EC, OB500_STA2, OB500_ADP_MASK)},
 	{OB4150, SIMPLE_BYTE(EC, OB4150_ADP, OB4150_ADP_MASK)},
@@ -50,7 +50,7 @@ struct omnibook_feature __declared_feature ac_driver = {
 	.enabled = 0,
 #endif
 	.read = omnibook_ac_read,
-	.ectypes = XE3GF | XE3GC | OB500 | OB510 | OB6000 | OB6100 | XE4500 | OB4150 | XE2 | AMILOD | TSP10 | TSM30X,
+	.ectypes = XE3GF | XE3GC | OB500 | OB510 | OB6000 | OB6100 | XE4500 | OB4150 | XE2 | AMILOD | TSP10 | TSM70 | TSM30X,
 	.tbl = ac_table,
 };
 

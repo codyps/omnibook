@@ -45,12 +45,13 @@ extern enum omnibook_ectype_t {
 	XE2    = (1<<8),  /* 9  HP OmniBook XE2 */
 	AMILOD = (1<<9),  /* 10 Fujitsu Amilo D */
 	TSP10  = (1<<10), /* 11 Toshiba Satellite P10, P15, P20 and compatible */
-	TSM30X = (1<<11), /* 12 Toshiba Satellite M30X, M35X, M40X, M70 and compatible */
-	TSM40  = (1<<12), /* 13 Toshiba Satellite M40 M45 Tecra S1 */
-	TSA105 = (1<<13)  /* 14 Toshiba Satellite A105 */
+	TSM70 = (1<<11), /* 12 Toshiba Satellite M40X, M70 and compatible */
+	TSM40  = (1<<12), /* 13 Toshiba Satellite M40, M45 and Tecra S1 */
+	TSA105 = (1<<13),  /* 14 Toshiba Satellite A105 and compatible (Real support is MISSING) */
+	TSM30X = (1<<14) /* 15 Toshiba Stallite M30X and compatible */
 } omnibook_ectype;
 
-#define ALL_ECTYPES XE3GF|XE3GC|OB500|OB510|OB6000|OB6100|XE4500|OB4150|XE2|AMILOD|TSP10|TSM30X|TSM40|TSA105
+#define ALL_ECTYPES XE3GF|XE3GC|OB500|OB510|OB6000|OB6100|XE4500|OB4150|XE2|AMILOD|TSP10|TSM70|TSM40|TSA105|TSM30X
 
 /*
  * This represent a feature provided by this module
@@ -159,7 +160,7 @@ void omnibook_report_key(struct input_dev *dev, unsigned int keycode);
  */
 
 #ifdef  OMNIBOOK_STANDALONE
-#if     (defined (CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE) || defined(CONFIG_BACKLIGHT_CLASS_DEVICE)) && (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,16)) && (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19))
+#if     (defined (CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE) || defined(CONFIG_BACKLIGHT_CLASS_DEVICE)) && (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,16)) && (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,20))
 #define CONFIG_OMNIBOOK_BACKLIGHT
 #else
 #undef  CONFIG_OMNIBOOK_BACKLIGHT

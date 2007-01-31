@@ -68,8 +68,9 @@ static int omnibook_battery_present(struct omnibook_operation *io_op, int num)
 	 * XE3GF
 	 * TSP10
 	 * TSM30X
+	 * TSM70
 	 */
-	if (omnibook_ectype & (XE3GF | TSP10 | TSM30X)) {
+	if (omnibook_ectype & (XE3GF | TSP10 | TSM70 | TSM30X)) {
 		io_op->read_addr = XE3GF_BAL;
 		io_op->read_mask = XE3GF_BAL0_MASK;
 		for (i = 0; i < num; i++)
@@ -112,9 +113,10 @@ static int omnibook_get_battery_info(struct omnibook_operation *io_op,
 	/*
 	 * XE3GF
 	 * TSP10
-	 * TSM30X
+	 * TSM70
+         * TSM30X
 	 */
-	if (omnibook_ectype & (XE3GF | TSP10 | TSM30X)) {
+	if (omnibook_ectype & (XE3GF | TSP10 | TSM70 | TSM30X)) {
 		retval = omnibook_battery_present(io_op, num);
 		if (retval < 0)
 			return retval;
@@ -232,9 +234,9 @@ static int omnibook_get_battery_status(struct omnibook_operation *io_op,
 	/*
 	 * XE3GF
 	 * TSP10
-	 * TSM30X
+	 * TSM70
 	 */
-	if (omnibook_ectype & (XE3GF | TSP10 | TSM30X)) {
+	if (omnibook_ectype & (XE3GF | TSP10 | TSM70 | TSM30X)) {
 		retval = omnibook_battery_present(io_op, num);
 		if (retval < 0)
 			return retval;
@@ -474,8 +476,9 @@ static int omnibook_battery_read(char *buffer, struct omnibook_operation *io_op)
 		max = 3;
 	/*
 	 * TSM30X
+	 * TSM70
 	 */
-	else if (omnibook_ectype & (TSM30X))
+	else if (omnibook_ectype & (TSM70 | TSM30X))
 		max = 1;
 
 	if(mutex_lock_interruptible(&io_op->backend->mutex))
@@ -533,7 +536,7 @@ static int omnibook_battery_read(char *buffer, struct omnibook_operation *io_op)
 }
 
 static struct omnibook_tbl battery_table[] __initdata = {
-	{XE3GF | XE3GC | AMILOD | TSP10 | TSM30X, {EC,}},
+	{XE3GF | XE3GC | AMILOD | TSP10 | TSM70 | TSM30X, {EC,}},
 	{0,}
 };
 
@@ -545,7 +548,7 @@ static struct omnibook_feature __declared_feature battery_driver = {
 	.enabled = 0,
 #endif
 	.read = omnibook_battery_read,
-	.ectypes = XE3GF | XE3GC | AMILOD | TSP10 | TSM30X,	/* FIXME: OB500|OB6000|OB6100|XE4500 */
+	.ectypes = XE3GF | XE3GC | AMILOD | TSP10 | TSM70 | TSM30X,	/* FIXME: OB500|OB6000|OB6100|XE4500 */
 	.tbl = battery_table,
 };
 

@@ -105,7 +105,7 @@ static void __exit omnibook_touchpad_cleanup(struct omnibook_operation *io_op)
 static struct omnibook_tbl touchpad_table[] __initdata = {
 	{XE3GF | XE3GC | TSP10,
 	 COMMAND(KBC, OMNIBOOK_KBC_CMD_TOUCHPAD_ENABLE, OMNIBOOK_KBC_CMD_TOUCHPAD_DISABLE)},
-	{TSM30X, {CDI, 0, TSM70_FN_INDEX, 0, TSM70_TOUCHPAD_ON, TSM70_TOUCHPAD_OFF}},
+	{TSM70, {CDI, 0, TSM70_FN_INDEX, 0, TSM70_TOUCHPAD_ON, TSM70_TOUCHPAD_OFF}},
 	{0,}
 };
 
@@ -117,7 +117,7 @@ static struct omnibook_feature __declared_feature touchpad_driver = {
 	.init = omnibook_touchpad_init,
 	.exit = omnibook_touchpad_cleanup,
 	.resume = omnibook_touchpad_resume,
-	.ectypes = XE3GF | XE3GC | TSP10 | TSM30X,
+	.ectypes = XE3GF | XE3GC | TSP10 | TSM70,
 	.tbl = touchpad_table,
 };
 

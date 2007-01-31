@@ -168,9 +168,9 @@ static void __exit omnibook_hotkeys_cleanup(struct omnibook_operation *io_op)
 }
 
 static struct omnibook_tbl hotkeys_table[] __initdata = {
-	{XE3GF | XE3GC | OB500 | OB510 | OB6000 | OB6100 | XE4500 | AMILOD | TSP10, 
+	{XE3GF | XE3GC | OB500 | OB510 | OB6000 | OB6100 | XE4500 | AMILOD | TSP10 | TSM30X, 
 	COMMAND(KBC,OMNIBOOK_KBC_CMD_ONETOUCH_ENABLE,OMNIBOOK_KBC_CMD_ONETOUCH_DISABLE)},
-	{TSM30X, {CDI,}},
+	{TSM70, {CDI,}},
 	{TSM40, {SMI,}},
 	{0,}
 };
@@ -185,7 +185,7 @@ static struct omnibook_feature __declared_feature hotkeys_driver = {
 	.suspend = omnibook_hotkeys_suspend,
 	.resume = omnibook_hotkeys_resume,
 	.ectypes =
-	    XE3GF | XE3GC | OB500 | OB510 | OB6000 | OB6100 | XE4500 | AMILOD | TSP10 | TSM30X |
+	    XE3GF | XE3GC | OB500 | OB510 | OB6000 | OB6100 | XE4500 | AMILOD | TSP10 | TSM70 | TSM30X |
 	    TSM40,
 	.tbl = hotkeys_table,
 };

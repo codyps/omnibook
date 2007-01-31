@@ -302,8 +302,8 @@ static int omnibook_cdimode_init(const struct omnibook_operation *io_op)
 	int retval = 0;
 	int i;
 
-	/* ectypes other than TSM30X have no business with this backend */
-	if (!(omnibook_ectype & TSM30X))
+	/* ectypes other than TSM70 have no business with this backend */
+	if (!(omnibook_ectype & TSM70))
 		return -ENODEV;
 
 	if (io_op->backend->already_failed) {
@@ -403,8 +403,8 @@ static void cdimode_free(struct kref *ref)
 
 static void omnibook_cdimode_exit(const struct omnibook_operation *io_op)
 {
-	/* ectypes other than TSM30X have no business with this backend */
-	BUG_ON(!(omnibook_ectype & TSM30X));
+	/* ectypes other than TSM70 have no business with this backend */
+	BUG_ON(!(omnibook_ectype & TSM70));
 	dprintk("Trying to dispose cdimode\n");
 	kref_put(&io_op->backend->kref, cdimode_free);
 }
