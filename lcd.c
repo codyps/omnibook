@@ -126,8 +126,13 @@ static int __init omnibook_brightness_init(struct omnibook_operation *io_op)
 #ifdef CONFIG_OMNIBOOK_BACKLIGHT
 	backend_byte_read(io_op, (u8*) &omnibookbl_data.brightness);
 	omnibookbl_data.max_brightness = omnibook_max_brightness;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20)
+	omnibook_backlight_device =
+	    backlight_device_register(OMNIBOOK_MODULE_NAME, NULL, (void *)io_op, &omnibookbl_data);
+#else
 	omnibook_backlight_device =
 	    backlight_device_register(OMNIBOOK_MODULE_NAME, (void *)io_op, &omnibookbl_data);
+#endif
 	if (IS_ERR(omnibook_backlight_device)) {
 		printk(O_ERR "Unable to register as backlight device.\n");
 		return -ENODEV;
