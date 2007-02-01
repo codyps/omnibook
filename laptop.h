@@ -612,7 +612,7 @@ static struct  dmi_system_id omnibook_ids[] __initdata = {
                         DMI_MATCH(DMI_PRODUCT_NAME, "Satellite A80"),
                 },
                 .driver_data = (void*) TSM70
-        }
+        },
         {
                 .callback = dmi_matched,
                 .ident = "Toshiba Satellite A105",
