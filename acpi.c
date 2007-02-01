@@ -343,15 +343,16 @@ static int set_wireless_status(const struct acpi_backend_data *priv_data, unsign
 
 static int omnibook_acpi_set_wireless(const struct omnibook_operation *io_op, unsigned int state)
 {
-	int retval;
+	int retval = -ENODEV;
 	struct acpi_backend_data *priv_data = io_op->backend->data;
 	
+	/* First try the ANTR/ANTW methods */
 	if(priv_data->has_antr_antw)
-		retval = set_wireless_status(priv_data, state);
-	else if(priv_data->bt_handle)
+		retval = set_wireless_status(priv_data, state);	
+	
+	/* Then try the bluetooth ACPI device if present */
+	if(priv_data->bt_handle)
 		retval = set_bt_status(priv_data, (state & BT_STA));
-	else
-		retval = -ENODEV;
 
 	return retval;
 }
