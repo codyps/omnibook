@@ -180,6 +180,18 @@ Board Name: EDW10
 Board Version: Null 
 
 ---------------------------------------------
+Toshiba Satellite A80 -----------------------
+
+BIOS Vendor: TOSHIBA
+BIOS Version: V2.50
+BIOS Release: 01/11/2006
+System Vendor: TOSHIBA
+Product Name: Satellite A80
+Version: PSA80E-03T00JSP
+Board Vendor: TOSHIBA
+Board Name: Null
+
+---------------------------------------------
 Toshiba Satellite A105 ----------------------
 
 BIOS Vendor:   Phoenix Technologies LTD

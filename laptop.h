@@ -604,6 +604,15 @@ static struct  dmi_system_id omnibook_ids[] __initdata = {
                 },
                 .driver_data = (void*) TSM70
         },
+	{
+                .callback = dmi_matched,
+                .ident = "Toshiba Satellite A80",
+                .matches = {
+                        DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+                        DMI_MATCH(DMI_PRODUCT_NAME, "Satellite A80"),
+                },
+                .driver_data = (void*) TSM70
+        }
         {
                 .callback = dmi_matched,
                 .ident = "Toshiba Satellite A105",
@@ -755,7 +764,7 @@ static struct  dmi_system_id omnibook_ids[] __initdata = {
                         DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
                         DMI_MATCH(DMI_PRODUCT_NAME, "EQUIUM A110"),
                 },
-                .driver_data = (void*) XE3GF /* FIXME: provisional */
+                .driver_data = (void*) TSM30X /* FIXME: provisional */
         },
 	{
 		.callback = dmi_matched,
