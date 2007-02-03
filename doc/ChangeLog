@@ -16,6 +16,7 @@ Changelog file for omnibook package:
 	Toshiba Satellite A75 (ectype 12)
 	Toshiba Tecra A4 (ectype 13)
 	Toshiba Satellite A80 (ectype 12)
+	Toshiba Satellite P100 (ectype 14)
 * Split TSM30X (ectype 12) : this ectype was reimplemented and if the
   new implementation works with Toshiba M40X, M70, M100... it does not
   (and will never, due to hardware) with Toshiba M30X, the only way

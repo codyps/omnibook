@@ -230,6 +230,18 @@ Board Name:    DAL00
 Board Version: Null
 
 ---------------------------------------------
+Toshiba Satellite P100 ----------------------
+
+BIOS Vendor:   TOSHIBA
+BIOS Version:  V3.30  
+BIOS Release:  12/22/2006
+System Vendor: TOSHIBA
+Product Name:  Satellite P100
+Version:       PSPA3E-02E013G3                   
+Board Vendor:  TOSHIBA
+Board Name:    Not Applicable                 
+
+---------------------------------------------
 Toshiba Satellite M40 -----------------------
 
 BIOS Vendor:   Phoenix Technologies LTD
