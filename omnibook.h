@@ -101,15 +101,6 @@ enum {
 #define HKEY_LAST_SHIFT 6
 
 /*
- * Various status bits
- */
-enum {
-	MUTELED = (1<<0), /* Mute LED status */
-	TOUCHPAD = (1<<1), /* Touchpad status */
-};
-
-
-/*
  * Display state backend neutral masks
  * _ON masks = port is powered up and running
  * _DET masks = a plugged display have been detected 

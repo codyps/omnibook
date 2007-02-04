@@ -44,6 +44,9 @@
 #define	CRT_CSTE	0x2
 #define	TVO_CSTE	0x4
 
+#define GET_THROTTLE_METHOD "THRO"
+#define	SET_THROTTLE_METHOD "CLCK"
+
 static char ec_dev_list[][20] = {
 	"\\_SB.PCI0.LPCB.EC0",
 	"\\_SB.PCI0.LPC0.EC0",
@@ -52,11 +55,11 @@ static char ec_dev_list[][20] = {
 #define TOSHIBA_ACPI_BT_CLASS "bluetooth"
 #define TOSHIBA_ACPI_DEVICE_NAME "bluetooth adapter"
 
-#define TOSH_BT_ACTIVATE_USB "AUSB"
-#define TOSH_BT_DISABLE_USB  "DUSB"
-#define TOSH_BT_POWER_ON     "BTPO"
-#define TOSH_BT_POWER_OFF    "BTPF"
-#define TOSH_BT_STATUS	     "BTST"
+#define TOSH_BT_ACTIVATE_USB	"AUSB"
+#define TOSH_BT_DISABLE_USB	"DUSB"
+#define TOSH_BT_POWER_ON	"BTPO"
+#define TOSH_BT_POWER_OFF	"BTPF"
+#define TOSH_BT_STATUS		"BTST"
 #define	TOSH_BT_KSST_MASK	0x1
 #define	TOSH_BT_USB_MASK	0x40
 #define	TOSH_BT_POWER_MASK	0x80
@@ -175,6 +178,7 @@ struct omnibook_backend acpi_backend;
 
 /*
  * Execute an ACPI method which return either an integer or nothing
+ * and that require 0 or 1 numerical argument
  * (acpi_evaluate_object wrapper)
  */
 static int omnibook_acpi_execute(acpi_handle dev_handle, char *method, const int *param, int *result)
@@ -246,7 +250,7 @@ static int omnibook_acpi_bt_add(struct acpi_device *device)
 	
 	dprintk("Enabling found Toshiba Bluetooth ACPI device.\n");
 	strcpy(acpi_device_name(device), TOSHIBA_ACPI_DEVICE_NAME);
-        strcpy(acpi_device_class(device), TOSHIBA_ACPI_BT_CLASS);
+	strcpy(acpi_device_class(device), TOSHIBA_ACPI_BT_CLASS);
 
 	/* Save handle in backend private data structure. ugly. */
 	priv_data->bt_handle = device->handle;
@@ -273,7 +277,7 @@ static int get_bt_status(const struct acpi_backend_data *priv_data, unsigned int
 	int retval = 0;
 	int raw_state;
 
-	if ((retval = omnibook_acpi_execute(priv_data->bt_handle, TOSH_BT_STATUS, 0, &raw_state)))
+	if ((retval = omnibook_acpi_execute(priv_data->bt_handle, TOSH_BT_STATUS, NULL, &raw_state)))
 		return retval;
 
 	dprintk("BTST raw_state: %x\n", raw_state);
@@ -293,7 +297,7 @@ static int get_wireless_status(const struct acpi_backend_data *priv_data, unsign
 	int retval = 0;
 	int raw_state;
 
-	if ((retval = omnibook_acpi_execute(priv_data->ec_handle, GET_WIRELESS_METHOD, 0, &raw_state)))
+	if ((retval = omnibook_acpi_execute(priv_data->ec_handle, GET_WIRELESS_METHOD, NULL, &raw_state)))
 		return retval;
 
 	dprintk("get_wireless raw_state: %x\n", raw_state);
@@ -363,7 +367,7 @@ static int omnibook_acpi_get_display(const struct omnibook_operation *io_op, uns
 	int raw_state = 0;
 	struct acpi_backend_data *priv_data = io_op->backend->data;
 	
-	retval = omnibook_acpi_execute(priv_data->ec_handle, GET_DISPLAY_METHOD, 0, &raw_state);
+	retval = omnibook_acpi_execute(priv_data->ec_handle, GET_DISPLAY_METHOD, NULL, &raw_state);
 	if (retval < 0)
 		return retval;
 
@@ -419,6 +423,40 @@ static int omnibook_acpi_set_display(const struct omnibook_operation *io_op, uns
 	return DISPLAY_LCD_ON | DISPLAY_CRT_ON | DISPLAY_TVO_ON;
 }
 
+static int omnibook_acpi_get_throttle(const struct omnibook_operation *io_op, unsigned int *state)
+{
+	int retval;
+	int thtl_en = 0, thtl_dty = 0;
+	int param;
+	struct acpi_backend_data *priv_data = io_op->backend->data;
+	
+	param = 0;
+	/* Read THEN aka THTL_EN in ICH6M datasheets */
+	retval = omnibook_acpi_execute(priv_data->ec_handle, GET_THROTTLE_METHOD, &param, &thtl_en); 
+	if ( thtl_en == 0 ) {
+		*state = 0;
+		return retval;
+	}
+	param = 1;
+	/* Read DUTY aka THTL_DTY in ICH6M datasheets */
+	retval = omnibook_acpi_execute(priv_data->ec_handle, GET_THROTTLE_METHOD, &param, &thtl_dty);
+	WARN_ON(thtl_dty > 7); /* We shouldn't encounter more than 7 throttling level */
+	*state = 8 - thtl_dty; /* THTL_DTY and ACPI T-state are reverse mapped */
+	return retval;
+}
+
+static int omnibook_acpi_set_throttle(const struct omnibook_operation *io_op, unsigned int state)
+{
+	struct acpi_backend_data *priv_data = io_op->backend->data;
+	/* THTL_DTY and ACPI T-state are reverse mapped */
+	/* throttling.c already clamped state between 0 and 7 */
+	if (state) 
+		state = 8 - state;
+
+	return omnibook_acpi_execute(priv_data->ec_handle, SET_THROTTLE_METHOD, &state, NULL);
+}
+
+
 struct omnibook_backend acpi_backend = {
 	.name = "acpi",
 	.init = omnibook_acpi_init,
@@ -427,6 +465,8 @@ struct omnibook_backend acpi_backend = {
 	.aerial_set = omnibook_acpi_set_wireless,
 	.display_get = omnibook_acpi_get_display,
 	.display_set = omnibook_acpi_set_display,
+	.throttle_get = omnibook_acpi_get_throttle,
+	.throttle_set = omnibook_acpi_set_throttle,
 };
 
 #else				/* CONFIG_ACPI */

@@ -27,6 +27,14 @@ Changelog file for omnibook package:
   The state of the Toshiba M35X is unknown and is assigned to TSM70, one
   should send a bug report if that fail.
   Fix bugs 1617818 and 1605278
+* New features for TSM70 class laptops:
+  -Cooling method control (can tune fan behaviour to 'Save power' or
+   to 'Maximize performance') provided in /proc/omnibook/cooling 
+  -CPU Throttling status&control (also known as ACPI T-States) should
+   be supported out of the box via /proc/acpi/processor/CPU0/throttling
+   but at least Toshiba Satellite M70 as a deficient ACPI FADT table
+   which prevent than, thus a custom access to ACPI Throttling is 
+   provided in /proc/omnibook/throttling
 
 2.20060921 Mathieu Bérard <math_b@users.sourceforge.net>
 * The minimal required kernel version is now 2.6.9 (kref API)

@@ -12,7 +12,7 @@
  * General Public License for more details.
  *
  * Written by Soós Péter <sp@osb.hu>, 2002-2004
- * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
+ * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006-2007
  */
 
 #include <linux/acpi.h>
@@ -55,7 +55,9 @@ struct omnibook_backend {
 
 	/* Public data fields, access with mutex held */
 	unsigned int hotkeys_state;	/* saved hotkeys state */
-	unsigned int misc_state;	/* various status bit: touchpad and muteled */
+	unsigned int touchpad_state;	/* saved touchpad state */
+	unsigned int muteled_state;	/* saved muteled state */
+	unsigned int cooling_state;	/* saved cooling method state */
 
 	/* Public function pointers */
 	int (*init) (const struct omnibook_operation *); 
@@ -68,6 +70,8 @@ struct omnibook_backend {
 	int (*hotkeys_set) (const struct omnibook_operation *, unsigned int); 
 	int (*display_get) (const struct omnibook_operation *, unsigned int *);
 	int (*display_set) (const struct omnibook_operation *, unsigned int);
+	int (*throttle_get) (const struct omnibook_operation *, unsigned int *);
+	int (*throttle_set) (const struct omnibook_operation *, unsigned int);
 
 	/* Private fields, never to be accessed outside backend code */
 	struct kref kref;	/* Reference counter of this backend */
@@ -133,6 +137,7 @@ static inline int __backend_##func##_set(const struct omnibook_operation *io_op,
 helper_func(aerial)
 helper_func(hotkeys)
 helper_func(display)
+helper_func(throttle)
 
 static inline int backend_byte_read(const struct omnibook_operation *io_op, u8 *data)
 {
@@ -502,6 +507,9 @@ static inline int omnibook_toggle(const struct omnibook_operation *io_op, int to
 #define TSM100_BLANK_INDEX	0x59
 #define	TSM100_LCD_ON		0xe1
 #define	TSM100_LCD_OFF		0xe2
+#define TSM70_COOLING_OFFSET	0xb0
+#define TSM70_COOLING_POWERSAVE	0x0
+#define TSM70_COOLING_PERF	0x2
 
 /* Toshiba SMI funtions and constants*/
 #define SMI_FN_PRESSED		0x8f

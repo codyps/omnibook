@@ -30,8 +30,7 @@ static int omnibook_muteled_set(struct omnibook_operation *io_op, int status)
 		goto out;
 	}
 
-	io_op->backend->misc_state = 
-		(io_op->backend->misc_state & ~MUTELED) | (MUTELED * !!status);
+	io_op->backend->muteled_state = !!status;
 
 	out:
 	mutex_unlock(&io_op->backend->mutex);
@@ -49,7 +48,7 @@ static int omnibook_muteled_read(char *buffer, struct omnibook_operation *io_op)
 		return -ERESTARTSYS;
 	len +=
 	    sprintf(buffer + len, "Last mute LED action was an %s command.\n",
-		    (io_op->backend->misc_state & MUTELED) ? "on" : "off");
+		    io_op->backend->touchpad_state ? "on" : "off");
 
 	mutex_unlock(&io_op->backend->mutex);
 	return len;
@@ -77,7 +76,7 @@ static int omnibook_muteled_resume(struct omnibook_operation *io_op)
 {	
 	int retval;
 	mutex_lock(&io_op->backend->mutex);
-	retval = __omnibook_toggle(io_op, !!(io_op->backend->misc_state & MUTELED));
+	retval = __omnibook_toggle(io_op, !!io_op->backend->touchpad_state);
 	mutex_unlock(&io_op->backend->mutex);
 	return retval;
 }

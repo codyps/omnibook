@@ -138,7 +138,6 @@ static void omnibook_pio_exit(const struct omnibook_operation *io_op)
 	if (match)
 		kref_put(&match->refcount, omnibook_free_port);
 
-	match = NULL;
 	match = omnibook_match_port(io_op->backend->data, io_op->write_addr);
 	if (match)
 		kref_put(&match->refcount, omnibook_free_port);

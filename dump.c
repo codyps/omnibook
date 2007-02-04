@@ -34,11 +34,15 @@ static int ecdump_read(char *buffer, struct omnibook_operation *io_op)
 	    sprintf(buffer + len,
 		    "EC      " " +00 +01 +02 +03 +04 +05 +06 +07"
 		    " +08 +09 +0a +0b +0c +0d +0e +0f\n");
+
+	if(mutex_lock_interruptible(&io_op->backend->mutex))
+			return -ERESTARTSYS;
+
 	for (i = 0; i < 255; i += 16) {
 		len += sprintf(buffer + len, "EC 0x%02x:", i);
 		for (j = 0; j < 16; j++) {
 			io_op->read_addr = i +j;
-			if (backend_byte_read(io_op, &v))
+			if (__backend_byte_read(io_op, &v))
 				break;
 			if (v != ecdump_regs[i + j])
 				len += sprintf(buffer + len, " *%02x", v);
@@ -50,6 +54,8 @@ static int ecdump_read(char *buffer, struct omnibook_operation *io_op)
 		if (j != 16)
 			break;
 	}
+
+	mutex_unlock(&io_op->backend->mutex);
 
 	/* These are way too dangerous to advertise openly... */
 #if 0
