@@ -188,8 +188,6 @@ static int omnibook_acpi_execute(acpi_handle dev_handle, char *method, const int
 	struct acpi_buffer buff;
 	union acpi_object arg, out_objs[1];
 	
-	WARN_ON(!mutex_is_locked(&acpi_backend.mutex));
-
 	if (param) {
 		args_list.count = 1;
 		args_list.pointer = &arg;
