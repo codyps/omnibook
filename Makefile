@@ -62,7 +62,6 @@ clean:
 		$(RM) -r *~ "#*#" .swp
 		$(RM) -r debian/omnibook-source *-stamp
 		$(RM) -r Module.symvers Modules.symvers
-		(cd misc/obtest; $(RM) obtest *.o;)
 
 install:	all
 		# Removing module from locations used by previous versions
@@ -93,7 +92,7 @@ kinstall:
 		$(MKDIR) $(KMODDIR)
 		$(INSTALL) *.h *.c sections.lds $(KMODDIR)
 		$(MKDIR) $(KDOCDIR)
-		$(INSTALL) doc/README doc/README-Hotkeys $(KDOCDIR)
+		$(INSTALL) doc/README $(KDOCDIR)
 		
 kpatch:		kinstall
 		(cd $(KSRC); patch -p1 < $(PWD)/misc/omnibook-integration.patch)
