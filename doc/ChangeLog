@@ -6,6 +6,7 @@ Changelog file for omnibook package:
   support with a far more complete autodetection database
   (see http://www2.informatik.hu-berlin.de/~tauber/acerhk/)
 * Fix and improve bluetooth handling for TSM30X class laptops
+  bluetooth now also works for TSA105
 * Implement Volume down,up and Mute buttons polling for ectype 2
    It was the last missing part from the "omke" module which never
    got ported to linux 2.6
