@@ -1,3 +1,16 @@
+omnibook (2:2.20070211-1) unstable; urgency=low
+
+  * New upstream release:
+    + For ectype 12 (Satellite M40X, M70, M100, ...):
+      - improved bluetooth control
+      - cooling method control
+      - CPU throttling ( ACPI T-States)
+    + Full hotkeys support for Tecra S1
+    + Bluetooth control for Ectype 14 (Satellite A100, A105, M115, ...)
+  * Updated homepage in long description
+
+ -- Julien Valroff <julien@kirya.net>  Mon, 12 Feb 2007 18:50:05 +0100
+
 omnibook (2:2.20060921+svn20061202-1) unstable; urgency=low
 
   * New SVN snapshot (r228)
