@@ -149,24 +149,20 @@ static int procfile_read_dispatch(char *page, char **start, off_t off, int count
 				  void *data)
 {
 	struct omnibook_feature *feature = (struct omnibook_feature *)data;
-	int len;
+	int len = 0;
 
 	if (!feature || !feature->read)
 		return -EINVAL;
+
+	if(off)
+		goto out;
 
 	len = feature->read(page, feature->io_op);
 	if (len < 0)
 		return len;
 
-	if (len <= off + count)
-		*eof = 1;
-	*start = page + off;
-	len -= off;
-	if (len > count)
-		len = count;
-	if (len < 0)
-		len = 0;
-
+	out:
+	*eof = 1;
 	return len;
 }
 
