@@ -2,6 +2,11 @@ Changelog file for omnibook package:
 ------------------------------------
 
 2.XXXXXXXX Mathieu Bérard <math_b@users.sourceforge.net>
+* DMI signature added:
+	Toshiba Satellite P25 (ectype 11)
+	Toshiba Satellite M60 (ectype 12)
+
+2.20070211 Mathieu Bérard <math_b@users.sourceforge.net>
 * Disable Acer support, acerhk module should provided better
   support with a far more complete autodetection database
   (see http://www2.informatik.hu-berlin.de/~tauber/acerhk/)

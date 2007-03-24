@@ -35,16 +35,28 @@ static int omnibook_cooling_write(char *buffer, struct omnibook_operation *io_op
 {
 	int retval = 0;
 
+	if(mutex_lock_interruptible(&io_op->backend->mutex))
+		return -ERESTARTSYS;
+
+
 	if (*buffer == '0') {
-		retval = backend_byte_write(io_op, 
+		retval = __backend_byte_write(io_op, 
 				TSM70_COOLING_OFFSET + TSM70_COOLING_POWERSAVE);
 	} else if (*buffer == '1') {
-		retval = backend_byte_write(io_op,
+		retval = __backend_byte_write(io_op,
 				TSM70_COOLING_OFFSET + TSM70_COOLING_PERF);
 	} else {
-		return -EINVAL;
+		retval = -EINVAL;
+		goto out;
 	}
 
+	/* *buffer is either '0' or '1' here */
+	if (!retval)
+		io_op->backend->cooling_state = *buffer - '0' ;
+
+	mutex_unlock(&io_op->backend->mutex);
+
+	out:
 	return retval;
 }
 

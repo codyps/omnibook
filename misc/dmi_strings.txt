@@ -230,6 +230,19 @@ Board Name:    DAL00
 Board Version: Null
 
 ---------------------------------------------
+Toshiba Satellite P25 -----------------------
+
+BIOS Vendor:   TOSHIBA
+BIOS Version:  V2.10
+BIOS Release:  12/27/2004
+System Vendor: TOSHIBA
+Product Name:  Satellite P25
+Version:       PSP20U-19PS8R
+Serial Number: Y3026615C
+Board Vendor:  TOSHIBA
+Board Name:    Null
+
+---------------------------------------------
 Toshiba Satellite P100 ----------------------
 
 BIOS Vendor:   TOSHIBA
@@ -278,6 +291,18 @@ Version:       PSM4XE-01400GFR
 Board Vendor:  TOSHIBA
 Board Name:    EAL30
 Board Version: Null
+
+---------------------------------------------
+Toshiba Satellite M60 -----------------------
+
+BIOS Vendor:   TOSHIBA
+BIOS Version:  V1.60
+BIOS Release:  03/16/2006
+System Vendor: TOSHIBA
+Product Name:  Satellite M60
+Version:       PSM60E-0CD01FIT
+Board Vendor:  TOSHIBA
+Board Name:    Null
 
 ---------------------------------------------
 Toshiba Satellite M70 -----------------------
