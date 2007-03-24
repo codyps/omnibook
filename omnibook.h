@@ -13,20 +13,13 @@
  * General Public License for more details.
  *
  * Written by Soós Péter <sp@osb.hu>, 2002-2004
- * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006
+ * Modified by Mathieu Bérard <mathieu.berard@crans.org>, 2006-2007
  */
 
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/input.h>
 #include <linux/version.h>
-
-/*
- * Module informations
- */
-
-#define OMNIBOOK_MODULE_NAME		"omnibook"
-#define OMNIBOOK_MODULE_VERSION		"2.20070211-trunk"
 
 /*
  * EC types
@@ -140,27 +133,5 @@ void omnibook_report_key(struct input_dev *dev, unsigned int keycode);
 #define dprintk(fmt, args...)	do { } while(0)
 #define dprintk_simple(fmt, args...) do { } while(0)
 #endif
-
-
-
-
-/* 
- * Configuration for standalone compilation: 
- * -Register as backlight depends on kernel config (requires 2.6.17+ interface)
- * -Legacy features disabled for ACPI enabled system
- */
-
-#ifdef  OMNIBOOK_STANDALONE
-#if     (defined (CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE) || defined(CONFIG_BACKLIGHT_CLASS_DEVICE)) && (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,16))
-#define CONFIG_OMNIBOOK_BACKLIGHT
-#else
-#undef  CONFIG_OMNIBOOK_BACKLIGHT
-#endif /* BACKLIGHT_CLASS_DEVICE */
-#ifdef CONFIG_ACPI_EC
-#undef CONFIG_OMNIBOOK_LEGACY
-#else
-#define CONFIG_OMNIBOOK_LEGACY
-#endif /* CONFIG_ACPI_EC */
-#endif /* OMNIBOOK_STANDALONE */
 
 /* End of file */
