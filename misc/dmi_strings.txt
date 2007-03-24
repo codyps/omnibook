@@ -238,7 +238,6 @@ BIOS Release:  12/27/2004
 System Vendor: TOSHIBA
 Product Name:  Satellite P25
 Version:       PSP20U-19PS8R
-Serial Number: Y3026615C
 Board Vendor:  TOSHIBA
 Board Name:    Null
 
