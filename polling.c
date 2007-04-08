@@ -18,6 +18,7 @@
 #include "omnibook.h"
 #include "hardware.h"
 #include <linux/workqueue.h>
+#include <linux/jiffies.h>
 
 /*
  * XE3GC type key_polling polling:
