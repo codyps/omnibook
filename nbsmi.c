@@ -321,7 +321,11 @@ static inline void nbsmi_ec_write_command(u8 index, u8 data)
  * XXX: Scancode 0x6d won't be detected if the keyboard has already been
  * grabbed (the Xorg event input driver do that)
  */
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,18))
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,21))
+static int hook_connect(struct input_handler *handler,
+					 struct input_dev *dev,
+					 const struct input_device_id *id)
+#elif (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,18))
 static struct input_handle *hook_connect(struct input_handler *handler,
 					 struct input_dev *dev,
 					 const struct input_device_id *id)
@@ -335,10 +339,10 @@ static struct input_handle *hook_connect(struct input_handler *handler,
 
 	/* the 0x0001 vendor magic number is found in atkbd.c */
 	if(!(dev->id.bustype == BUS_I8042 && dev->id.vendor == 0x0001))
-		return NULL;
+		goto out_nobind;
 
 	if(!strstr(dev->phys, I8042_KBD_PHYS_DESC))
-		return NULL;
+		goto out_nobind;
 
 	dprintk("hook_connect for device %s.\n", dev->name);
 
@@ -348,7 +352,11 @@ static struct input_handle *hook_connect(struct input_handler *handler,
 
 	handle = kzalloc(sizeof(struct input_handle), GFP_KERNEL);
 	if (!handle)
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,21))
+		return -ENOMEM;
+#else
 		return NULL;
+#endif
 
 	handle->dev = dev;
 	handle->handler = handler;
@@ -357,7 +365,15 @@ static struct input_handle *hook_connect(struct input_handler *handler,
 
 	input_open_device(handle);
 
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,21))
+	return 0;
+out_nobind:
+	return -ENODEV;
+#else
 	return handle;
+out_nobind:
+	return NULL;
+#endif	
 }
 
 static void hook_disconnect(struct input_handle *handle)
