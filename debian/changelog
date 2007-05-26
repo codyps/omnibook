@@ -1,4 +1,4 @@
-omnibook (2:2.20070211-+svn20070526-1) unstable; urgency=low
+omnibook (2:2.20070211+svn20070526-1) unstable; urgency=low
 
   * New SVN snapshot (r259):
     + Fixed compilation issue with kernel 2.6.21
