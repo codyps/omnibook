@@ -1,3 +1,9 @@
+omnibook (2:2.20070211+svn20070905-1) unstable; urgency=low
+
+  * Added dependency on dpatch
+
+ -- Julien Valroff <julien@kirya.net>  Wed, 05 Sep 2007 18:46:29 +0200
+
 omnibook (2:2.20070211+svn20070526-1) unstable; urgency=low
 
   * New SVN snapshot (r259):

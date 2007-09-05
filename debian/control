@@ -8,7 +8,7 @@ Standards-Version: 3.7.2
 
 Package: omnibook-source
 Architecture: all
-Depends: debhelper (>= 4.0.0), make, module-assistant, kernel-package, bzip2
+Depends: debhelper (>= 4.0.0), make, module-assistant, kernel-package, bzip2, dpatch
 Description: Source for the omnibook driver
  This package contains the loadable kernel modules for the HP OmniBooks,
  Pavilions, Toshiba Satellites and some other laptops manufactured by
