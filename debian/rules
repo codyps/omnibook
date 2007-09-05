@@ -103,7 +103,7 @@ STEM:=${KPKG_STEM}
 endif
 
 kdist_clean: prep-deb-files
-	-$(MAKE) KSRC=$(KSRC) clean
+	[ ! -f Makefile ] || $(MAKE) KSRC=$(KSRC) clean
 	dh_clean
 
 kdist_config: prep-deb-files
