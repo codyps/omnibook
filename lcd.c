@@ -49,7 +49,11 @@ static int omnibook_get_backlight(struct backlight_device *bd)
 	struct omnibook_operation *io_op;
 	u8 brgt;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
+	io_op = bl_get_data(bd);
+#else /* 2.6.23 */	
 	io_op = class_get_devdata(&bd->class_dev);
+#endif /* 2.6.23 */
 	retval = backend_byte_read(io_op, &brgt);
 	if (!retval)
 		retval = brgt;
@@ -66,7 +70,11 @@ static int omnibook_set_backlight(struct backlight_device *bd)
 #endif /* 2.6.21 */	
 	struct omnibook_operation *io_op;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
+	io_op = bl_get_data(bd);
+#else /* 2.6.23 */	
 	io_op = class_get_devdata(&bd->class_dev);
+#endif /* 2.6.23 */
 	return backend_byte_write(io_op, intensity);
 }
 #endif /* CONFIG_OMNIBOOK_BACKLIGHT */

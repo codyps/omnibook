@@ -70,6 +70,23 @@ static char ec_dev_list[][20] = {
 static int omnibook_acpi_bt_add(struct acpi_device *device);
 static int omnibook_acpi_bt_remove(struct acpi_device *device, int type);
 
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,21)
+const struct acpi_device_id omnibook_bt_ids[] = {
+	{"TOS6205", 0},
+	{"", 0},
+};
+
+static struct acpi_driver omnibook_bt_driver = {
+	.name	= OMNIBOOK_MODULE_NAME,
+	.class	= TOSHIBA_ACPI_BT_CLASS,
+	.ids	= omnibook_bt_ids,
+	.ops	= {
+			.add	=  omnibook_acpi_bt_add,
+			.remove	=  omnibook_acpi_bt_remove,
+		  },
+};
+#else /* 2.6.23 */
 static struct acpi_driver omnibook_bt_driver = {
 	.name	= OMNIBOOK_MODULE_NAME,
 	.class	= TOSHIBA_ACPI_BT_CLASS,
@@ -79,6 +96,8 @@ static struct acpi_driver omnibook_bt_driver = {
 			.remove	=  omnibook_acpi_bt_remove,
 		  },
 };
+#endif /* 2.6.23 */
+
 
 /*
  * ACPI backend private data structure
