@@ -1,9 +1,8 @@
 Source: omnibook
 Section: misc
 Priority: optional
-Maintainer: Mathieu Bérard <math_b@users.sourceforge.net>
-Uploaders: Julien Valroff <julien@kirya.net>
-Build-Depends: debhelper (>> 4.0.0), dpatch, bzip2
+Maintainer: Julien Valroff <julien@kirya.net>
+Build-Depends: debhelper (>> 5.0.0), dpatch, bzip2
 Standards-Version: 3.7.2
 
 Package: omnibook-source

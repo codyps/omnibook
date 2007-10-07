@@ -1,3 +1,15 @@
+omnibook (2:2.20070211+svn20071006-1) unstable; urgency=low
+
+  * New SVN snapshot (r264):
+    + Update for acpi and backlight API changes in linux 2.6.23
+  * First upload to Debian (Closes: #445602):
+    + Improved debian/copyright
+    + Bumped debhelper compat to version 5
+    + Added myself as maintainer
+    + Updated README.Debian
+
+ -- Julien Valroff <julien@kirya.net>  Sun, 07 Oct 2007 10:38:18 +0200
+
 omnibook (2:2.20070211+svn20070905-1) unstable; urgency=low
 
   * Added dependency on dpatch
