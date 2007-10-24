@@ -4,6 +4,7 @@ Priority: optional
 Maintainer: Julien Valroff <julien@kirya.net>
 Build-Depends: debhelper (>> 5.0.0), dpatch, bzip2
 Standards-Version: 3.7.2
+Homepage: http://omnibook.sf.net
 
 Package: omnibook-source
 Architecture: all
@@ -16,5 +17,3 @@ Description: Source for the omnibook driver
  This module is only compatible with Linux kernels >= 2.6.9
  .
  Kernel source is required to compile this module.
- .
-  Homepage: http://omnibook.sf.net

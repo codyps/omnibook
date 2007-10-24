@@ -7,8 +7,9 @@ omnibook (2:2.20070211+svn20071006-1) unstable; urgency=low
     + Bumped debhelper compat to version 5
     + Added myself as maintainer
     + Updated README.Debian
+  * Moved Homepage to own field (from pseudo-field in long description)
 
- -- Julien Valroff <julien@kirya.net>  Sun, 07 Oct 2007 10:38:18 +0200
+ -- Julien Valroff <julien@kirya.net>  Wed, 24 Oct 2007 19:15:04 +0200
 
 omnibook (2:2.20070211+svn20070905-1) unstable; urgency=low
 
