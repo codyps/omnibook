@@ -336,6 +336,7 @@ static struct input_handle *hook_connect(struct input_handler *handler,
 #endif
 {
 	struct input_handle *handle;
+	int error;
 
 	/* the 0x0001 vendor magic number is found in atkbd.c */
 	if(!(dev->id.bustype == BUS_I8042 && dev->id.vendor == 0x0001))
@@ -363,14 +364,38 @@ static struct input_handle *hook_connect(struct input_handler *handler,
 	handle->name = "omnibook_scancode_hook";
 	handle->private = handler->private;
 
-	input_open_device(handle);
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,21))
+	error = input_register_handle(handle);
+	if (error) {
+		dprintk("register_handle failed\n");
+		goto out_nobind_free;
+	} 
+	error = input_open_device(handle);
+	if (error) {
+		dprintk("register_handle failed\n");
+		input_unregister_handle(handle);
+		goto out_nobind_free;
+	} 
+	
+#else
+	status=input_open_device(handle);
+	if (error==0) dprintk("Input device opened\n");
+	else { 
+		dprintk("opening input device failed\n");
+		goto out_nobind_free;
+	}
+#endif
 
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,21))
 	return 0;
+out_nobind_free:
+	kfree(handle);
 out_nobind:
 	return -ENODEV;
 #else
 	return handle;
+out_nobind_free:
+	kfree(handle);
 out_nobind:
 	return NULL;
 #endif	
@@ -380,6 +405,9 @@ static void hook_disconnect(struct input_handle *handle)
 {
 	dprintk("hook_disconnect.\n");
 	input_close_device(handle);
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,21))
+	input_unregister_handle(handle);
+#endif
 	kfree(handle);
 }
 
