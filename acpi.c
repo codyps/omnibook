@@ -71,7 +71,7 @@ static int omnibook_acpi_bt_add(struct acpi_device *device);
 static int omnibook_acpi_bt_remove(struct acpi_device *device, int type);
 
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,21)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
 const struct acpi_device_id omnibook_bt_ids[] = {
 	{"TOS6205", 0},
 	{"", 0},

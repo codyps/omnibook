@@ -82,7 +82,7 @@ static struct proc_dir_entry *omnibook_proc_root = NULL;
 
 enum omnibook_ectype_t omnibook_ectype = NONE;
 
-static char *laptop_model __initdata;
+static const char *laptop_model __initdata;
 
 static int omnibook_userset = 0;
 
@@ -132,7 +132,11 @@ static struct omnibook_feature *omnibook_available_feature;
 extern struct omnibook_feature _start_features_driver[];
 extern struct omnibook_feature _end_features_driver[];
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24))
 static int __init dmi_matched(struct dmi_system_id *dmi)
+#else
+static int __init dmi_matched(const struct dmi_system_id *dmi)
+#endif
 {
 	omnibook_ectype = (int)dmi->driver_data;
 	if (dmi->ident)

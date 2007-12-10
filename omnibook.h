@@ -116,8 +116,15 @@ int omnibook_lcd_blank(int blank);
 struct omnibook_feature *omnibook_find_feature(char *name);
 void omnibook_report_key(struct input_dev *dev, unsigned int keycode);
 
+/* 
+ * __attribute_used__ is not defined anymore in 2.6.24
+ * but __used appeared only in 2.6.22
+ */
+#ifndef __used
+#define __used	__attribute_used__
+#endif
 
-#define __declared_feature __attribute__ (( __section__(".features"),  __aligned__(__alignof__ (struct omnibook_feature)))) __attribute_used__
+#define __declared_feature __attribute__ (( __section__(".features"),  __aligned__(__alignof__ (struct omnibook_feature)))) __used
 
 /*
  * yet another printk wrapper

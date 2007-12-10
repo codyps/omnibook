@@ -18,7 +18,11 @@
 
 #define HP_SIGNATURE	"Hewlett-Packard"
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24))
 static int __init dmi_matched(struct dmi_system_id *dmi);
+#else
+static int __init dmi_matched(const struct dmi_system_id *dmi);
+#endif
 
 static struct  dmi_system_id omnibook_ids[] __initdata = {
 	{
