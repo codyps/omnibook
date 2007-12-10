@@ -700,6 +700,15 @@ static struct  dmi_system_id omnibook_ids[] __initdata = {
 	},
 	{
 		.callback = dmi_matched,
+		.ident = "Toshiba Satellite M50",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite M50"),
+		},
+		.driver_data = (void*) TSM70
+	},
+	{
+		.callback = dmi_matched,
 		.ident = "Toshiba Satellite M60",
 		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
@@ -805,6 +814,15 @@ static struct  dmi_system_id omnibook_ids[] __initdata = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "Tecra A4"),
 		},
 		.driver_data = (void*) TSM40
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Toshiba Tecra A6",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "TECRA A6"),
+		},
+		.driver_data = (void*) TSM70
 	},
 	{
                 .callback = dmi_matched,

@@ -99,7 +99,7 @@ static int omnibook_hotkeys_suspend(struct omnibook_operation *io_op)
 }
 
 static const char pretty_name[][27] = {
-	"Onetouch buttons",
+	"Onetouch buttons are",
 	"Multimedia hotkeys are",
 	"Fn hotkeys are",
 	"Stick key is",

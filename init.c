@@ -138,7 +138,7 @@ static int __init dmi_matched(struct dmi_system_id *dmi)
 static int __init dmi_matched(const struct dmi_system_id *dmi)
 #endif
 {
-	omnibook_ectype = (int)dmi->driver_data;
+	omnibook_ectype = (enum omnibook_ectype_t)dmi->driver_data;
 	if (dmi->ident)
 		laptop_model = (char *)dmi->ident;
 	else

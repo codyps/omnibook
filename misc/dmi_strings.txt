@@ -292,6 +292,18 @@ Board Name:    EAL30
 Board Version: Null
 
 ---------------------------------------------
+Toshiba Satellite M50------------------------
+
+BIOS Vendor: TOSHIBA
+BIOS Version: V2.10
+BIOS Release: 05/08/2006
+System Vendor: TOSHIBA
+Product Name: Satellite M50
+Version: PSM51E-01C011IT
+Board Vendor: TOSHIBA
+Board Name: Null
+
+---------------------------------------------
 Toshiba Satellite M60 -----------------------
 
 BIOS Vendor:   TOSHIBA
@@ -390,6 +402,18 @@ Product Name:  Tecra A4
 Version:       PTA40E-0UN00FSP
 Board Vendor:  TOSHIBA
 Board Name:    Version A0
+
+---------------------------------------------
+Toshiba Tecra A6 ----------------------------
+
+BIOS Vendor: TOSHIBA
+BIOS Version: V2.70
+BIOS Release: 04/26/2007
+System Vendor: TOSHIBA
+Product Name: TECRA A6
+Version: PTA60U-0FK00D
+Board Vendor: TOSHIBA
+Board Name: Null
 
 ---------------------------------------------
 Toshiba Tecra S2 ----------------------------

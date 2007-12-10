@@ -128,12 +128,13 @@ static int __init omnibook_brightness_init(struct omnibook_operation *io_op)
 	 * and previous versions of this driver (wrongly) assumed it was 10 for
 	 * all models.
 	 * 
+	 * XE3GF
 	 * TSM30X
 	 * TSM70
 	 * TSM40
 	 * TSA105
 	 */
-	if (omnibook_ectype & (TSM70 | TSM30X | TSM40 | TSA105))
+	if (omnibook_ectype & (XE3GF | TSM70 | TSM30X | TSM40 | TSA105))
 		omnibook_max_brightness = 7;
 	else {
 		omnibook_max_brightness = 10;
