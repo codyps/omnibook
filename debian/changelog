@@ -1,3 +1,10 @@
+omnibook (2:2.20070211+svn20071217-1) unstable; urgency=low
+
+  * New SVN snapshot (r271)
+  * Added amd64 as a compatible architecture for the module
+
+ -- Julien Valroff <julien@kirya.net>  Mon, 17 Dec 2007 17:44:12 +0100
+
 omnibook (2:2.20070211+svn20071006-1) unstable; urgency=low
 
   * New SVN snapshot (r264):

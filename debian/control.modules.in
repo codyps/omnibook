@@ -6,7 +6,7 @@ Build-Depends: debhelper (>> 5.0.0)
 Standards-Version: 3.7.2
 
 Package: omnibook-module-_KVERS_
-Architecture: i386
+Architecture: i386 amd64
 Recommends: _STEM_-image-_KVERS_
 Provides: omnibook-module
 Description: omnibook module for Linux (kernel _KVERS_)
