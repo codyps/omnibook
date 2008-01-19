@@ -60,7 +60,7 @@ static struct input_dev *poll_input_dev;
 	__backend_byte_write(key_polling_driver.io_op, 0);
 	mutex_unlock(&key_polling_driver.io_op->backend->mutex);
 
-#ifdef OMNIBOOK_DEBUG
+#ifdef CONFIG_OMNIBOOK_DEBUG
 	if (unlikely(q0a & XE3GC_SLPB_MASK))
 		dprintk("Sleep button pressed.\n");
 	if (unlikely(q0a & XE3GC_F5_MASK))
@@ -144,7 +144,7 @@ static int omnibook_key_polling_read(char *buffer, struct omnibook_operation *io
 
 	len += sprintf(buffer + len, "Volume buttons polling is %s.\n",
 		(key_polling_enabled) ? "enabled" : "disabled");
-#ifdef OMNIBOOK_DEBUG
+#ifdef CONFIG_OMNIBOOK_DEBUG
 	if(key_polling_enabled)	
 		len += sprintf(buffer + len, "Will poll in %i msec.\n",
 		jiffies_to_msecs(omnibook_poll_work.timer.expires - jiffies));

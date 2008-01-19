@@ -72,7 +72,7 @@ static int omnibook_acpi_bt_remove(struct acpi_device *device, int type);
 
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
-const struct acpi_device_id omnibook_bt_ids[] = {
+static const struct acpi_device_id omnibook_bt_ids[] = {
 	{"TOS6205", 0},
 	{"", 0},
 };
@@ -106,6 +106,7 @@ struct acpi_backend_data {
 	acpi_handle ec_handle;  /* Handle on ACPI EC device */
 	acpi_handle bt_handle;  /* Handle on ACPI BT device */
 	unsigned has_antr_antw:1; /* Are there ANTR/ANTW methods in the EC device ? */
+	unsigned has_doss_dosw:1; /* Are there DOSS/DOSW methods in the EC device ? */
 };
 
 /*
@@ -149,17 +150,23 @@ static int omnibook_acpi_init(const struct omnibook_operation *io_op)
 			goto error1;
 		}
 
-		if((acpi_get_handle( dev_handle, "ANTR", &method_handle) == AE_OK) &&
-		    (acpi_get_handle( dev_handle, "ANTW", &method_handle) == AE_OK))
+		if((acpi_get_handle( dev_handle, GET_WIRELESS_METHOD, &method_handle) == AE_OK) &&
+		    (acpi_get_handle( dev_handle, SET_WIRELESS_METHOD, &method_handle) == AE_OK))
 			priv_data->has_antr_antw = 1;
+			
+		if((acpi_get_handle( dev_handle, GET_DISPLAY_METHOD, &method_handle) == AE_OK) &&
+		    (acpi_get_handle( dev_handle, SET_DISPLAY_METHOD, &method_handle) == AE_OK))
+			priv_data->has_doss_dosw = 1;
 
 		io_op->backend->data = (void *) priv_data;
+		
+		mutex_unlock(&io_op->backend->mutex);
 		
 		/* attempt to register Toshiba bluetooth ACPI driver */
 		acpi_bus_register_driver(&omnibook_bt_driver);
 
 		dprintk("ACPI backend init OK\n");
-		mutex_unlock(&io_op->backend->mutex);
+		
 		return 0;
 
 	} else {
@@ -182,8 +189,16 @@ static void omnibook_acpi_free(struct kref *ref)
 	struct omnibook_backend *backend;
 	backend = container_of(ref, struct omnibook_backend, kref);
 	dprintk("ACPI backend not used anymore: disposing\n");
+
+	
+	dprintk("ptr addr: %p driver name: %s\n",&omnibook_bt_driver, omnibook_bt_driver.name);
 	acpi_bus_unregister_driver(&omnibook_bt_driver);
+	
+	mutex_lock(&backend->mutex);
 	kfree(backend->data);
+	backend->data = NULL;
+	mutex_unlock(&backend->mutex);
+	mutex_destroy(&backend->mutex);
 }
 
 static void omnibook_acpi_exit(const struct omnibook_operation *io_op)
@@ -263,6 +278,7 @@ static int set_bt_status(const struct acpi_backend_data *priv_data, unsigned int
 
 static int omnibook_acpi_bt_add(struct acpi_device *device)
 {
+	int retval;
 	struct acpi_backend_data *priv_data = acpi_backend.data;
 	
 	dprintk("Enabling found Toshiba Bluetooth ACPI device.\n");
@@ -270,19 +286,26 @@ static int omnibook_acpi_bt_add(struct acpi_device *device)
 	strcpy(acpi_device_class(device), TOSHIBA_ACPI_BT_CLASS);
 
 	/* Save handle in backend private data structure. ugly. */
-	priv_data->bt_handle = device->handle;
 
-	return set_bt_status(priv_data, 1);
+	mutex_lock(&acpi_backend.mutex);
+	priv_data->bt_handle = device->handle;
+	retval = set_bt_status(priv_data, 1);
+	mutex_unlock(&acpi_backend.mutex);
+
+	return retval;
 }
 
 static int omnibook_acpi_bt_remove(struct acpi_device *device, int type)
 {
 	int retval;	
-	struct acpi_backend_data *priv_data = acpi_backend.data;	
+	struct acpi_backend_data *priv_data = acpi_backend.data;
 
+	mutex_lock(&acpi_backend.mutex);
 	dprintk("Disabling Toshiba Bluetooth ACPI device.\n");
 	retval = set_bt_status(priv_data, 0);
 	priv_data->bt_handle = NULL;
+	mutex_unlock(&acpi_backend.mutex);
+	
 	return retval;
 }
 
@@ -384,6 +407,9 @@ static int omnibook_acpi_get_display(const struct omnibook_operation *io_op, uns
 	int raw_state = 0;
 	struct acpi_backend_data *priv_data = io_op->backend->data;
 	
+	if(!priv_data->has_doss_dosw)
+		return -ENODEV;
+	
 	retval = omnibook_acpi_execute(priv_data->ec_handle, GET_DISPLAY_METHOD, NULL, &raw_state);
 	if (retval < 0)
 		return retval;
@@ -419,6 +445,9 @@ static int omnibook_acpi_set_display(const struct omnibook_operation *io_op, uns
 	int i; 
 	int matched = -1;
 	struct acpi_backend_data *priv_data = io_op->backend->data;
+
+	if(!priv_data->has_doss_dosw)
+		return -ENODEV;
 
 	for (i = 0; i < ARRAY_SIZE(acpi_display_mode_list); i++) {
 		if (acpi_display_mode_list[i] == state) {

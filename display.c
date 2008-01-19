@@ -73,10 +73,18 @@ static struct omnibook_feature display_driver;
 
 static int __init omnibook_display_init(struct omnibook_operation *io_op)
 {
+	int retval;
+	unsigned int state;
+	
 	/* Disable file writing if unsuported by backend */
 	if (!io_op->backend->display_set)
 		display_driver.write = NULL;
-	return 0;
+		
+	retval = backend_display_get(io_op, &state);
+	if (retval < 0)
+		return retval;
+	else
+		return 0;
 }
 
 static struct omnibook_tbl display_table[] __initdata = {

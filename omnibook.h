@@ -133,7 +133,7 @@ void omnibook_report_key(struct input_dev *dev, unsigned int keycode);
 #define O_WARN	KERN_WARNING OMNIBOOK_MODULE_NAME ": "
 #define O_ERR	KERN_ERR OMNIBOOK_MODULE_NAME ": "
 
-#ifdef OMNIBOOK_DEBUG
+#ifdef CONFIG_OMNIBOOK_DEBUG
 #define dprintk(fmt, args...) printk(KERN_INFO "%s: " fmt, OMNIBOOK_MODULE_NAME, ## args)
 #define dprintk_simple(fmt, args...) printk(fmt, ## args)
 #else
