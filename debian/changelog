@@ -1,3 +1,9 @@
+omnibook (2:2.20070211+svn20071217-2) unstable; urgency=low
+
+  * New Standards version 3.8.0 - no further changes needed
+
+ -- Julien Valroff <julien@kirya.net>  Sat, 19 Jul 2008 11:55:31 +0200
+
 omnibook (2:2.20070211+svn20071217-1) unstable; urgency=low
 
   * New SVN snapshot (r271)
