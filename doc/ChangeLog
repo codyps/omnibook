@@ -5,6 +5,10 @@ Changelog file for omnibook package:
 * DMI signature added:
 	Toshiba Satellite P25 (ectype 11)
 	Toshiba Satellite M60 (ectype 12)
+* Applied patch from Danny Kukawka <dkukawka@suse.de> to
+  fix compiler warning about use uninitialized variable
+* Applied patch from Danny Kukawka <dkukawka@suse.de> to
+  fix build the driver on older kernel versions
 
 2.20070211 Mathieu Bérard <math_b@users.sourceforge.net>
 * Disable Acer support, acerhk module should provided better
