@@ -379,7 +379,7 @@ static struct input_handle *hook_connect(struct input_handler *handler,
 	} 
 	
 #else
-	status=input_open_device(handle);
+	error = input_open_device(handle);
 	if (error==0) dprintk("Input device opened\n");
 	else { 
 		dprintk("opening input device failed\n");
