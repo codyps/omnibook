@@ -127,9 +127,10 @@ static inline u32 ati_do_smi_call(u16 function)
 
 static inline u32 intel_do_smi_call(u16 function, struct pci_dev *lpc_bridge)
 {
-	u32 state, sci_en;
+	u32 state;
 	unsigned long flags;
 	u32 retval = 0;
+	u32 sci_en = 0;
 
 	local_irq_save(flags);
 	preempt_disable();

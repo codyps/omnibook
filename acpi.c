@@ -330,7 +330,7 @@ static int get_bt_status(const struct acpi_backend_data *priv_data, unsigned int
 
 /*
  * Get the Bluetooth + Wireless status using the ANTR method
- * FIXME: what if ANTR and BTST disagree ? we thrust ANTR for now
+ * FIXME: what if ANTR and BTST disagree ? we trust ANTR for now
  */
 static int get_wireless_status(const struct acpi_backend_data *priv_data, unsigned int *state)
 {
