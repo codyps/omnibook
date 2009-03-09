@@ -76,7 +76,7 @@ static void __exit omnibook_cooling_exit(struct omnibook_operation *io_op)
 }
 
 static struct omnibook_tbl cooling_table[] __initdata = {
-	{TSM70, {CDI, 0, TSM70_FN_INDEX, 0, 0, 0 }},
+	{TSM70 | TSX205, {CDI, 0, TSM70_FN_INDEX, 0, 0, 0 }},
 	{0,}
 };
 
@@ -87,7 +87,7 @@ struct omnibook_feature __declared_feature cooling_driver = {
 	.write = omnibook_cooling_write,
 	.init = omnibook_cooling_init,
 	.exit = omnibook_cooling_exit,
-	.ectypes = TSM70,
+	.ectypes = TSM70 | TSX205,
 	.tbl = cooling_table,
 };
 

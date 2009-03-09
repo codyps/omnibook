@@ -64,7 +64,7 @@ static int omnibook_throttle_write(char *buffer, struct omnibook_operation *io_o
 
 
 static struct omnibook_tbl throttle_table[] __initdata = {
-	{TSM70, {ACPI,}},
+	{TSM70 | TSX205, {ACPI,}},
 	{0,}
 };
 
@@ -73,7 +73,7 @@ struct omnibook_feature __declared_feature throttle_driver = {
 	.enabled = 1,
 	.read = omnibook_throttle_read,
 	.write = omnibook_throttle_write,
-	.ectypes = TSM70,
+	.ectypes = TSM70 | TSX205,
 	.tbl = throttle_table,
 };
 

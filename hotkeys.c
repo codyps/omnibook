@@ -50,7 +50,6 @@ static int hotkeys_set_save(struct omnibook_operation *io_op, unsigned int state
  */
 static int hotkeys_get_save(struct omnibook_operation *io_op, unsigned int *state)
 {
-
 	unsigned int read_state = 0;
 	int retval = 0;
 
@@ -65,7 +64,6 @@ static int hotkeys_get_save(struct omnibook_operation *io_op, unsigned int *stat
 	/* Return previously set state for the fields that are write only */
 	*state = (read_state & io_op->backend->hotkeys_read_cap) + 
 		 (io_op->backend->hotkeys_state & ~io_op->backend->hotkeys_read_cap);
-
 
 	out:
 	mutex_unlock(&io_op->backend->mutex);
@@ -129,7 +127,6 @@ static int omnibook_hotkeys_read(char *buffer, struct omnibook_operation *io_op)
 				    (read_state & mask) ? "enabled" : "disabled");
 	}
 
-
 	return len;
 }
 
@@ -172,6 +169,7 @@ static struct omnibook_tbl hotkeys_table[] __initdata = {
 	COMMAND(KBC,OMNIBOOK_KBC_CMD_ONETOUCH_ENABLE,OMNIBOOK_KBC_CMD_ONETOUCH_DISABLE)},
 	{TSM70, {CDI,}},
 	{TSM40, {SMI,}},
+	{TSX205, {ACPI,}},
 	{0,}
 };
 
@@ -186,7 +184,7 @@ static struct omnibook_feature __declared_feature hotkeys_driver = {
 	.resume = omnibook_hotkeys_resume,
 	.ectypes =
 	    XE3GF | XE3GC | OB500 | OB510 | OB6000 | OB6100 | XE4500 | AMILOD | TSP10 | TSM70 | TSM30X |
-	    TSM40,
+	    TSM40 | TSX205,
 	.tbl = hotkeys_table,
 };
 

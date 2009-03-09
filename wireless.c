@@ -89,8 +89,8 @@ static int __init omnibook_wifi_init(struct omnibook_operation *io_op)
 }
 
 static struct omnibook_tbl wireless_table[] __initdata = {
-	{TSM70, {ACPI,}},	/* stubs to select backend */
-	{TSM40, {SMI,}},	/* stubs to select backend */
+	{TSM70 | TSX205, {ACPI,}},	/* stubs to select backend */
+	{TSM40, {SMI,}},		/* stubs to select backend */
 	{0,}
 };
 
@@ -100,7 +100,7 @@ static struct omnibook_feature __declared_feature wifi_driver = {
 	.read = omnibook_wifi_read,
 	.write = omnibook_wifi_write,
 	.init = omnibook_wifi_init,
-	.ectypes = TSM70 | TSM40,
+	.ectypes = TSM70 | TSM40 | TSX205,
 	.tbl = wireless_table,
 };
 

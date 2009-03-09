@@ -67,7 +67,7 @@ struct omnibook_backend {
 	int (*aerial_get) (const struct omnibook_operation *, unsigned int *);
 	int (*aerial_set) (const struct omnibook_operation *, unsigned int);
 	int (*hotkeys_get) (const struct omnibook_operation *, unsigned int *);
-	int (*hotkeys_set) (const struct omnibook_operation *, unsigned int); 
+	int (*hotkeys_set) (const struct omnibook_operation *, unsigned int);
 	int (*display_get) (const struct omnibook_operation *, unsigned int *);
 	int (*display_set) (const struct omnibook_operation *, unsigned int);
 	int (*throttle_get) (const struct omnibook_operation *, unsigned int *);
@@ -534,3 +534,45 @@ static inline int omnibook_toggle(const struct omnibook_operation *io_op, int to
 
 #define SMI_FN_SCAN		0x6d	/* Fn key scancode */
 #define	SMI_DOCK_SCAN		0x6e	/* Dock scancode */
+
+/* Toshiba HCI method and constants */
+#define METHOD_HCI		"\\_SB.VALZ.SPFC"
+#define HCI_WORDS		6
+
+#define HCI_GET			0xfe00
+#define HCI_SET			0xff00
+
+#define HCI_HOTKEY_EVENT	0x001e
+#define HCI_RF_CONTROL		0x0056
+
+#define HCI_ENABLE		0x0001
+#define HCI_DISABLE		0x0000
+
+#define HCI_WIRELESS_CHECK	0x0001
+#define HCI_WIRELESS_POWER	0x0200
+
+#define HCI_SUCCESS		0x0000
+#define HCI_FAILURE		0x1000
+#define HCI_NOT_SUPPORTED	0x8000
+
+/* Toshiba Satellite X205 methods */
+#define TSX205_EVENTS_METHOD	"TOHK"
+#define TSX205_KILLSW_METHOD	"KLSW"
+
+#define ACPI_FN_MASK		0x01
+#define ACPI_FN_SCAN		0x6e	/* Fn key scancode */
+
+/* HCI key definitions */
+#define HCI_FN			0x100
+#define HCI_MUTE		0x101
+#define HCI_1			0x102
+#define HCI_2			0x103
+#define HCI_SPACE		0x139
+#define HCI_BREAK		0x13b
+#define HCI_BSM			0x13c
+#define HCI_SUSPEND		0x13d
+#define HCI_HIBERNATE		0x13e
+#define HCI_BRIGHTNESSDOWN	0x140
+#define HCI_BRIGHTNESSUP	0x141
+#define HCI_WLAN		0x142
+#define HCI_TOUCHPAD		0x143

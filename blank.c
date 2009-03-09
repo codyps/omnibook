@@ -113,7 +113,7 @@ static void __exit omnibook_console_blank_cleanup(struct omnibook_operation *io_
 }
 
 static struct omnibook_tbl blank_table[] __initdata = {
-	{TSM70, {CDI, 0, TSM100_BLANK_INDEX, 0, TSM100_LCD_OFF, TSM100_LCD_ON}},
+	{TSM70 | TSX205, {CDI, 0, TSM100_BLANK_INDEX, 0, TSM100_LCD_OFF, TSM100_LCD_ON}},
 	{XE3GF | XE3GC | AMILOD | TSP10 | TSM70 | TSM30X,
 	 COMMAND(KBC, OMNIBOOK_KBC_CMD_LCD_OFF, OMNIBOOK_KBC_CMD_LCD_ON)},
 	{OB500 | OB6000 | XE2, {PIO, OB500_GPO1, OB500_GPO1, 0, -OB500_BKLT_MASK, OB500_BKLT_MASK}},
@@ -129,7 +129,7 @@ static struct omnibook_feature __declared_feature blank_driver = {
 	.init = omnibook_console_blank_init,
 	.exit = omnibook_console_blank_cleanup,
 	.ectypes =
-	    XE3GF | XE3GC | OB500 | OB510 | OB6000 | OB6100 | XE2 | AMILOD | TSP10 | TSM70 | TSM30X,
+	    XE3GF | XE3GC | OB500 | OB510 | OB6000 | OB6100 | XE2 | AMILOD | TSP10 | TSM70 | TSM30X | TSX205,
 	.tbl = blank_table,
 };
 

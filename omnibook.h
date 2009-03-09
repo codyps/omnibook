@@ -38,13 +38,14 @@ extern enum omnibook_ectype_t {
 	XE2    = (1<<8),  /* 9  HP OmniBook XE2 */
 	AMILOD = (1<<9),  /* 10 Fujitsu Amilo D */
 	TSP10  = (1<<10), /* 11 Toshiba Satellite P10, P15, P20 and compatible */
-	TSM70 = (1<<11), /* 12 Toshiba Satellite M40X, M70 and compatible */
+	TSM70  = (1<<11), /* 12 Toshiba Satellite M40X, M70 and compatible */
 	TSM40  = (1<<12), /* 13 Toshiba Satellite M40, M45 and Tecra S1 */
-	TSA105 = (1<<13),  /* 14 Toshiba Satellite A105 and compatible (Real support is MISSING) */
-	TSM30X = (1<<14) /* 15 Toshiba Stallite M30X and compatible */
+	TSA105 = (1<<13), /* 14 Toshiba Satellite A105 and compatible (Real support is MISSING) */
+	TSM30X = (1<<14), /* 15 Toshiba Stallite M30X and compatible */
+	TSX205 = (1<<15)  /* 16 Toshiba Stallite X205 and compatible */
 } omnibook_ectype;
 
-#define ALL_ECTYPES XE3GF|XE3GC|OB500|OB510|OB6000|OB6100|XE4500|OB4150|XE2|AMILOD|TSP10|TSM70|TSM40|TSA105|TSM30X
+#define ALL_ECTYPES XE3GF|XE3GC|OB500|OB510|OB6000|OB6100|XE4500|OB4150|XE2|AMILOD|TSP10|TSM70|TSM40|TSA105|TSM30X|TSX205
 
 /*
  * This represent a feature provided by this module
@@ -53,15 +54,15 @@ extern enum omnibook_ectype_t {
 struct omnibook_operation;
 
 struct omnibook_feature {
-	char *name;		/* Name */
-	int enabled;		/* Set from module parameter */
+	char *name;						/* Name */
+	int enabled;						/* Set from module parameter */
 	int (*read) (char *,struct omnibook_operation *);	/* Procfile read function */
-	int (*write) (char *,struct omnibook_operation *);/* Procfile write function */
-	int (*init) (struct omnibook_operation *);	/* Specific Initialization function */
-	void (*exit) (struct omnibook_operation *);	/* Specific Cleanup function */
-	int (*suspend) (struct omnibook_operation *);	/* PM Suspend function */
-	int (*resume) (struct omnibook_operation *);	/* PM Resume function */
-	int ectypes;		/* Type(s) of EC we support for this feature (bitmask) */
+	int (*write) (char *,struct omnibook_operation *);	/* Procfile write function */
+	int (*init) (struct omnibook_operation *);		/* Specific Initialization function */
+	void (*exit) (struct omnibook_operation *);		/* Specific Cleanup function */
+	int (*suspend) (struct omnibook_operation *);		/* PM Suspend function */
+	int (*resume) (struct omnibook_operation *);		/* PM Resume function */
+	int ectypes;						/* Type(s) of EC we support for this feature (bitmask) */
 	struct omnibook_tbl *tbl;
 	struct omnibook_operation *io_op;
 	struct list_head list;
@@ -82,13 +83,13 @@ enum {
  * Hotkeys state backend neutral masks
  */
 enum {
-	HKEY_ONETOUCH = (1<<0),		/* 1  Ontetouch button scancode generation */
-	HKEY_MULTIMEDIA = (1<<1),	/* 2  "Multimedia hotkeys" scancode generation */	
-	HKEY_FN = (1<<2),		/* 4  Fn + foo hotkeys scancode generation */
-	HKEY_STICK = (1<<3),		/* 8  Stick key (Fn locked/unlocked on keypress)  */
-	HKEY_TWICE_LOCK = (1<<4),	/* 16 Press Fn twice to lock */
-	HKEY_DOCK = (1<<5),		/* 32 (Un)Dock events scancode generation */
-	HKEY_FNF5 = (1<<6),		/* 64 Fn + F5 (toggle display) is enabled */
+	HKEY_ONETOUCH = (1<<0),		/* 1   Ontetouch button scancode generation */
+	HKEY_MULTIMEDIA = (1<<1),	/* 2   "Multimedia hotkeys" scancode generation */	
+	HKEY_FN = (1<<2),		/* 4   Fn + foo hotkeys scancode generation */
+	HKEY_STICK = (1<<3),		/* 8   Stick key (Fn locked/unlocked on keypress)  */
+	HKEY_TWICE_LOCK = (1<<4),	/* 16  Press Fn twice to lock */
+	HKEY_DOCK = (1<<5),		/* 32  (Un)Dock events scancode generation */
+	HKEY_FNF5 = (1<<6),		/* 64  Fn + F5 (toggle display) is enabled */
 };
 
 #define HKEY_LAST_SHIFT 6

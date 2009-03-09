@@ -133,8 +133,9 @@ static int __init omnibook_brightness_init(struct omnibook_operation *io_op)
 	 * TSM70
 	 * TSM40
 	 * TSA105
+	 * TSX205
 	 */
-	if (omnibook_ectype & (XE3GF | TSM70 | TSM30X | TSM40 | TSA105))
+	if (omnibook_ectype & (XE3GF | TSM70 | TSM30X | TSM40 | TSA105 | TSX205))
 		omnibook_max_brightness = 7;
 	else {
 		omnibook_max_brightness = 10;
@@ -180,7 +181,7 @@ static void __exit omnibook_brightness_cleanup(struct omnibook_operation *io_op)
 }
 
 static struct omnibook_tbl lcd_table[] __initdata = {
-	{TSM70, {CDI, TSM70_LCD_READ, TSM70_LCD_WRITE, 0, 0, 0}},
+	{TSM70 | TSX205, {CDI, TSM70_LCD_READ, TSM70_LCD_WRITE, 0, 0, 0}},
 	{TSM40, {SMI, SMI_GET_LCD_BRIGHTNESS, SMI_SET_LCD_BRIGHTNESS, 0, 0, 0}},
 	{XE3GF | TSP10 | TSM70 | TSM30X, SIMPLE_BYTE(EC, XE3GF_BRTS, XE3GF_BRTS_MASK)},
 	{XE3GC, SIMPLE_BYTE(EC, XE3GC_BTVL, XE3GC_BTVL_MASK)},
@@ -196,7 +197,7 @@ static struct omnibook_feature __declared_feature lcd_driver = {
 	.write = omnibook_brightness_write,
 	.init = omnibook_brightness_init,
 	.exit = omnibook_brightness_cleanup,
-	.ectypes = XE3GF | XE3GC | AMILOD | TSP10 | TSM70 | TSM30X | TSM40 | TSA105,
+	.ectypes = XE3GF | XE3GC | AMILOD | TSP10 | TSM70 | TSM30X | TSM40 | TSA105 | TSX205,
 	.tbl = lcd_table,
 };
 

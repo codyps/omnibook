@@ -91,6 +91,7 @@ const struct pci_device_id lpc_bridge_table[] = {
 	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_1, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
 	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_30, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
 	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_31, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
+        {PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH8_4, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
 	{PCI_VENDOR_ID_ATI, PCI_DEVICE_ID_ATI_SB400, PCI_ANY_ID, PCI_ANY_ID, 0, 0,},
 	{0,},			/* End of list */
 };
@@ -189,6 +190,7 @@ static int enable_cdimode(void)
 		case PCI_DEVICE_ID_INTEL_ICH7_1:
 		case PCI_DEVICE_ID_INTEL_ICH7_30:
 		case PCI_DEVICE_ID_INTEL_ICH7_31:
+		case PCI_DEVICE_ID_INTEL_ICH8_4:	/* ICH8 */
 			pci_read_config_dword(lpc_bridge, INTEL_LPC_GEN4_DEC, &(value.dword));
 			pci_reg_state.dword = value.dword;
 			value.dword = 0x3CFF21;
@@ -278,6 +280,7 @@ static void clear_cdimode_pci(void)
 		case PCI_DEVICE_ID_INTEL_ICH7_1:
 		case PCI_DEVICE_ID_INTEL_ICH7_30:
 		case PCI_DEVICE_ID_INTEL_ICH7_31:
+		case PCI_DEVICE_ID_INTEL_ICH8_4:	/* ICH8 */
 			pci_write_config_dword(lpc_bridge, INTEL_LPC_GEN4_DEC, pci_reg_state.dword);
 			break;
 		default:	/* All other Intel chipset */
@@ -303,7 +306,7 @@ static int omnibook_cdimode_init(const struct omnibook_operation *io_op)
 	int i;
 
 	/* ectypes other than TSM70 have no business with this backend */
-	if (!(omnibook_ectype & TSM70))
+	if (!(omnibook_ectype & (TSM70 | TSX205)))
 		return -ENODEV;
 
 	if (io_op->backend->already_failed) {
@@ -404,7 +407,7 @@ static void cdimode_free(struct kref *ref)
 static void omnibook_cdimode_exit(const struct omnibook_operation *io_op)
 {
 	/* ectypes other than TSM70 have no business with this backend */
-	BUG_ON(!(omnibook_ectype & TSM70));
+	BUG_ON(!(omnibook_ectype & (TSM70 | TSX205)));
 	dprintk("Trying to dispose cdimode\n");
 	kref_put(&io_op->backend->kref, cdimode_free);
 }

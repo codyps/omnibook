@@ -35,10 +35,10 @@ static int omnibook_get_fan(struct omnibook_operation *io_op)
 	/*
 	 * For most models the reading is a bool
 	 * It as to be inverted on all but OB6000|OB6100|OB4150|AMILOD
-	 * TSP10|XE3GF return an integer
+	 * TSP10|XE3GF|TSX205 return an integer
 	 */
 
-	if (omnibook_ectype & (TSP10 | XE3GF))
+	if (omnibook_ectype & (TSP10 | XE3GF | TSX205))
 		retval = fan;
 	else if (omnibook_ectype & (OB6000 | OB6100 | OB4150 | AMILOD))
 		retval = !!fan;
@@ -57,7 +57,7 @@ static int omnibook_fan_off(struct omnibook_operation *io_op)
 {
 	int i, retval = 0;
 
-	if (!(omnibook_ectype & (XE3GF | TSP10))) {
+	if (!(omnibook_ectype & (XE3GF | TSP10 | TSX205))) {
 		retval = omnibook_apply_write_mask(io_op, 0);
 		return retval;
 	} else {
@@ -156,7 +156,7 @@ static int __init omnibook_fan_init(struct omnibook_operation *io_op)
 }
 
 static struct omnibook_tbl fan_table[] __initdata = {
-	{XE3GF | TSP10, {EC, XE3GF_FSRD, XE3GF_FSRD, 0, XE3GF_FAN_ON_MASK, 0}},
+	{XE3GF | TSP10 | TSM70 | TSX205, {EC, XE3GF_FSRD, XE3GF_FSRD, 0, XE3GF_FAN_ON_MASK, 0}},
 	{OB500,
 	 {PIO, OB500_GPO1, OB500_GPO1, OB500_FAN_OFF_MASK, -OB500_FAN_ON_MASK, OB500_FAN_OFF_MASK}},
 	{OB510,
@@ -174,7 +174,7 @@ static struct omnibook_feature __declared_feature fan_driver = {
 	.read = omnibook_fan_read,
 	.write = omnibook_fan_write,
 	.init = omnibook_fan_init,
-	.ectypes = XE3GF | OB500 | OB510 | OB6000 | OB6100 | OB4150 | XE2 | AMILOD | TSP10,
+	.ectypes = XE3GF | OB500 | OB510 | OB6000 | OB6100 | OB4150 | XE2 | AMILOD | TSP10 | TSX205,
 	.tbl = fan_table,
 };
 

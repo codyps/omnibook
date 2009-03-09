@@ -9,6 +9,9 @@ Changelog file for omnibook package:
   fix compiler warning about use uninitialized variable
 * Applied patch from Danny Kukawka <dkukawka@suse.de> to
   fix build the driver on older kernel versions
+* Applied patch from Azael Avalos <coproscefalo@gmail.com>
+  to add support to Satellite X205 and other laptops based on
+  ICH8
 
 2.20070211 Mathieu Bérard <math_b@users.sourceforge.net>
 * Disable Acer support, acerhk module should provided better
