@@ -432,7 +432,7 @@ static inline int omnibook_toggle(const struct omnibook_operation *io_op, int to
  *	Keyboard controller command for some laptop functions
  */
 
-#define OMNIBOOK_KBC_CONTROL_CMD	0x59
+#define OMNIBOOK_KBC_CONTROL_CMD		0x59
 
 /*
  *	Keyboard controller command parameters for functions available via kbc
@@ -536,7 +536,7 @@ static inline int omnibook_toggle(const struct omnibook_operation *io_op, int to
 #define	SMI_DOCK_SCAN		0x6e	/* Dock scancode */
 
 /* Toshiba HCI method and constants */
-#define METHOD_HCI		"\\_SB.VALZ.SPFC"
+#define HCI_METHOD		"SPFC"
 #define HCI_WORDS		6
 
 #define HCI_GET			0xfe00
@@ -556,14 +556,15 @@ static inline int omnibook_toggle(const struct omnibook_operation *io_op, int to
 #define HCI_NOT_SUPPORTED	0x8000
 
 /* Toshiba Satellite X205 methods */
-#define TSX205_EVENTS_METHOD	"TOHK"
+#define TSX205_EVENTS_METHOD	"INFO"
+#define TSX205_NOTIFY_METHOD	"NTFY"
 #define TSX205_KILLSW_METHOD	"KLSW"
 
 #define ACPI_FN_MASK		0x01
 #define ACPI_FN_SCAN		0x6e	/* Fn key scancode */
 
 /* HCI key definitions */
-#define HCI_FN			0x100
+#define HCI_FN_RELEASED		0x100
 #define HCI_MUTE		0x101
 #define HCI_1			0x102
 #define HCI_2			0x103
@@ -572,7 +573,9 @@ static inline int omnibook_toggle(const struct omnibook_operation *io_op, int to
 #define HCI_BSM			0x13c
 #define HCI_SUSPEND		0x13d
 #define HCI_HIBERNATE		0x13e
+#define HCI_VIDEOOUT		0x13f
 #define HCI_BRIGHTNESSDOWN	0x140
 #define HCI_BRIGHTNESSUP	0x141
 #define HCI_WLAN		0x142
 #define HCI_TOUCHPAD		0x143
+#define HCI_FN_PRESSED		0x17f

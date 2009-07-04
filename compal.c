@@ -134,13 +134,13 @@ static int check_cdimode_flag(unsigned int mode)
 	int i;
 	int retval;
 
-	dprintk("Index mode:");
+	/*dprintk("Index mode:");*/
 	for (i = 1; i <= 250; i++) {
 		retval = lowlevel_read(0xfbfc);
-		dprintk_simple(" [%i]", retval);
+		/*dprintk_simple(" [%i]", retval);*/
 		if (retval == mode) {
-			dprintk_simple(".\n");
-			dprintk("Index Mode Ok (%i) after %i iter\n", mode, i);
+			/*dprintk_simple(".\n");
+			dprintk("Index Mode Ok (%i) after %i iter\n", mode, i);*/
 			return 0;
 		}
 		udelay(100);
@@ -473,6 +473,7 @@ static int omnibook_cdimode_write(const struct omnibook_operation *io_op, u8 val
 static int omnibook_cdimode_hotkeys(const struct omnibook_operation *io_op, unsigned int state)
 {
 	int retval;
+
 	struct omnibook_operation hotkeys_op = 
 		{ CDI, 0, TSM70_FN_INDEX, 0, TSM70_FN_ENABLE, TSM70_FN_DISABLE};
 

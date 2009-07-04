@@ -18,7 +18,7 @@
 #Module informations
 
 MODULE_NAME = omnibook
-MODULE_VERSION = 2.20070211
+MODULE_VERSION = 2.20092106
 MODULE_BRANCH = trunk
 
 # Out-of-tree configuration
