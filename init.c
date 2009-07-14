@@ -291,7 +291,9 @@ static int __init omnibook_init(struct omnibook_feature *feature)
 		proc_entry->read_proc = &procfile_read_dispatch;
 		if (feature->write)
 			proc_entry->write_proc = &procfile_write_dispatch;
-		proc_entry->owner = THIS_MODULE;
+		#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
+			proc_entry->owner = THIS_MODULE;
+		#endif
 	}
 	list_add_tail(&feature->list, &omnibook_available_feature->list);
 	return 0;

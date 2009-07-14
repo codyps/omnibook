@@ -12,6 +12,7 @@ Changelog file for omnibook package:
 * Applied patches from Azael Avalos <coproscefalo@gmail.com>
   to add support to Satellite X205 and other laptops based on
   ICH8
+* Fix build with kernel >= 2.6.30
 
 2.20070211 Mathieu Bérard <math_b@users.sourceforge.net>
 * Disable Acer support, acerhk module should provided better
