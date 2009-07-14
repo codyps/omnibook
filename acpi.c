@@ -44,9 +44,21 @@
 #define	LCD_CADL	0x10
 #define	CRT_CADL	0x20
 #define	TVO_CADL	0x40
+#define	DVI_CADL	0x80
 #define	LCD_CSTE	0x1
 #define	CRT_CSTE	0x2
 #define	TVO_CSTE	0x4
+#define DVI_CSTE	0x8
+
+/* TSX205 Video-Out methods and return values */
+#define TSX205_SET_DISPLAY_METHOD "STBL"
+#define TSX205_SLI_DISPLAY_METHOD "SL01.VGA1.STBL"
+/* NOTE: Method DSSW seems to be some sort of auto-detect method */
+#define TSX205_AUTO_DISPLAY_METHOD "DSSW"
+#define TSX205_DSPY_DE	0x1F	/* DE - Detected and Enabled */
+#define TSX205_DSPY_DN	0x1D	/* DN - Detected and Not enabled */
+#define TSX205_DSPY_NE	0x0F	/* NE - Not detected and Enabled */
+#define TSX205_DSPY_NN	0x0D	/* NN - Not detected and Not enabled */
 
 #define GET_THROTTLE_METHOD "THRO"
 #define	SET_THROTTLE_METHOD "CLCK"
@@ -56,10 +68,22 @@ static char ec_dev_list[][20] = {
 	"\\_SB.PCI0.LPC0.EC0",
 };
 
-/* Toshiba's Hardware Control Interface method */
-static char hci_dev_list[][20] = {
-	"\\_SB.VALD",
+/* TSX205 HCI and display handles */
+static char tsx205_dev_list[][20] = {
 	"\\_SB.VALZ",
+	"\\_SB.PCI0.PEGP.VGA"
+};
+
+/* TSX205 GET video-out methods */
+static char tsx205_video_list[][20] = {
+	"LCD._DCS",
+	"CRT._DCS",
+	"TV._DCS",
+	"DVI._DCS",
+	"SL01.VGA1.LCD._DCS",
+	"SL01.VGA1.CRT._DCS",
+	"SL01.VGA1.TV._DCS",
+	"SL01.VGA1.DVI._DCS",
 };
 
 #define TOSHIBA_ACPI_BT_CLASS "bluetooth"
@@ -116,8 +140,10 @@ struct acpi_backend_data {
 	acpi_handle ec_handle;  /* Handle on ACPI EC device */
 	acpi_handle bt_handle;  /* Handle on ACPI BT device */
 	acpi_handle hci_handle; /* Handle on ACPI HCI device */
+	acpi_handle dis_handle; /* Handle on ACPI Display device */
 	unsigned has_antr_antw:1; /* Are there ANTR/ANTW methods in the EC device ? */
 	unsigned has_doss_dosw:1; /* Are there DOSS/DOSW methods in the EC device ? */
+	unsigned has_sli:1; /* Does the laptop has SLI enabled ? */
 	struct input_dev *acpi_input_dev;
 	struct work_struct fnkey_work;
 };
@@ -269,15 +295,15 @@ static const struct {
 	{ HCI_BREAK,          KEY_COFFEE},
 	{ HCI_1,              KEY_ZOOMOUT},
 	{ HCI_2,              KEY_ZOOMIN},
-	{ HCI_SPACE,          KEY_ZOOM},
-	{ HCI_BSM,            KEY_PROG1},
+	{ HCI_SPACE,          KEY_ZOOMRESET},
+	{ HCI_BSM,            KEY_BATTERY},
 	{ HCI_SUSPEND,        KEY_SLEEP},
 	{ HCI_HIBERNATE,      KEY_SUSPEND},
 	{ HCI_VIDEOOUT,       KEY_SWITCHVIDEOMODE},
 	{ HCI_BRIGHTNESSDOWN, KEY_BRIGHTNESSDOWN},
 	{ HCI_BRIGHTNESSUP,   KEY_BRIGHTNESSUP},
 	{ HCI_WLAN,           KEY_WLAN},
-	{ HCI_TOUCHPAD,       KEY_PROG2},
+	{ HCI_TOUCHPAD,       KEY_PROG1},
 	{ HCI_FN_PRESSED,     KEY_FN},
 	{ 0, 0},
 };
@@ -339,13 +365,54 @@ static int register_input_subsystem(struct acpi_backend_data *priv_data)
 }
 
 /*
+ * Execute an ACPI method which return either an integer or nothing
+ * and that require 0 or 1 numerical argument
+ * (acpi_evaluate_object wrapper)
+ */
+static int omnibook_acpi_execute(acpi_handle dev_handle, char *method, const int *param, int *result)
+{
+
+	struct acpi_object_list args_list;
+	struct acpi_buffer buff;
+	union acpi_object arg, out_objs[1];
+	
+	if (param) {
+		args_list.count = 1;
+		args_list.pointer = &arg;
+		arg.type = ACPI_TYPE_INTEGER;
+		arg.integer.value = *param;
+	} else
+		args_list.count = 0;
+
+	buff.length = sizeof(out_objs);
+	buff.pointer = out_objs;
+
+	if (acpi_evaluate_object(dev_handle, method, &args_list, &buff) != AE_OK) {
+		printk(O_ERR "ACPI method execution failed\n");
+		return -EIO;
+	}
+
+	if (!result)		/* We don't care what the method returned here */
+		return 0;
+
+	if (out_objs[0].type != ACPI_TYPE_INTEGER) {
+		printk(O_ERR "ACPI method result is not a number\n");
+		return -EINVAL;
+	}
+
+	*result = out_objs[0].integer.value;
+	return 0;
+}
+
+/*
  * Probe for expected ACPI devices
  */
 static int omnibook_acpi_init(const struct omnibook_operation *io_op)
 {
 	int retval = 0;	
-	acpi_handle dev_handle, method_handle, hci_handle;
+	acpi_handle dev_handle, method_handle, hci_handle, dis_handle;
 	int i;
+	int has_sli = 0;
 	struct acpi_backend_data *priv_data;
 	
 	if (unlikely(acpi_disabled)) {
@@ -373,16 +440,16 @@ static int omnibook_acpi_init(const struct omnibook_operation *io_op)
 			}
 		}
 		
-		if(!dev_handle) {
+		if (!dev_handle) {
 			printk(O_ERR "Can't get handle on ACPI EC device.\n");
 			retval = -ENODEV;
 			goto error1;
 		}
 
-		/* Probe for HCI device only on TSX205 models */
+		/* Probe for HCI and Display devices only on TSX205 models */
 		if (omnibook_ectype & TSX205) {
-			if (acpi_get_handle(NULL, hci_dev_list[1], &hci_handle) == AE_OK) {
-				dprintk("Toshiba's HCI device found\n");
+			if (acpi_get_handle(NULL, tsx205_dev_list[0], &hci_handle) == AE_OK) {
+				dprintk("Toshiba X205 HCI device found\n");
 				priv_data->hci_handle = hci_handle;
 			}
 
@@ -391,15 +458,39 @@ static int omnibook_acpi_init(const struct omnibook_operation *io_op)
 				retval = -ENODEV;
 				goto error1;
 			}
+
+			if (acpi_get_handle(NULL, tsx205_dev_list[1], &dis_handle) == AE_OK)
+				priv_data->dis_handle = dis_handle;
+
+			if (!dis_handle) {
+				printk(O_ERR "Couldn't get X205 Display handle.\n");
+				retval = -ENODEV;
+				goto error1;
+			}
+
+			/* Does the laptop has SLI enabled? */
+			omnibook_acpi_execute(dis_handle, (char *)TSX205_SLIVDO_METHOD, NULL, &has_sli);
+			if (has_sli)
+				dprintk("Toshiba X205 Display device found (SLI).\n");
+			else
+				dprintk("Toshiba X205 Display device found.\n");
+
+			priv_data->has_sli = has_sli;
 		}
 
-		if((acpi_get_handle( dev_handle, GET_WIRELESS_METHOD, &method_handle) == AE_OK) &&
+		if ((acpi_get_handle( dev_handle, GET_WIRELESS_METHOD, &method_handle) == AE_OK) &&
 		    (acpi_get_handle( dev_handle, SET_WIRELESS_METHOD, &method_handle) == AE_OK))
 			priv_data->has_antr_antw = 1;
-			
-		if((acpi_get_handle( dev_handle, GET_DISPLAY_METHOD, &method_handle) == AE_OK) &&
-		    (acpi_get_handle( dev_handle, SET_DISPLAY_METHOD, &method_handle) == AE_OK))
-			priv_data->has_doss_dosw = 1;
+
+		if (omnibook_ectype & TSX205) {
+			if ((acpi_get_handle(dis_handle, TSX205_AUTO_DISPLAY_METHOD, &method_handle) ==  AE_OK) &&
+			    (acpi_get_handle(dis_handle, TSX205_AUTO_DISPLAY_METHOD, &method_handle) ==  AE_OK))
+				priv_data->has_doss_dosw = 1;
+		} else {
+			if ((acpi_get_handle( dev_handle, GET_DISPLAY_METHOD, &method_handle) == AE_OK) &&
+			    (acpi_get_handle( dev_handle, SET_DISPLAY_METHOD, &method_handle) == AE_OK))
+				priv_data->has_doss_dosw = 1;
+		}
 
 		retval = register_input_subsystem(priv_data);
 		if(retval)
@@ -464,46 +555,6 @@ static void omnibook_acpi_exit(const struct omnibook_operation *io_op)
 
 /* forward declaration */
 struct omnibook_backend acpi_backend;
-
-/*
- * Execute an ACPI method which return either an integer or nothing
- * and that require 0 or 1 numerical argument
- * (acpi_evaluate_object wrapper)
- */
-static int omnibook_acpi_execute(acpi_handle dev_handle, char *method, const int *param, int *result)
-{
-
-	struct acpi_object_list args_list;
-	struct acpi_buffer buff;
-	union acpi_object arg, out_objs[1];
-	
-	if (param) {
-		args_list.count = 1;
-		args_list.pointer = &arg;
-		arg.type = ACPI_TYPE_INTEGER;
-		arg.integer.value = *param;
-	} else
-		args_list.count = 0;
-
-	buff.length = sizeof(out_objs);
-	buff.pointer = out_objs;
-
-	if (acpi_evaluate_object(dev_handle, method, &args_list, &buff) != AE_OK) {
-		printk(O_ERR "ACPI method execution failed\n");
-		return -EIO;
-	}
-
-	if (!result)		/* We don't care what the method returned here */
-		return 0;
-
-	if (out_objs[0].type != ACPI_TYPE_INTEGER) {
-		printk(O_ERR "ACPI method result is not a number\n");
-		return -EINVAL;
-	}
-
-	*result = out_objs[0].integer.value;
-	return 0;
-}
 
 /* Function taken from toshiba_acpi */
 static acpi_status hci_raw(const u32 in[HCI_WORDS], u32 out[HCI_WORDS])
@@ -742,6 +793,72 @@ static int omnibook_acpi_set_wireless(const struct omnibook_operation *io_op, un
 	return retval;
 }
 
+static int tsx205_get_display(const struct acpi_backend_data *priv_data, unsigned int *state, unsigned int device)
+{
+	int retval = 0;
+	int raw_state = 0;
+
+	retval = omnibook_acpi_execute(priv_data->dis_handle, tsx205_video_list[device], NULL, &raw_state);
+	if (retval < 0) {
+		dprintk(O_ERR "Failed to get video device (%d) state.\n", device);
+		return retval;
+	}
+
+	/* Ugly, but better than nothing... */
+	switch (device) {
+	case 0:
+	case 4:	/* LCD device */
+		dprintk("get_display LCD (%d) raw_state: %x\n", device, raw_state);
+		if (raw_state == TSX205_DSPY_DE) {
+			*state |= DISPLAY_LCD_DET;
+			*state |= DISPLAY_LCD_ON;
+		} else
+		if (raw_state == TSX205_DSPY_DN)
+			*state |= DISPLAY_LCD_DET;
+		else if (raw_state == TSX205_DSPY_NE)
+			*state |= DISPLAY_LCD_ON;
+		break;
+	case 1:
+	case 5:	/* CRT device */
+		dprintk("get_display CRT (%d) raw_state: %x\n", device, raw_state);
+		if (raw_state == TSX205_DSPY_DE) {
+			*state |= DISPLAY_CRT_DET;
+			*state |= DISPLAY_CRT_ON;
+		} else
+		if (raw_state == TSX205_DSPY_DN)
+			*state |= DISPLAY_CRT_DET;
+		else if (raw_state == TSX205_DSPY_NE)
+			*state |= DISPLAY_CRT_ON;
+		break;
+	case 2:
+	case 6:	/* TV-OUT device */
+		dprintk("get_display TV-OUT (%d) raw_state: %x\n", device, raw_state);
+		if (raw_state == TSX205_DSPY_DE) {
+			*state |= DISPLAY_TVO_DET;
+			*state |= DISPLAY_TVO_ON;
+		} else
+		if (raw_state == TSX205_DSPY_DN)
+			*state |= DISPLAY_TVO_DET;
+		else if (raw_state == TSX205_DSPY_NE)
+			*state |= DISPLAY_TVO_ON;
+		break;
+	case 3:
+	case 7:	/* DVI device */
+		dprintk("get_display DVI (%d) raw_state: %x\n", device, raw_state);
+		if (raw_state == TSX205_DSPY_DE) {
+			*state |= DISPLAY_DVI_DET;
+			*state |= DISPLAY_DVI_ON;
+		} else
+		if (raw_state == TSX205_DSPY_DN)
+			*state |= DISPLAY_DVI_DET;
+		else if (raw_state == TSX205_DSPY_NE)
+			*state |= DISPLAY_DVI_ON;
+		break;
+	}
+
+	return retval;
+}
+
 static int omnibook_acpi_get_display(const struct omnibook_operation *io_op, unsigned int *state)
 {
 	int retval = 0;
@@ -750,7 +867,24 @@ static int omnibook_acpi_get_display(const struct omnibook_operation *io_op, uns
 	
 	if(!priv_data->has_doss_dosw)
 		return -ENODEV;
+
+	if (omnibook_ectype & TSX205) {
+		int i;
+
+		/* Loop 'tru the different Video-Out devices */
+		if (priv_data->has_sli)
+			for (i = 4; i < ARRAY_SIZE(tsx205_video_list); i++)
+				retval = tsx205_get_display(priv_data, state, i);
+		else
+			for (i = 0; i < 4; i++)
+				retval = tsx205_get_display(priv_data, state, i);
+
+		if (retval < 0)
+			return -EIO;
 	
+		goto vidout;
+	}
+
 	retval = omnibook_acpi_execute(priv_data->ec_handle, GET_DISPLAY_METHOD, NULL, &raw_state);
 	if (retval < 0)
 		return retval;
@@ -761,13 +895,16 @@ static int omnibook_acpi_get_display(const struct omnibook_operation *io_op, uns
 	*state = (raw_state & LCD_CSTE) ? DISPLAY_LCD_ON : 0;
 	*state |= (raw_state & CRT_CSTE) ? DISPLAY_CRT_ON : 0;
 	*state |= (raw_state & TVO_CSTE) ? DISPLAY_TVO_ON : 0;
+	*state |= (raw_state & DVI_CSTE) ? DISPLAY_DVI_ON : 0;
 
 	*state |= (raw_state & LCD_CADL) ? DISPLAY_LCD_DET : 0;
 	*state |= (raw_state & CRT_CADL) ? DISPLAY_CRT_DET : 0;
 	*state |= (raw_state & TVO_CADL) ? DISPLAY_TVO_DET : 0;
+	*state |= (raw_state & DVI_CADL) ? DISPLAY_DVI_DET : 0;
 
-	return DISPLAY_LCD_ON | DISPLAY_CRT_ON | DISPLAY_TVO_ON | DISPLAY_LCD_DET | DISPLAY_CRT_DET
-	    | DISPLAY_TVO_DET;
+vidout:
+	return DISPLAY_LCD_ON | DISPLAY_CRT_ON | DISPLAY_TVO_ON | DISPLAY_DVI_ON
+	    | DISPLAY_LCD_DET | DISPLAY_CRT_DET | DISPLAY_TVO_DET | DISPLAY_DVI_DET;
 }
 
 static const unsigned int acpi_display_mode_list[] = {
@@ -778,6 +915,8 @@ static const unsigned int acpi_display_mode_list[] = {
 	DISPLAY_LCD_ON | DISPLAY_TVO_ON,
 	DISPLAY_CRT_ON | DISPLAY_TVO_ON,
 	DISPLAY_LCD_ON | DISPLAY_CRT_ON | DISPLAY_TVO_ON,
+	DISPLAY_DVI_ON,
+	DISPLAY_LCD_ON | DISPLAY_DVI_ON,
 };
 
 static int omnibook_acpi_set_display(const struct omnibook_operation *io_op, unsigned int state)
@@ -803,11 +942,17 @@ static int omnibook_acpi_set_display(const struct omnibook_operation *io_op, uns
 
 	dprintk("set_display raw_state: %x\n", matched);
 
-	retval = omnibook_acpi_execute(priv_data->ec_handle, SET_DISPLAY_METHOD, &matched, NULL);
+	if (omnibook_ectype & TSX205) {
+		if (priv_data->has_sli)
+			retval = omnibook_acpi_execute(priv_data->dis_handle, TSX205_SLI_DISPLAY_METHOD, &matched, NULL);
+		else
+			retval = omnibook_acpi_execute(priv_data->dis_handle, TSX205_SET_DISPLAY_METHOD, &matched, NULL);
+	} else
+		retval = omnibook_acpi_execute(priv_data->ec_handle, SET_DISPLAY_METHOD, &matched, NULL);
 	if (retval < 0)
 		return retval;
 
-	return DISPLAY_LCD_ON | DISPLAY_CRT_ON | DISPLAY_TVO_ON;
+	return DISPLAY_LCD_ON | DISPLAY_CRT_ON | DISPLAY_TVO_ON | DISPLAY_DVI_ON;
 }
 
 static int omnibook_acpi_get_throttle(const struct omnibook_operation *io_op, unsigned int *state)

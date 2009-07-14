@@ -88,7 +88,7 @@ static int __init omnibook_display_init(struct omnibook_operation *io_op)
 }
 
 static struct omnibook_tbl display_table[] __initdata = {
-	{TSM70, {ACPI,}},
+	{TSM70 | TSX205, {ACPI,}},
 	{TSM40, {SMI, SMI_GET_DISPLAY_STATE, SMI_SET_DISPLAY_STATE, 0, 0, 0}},
 	{XE3GF | TSP10 | TSM70 | TSM30X | TSM40, SIMPLE_BYTE(EC, XE3GF_STA1, XE3GF_SHDD_MASK)},
 	{XE3GC, SIMPLE_BYTE(EC, XE3GC_STA1, XE3GC_CRTI_MASK)},
@@ -105,7 +105,7 @@ static struct omnibook_feature __declared_feature display_driver = {
 	.write = omnibook_display_write,
 	.ectypes =
 	    XE3GF | XE3GC | OB500 | OB510 | OB6000 | OB6100 | XE4500 | OB4150 | TSP10 | TSM70 | TSM30X |
-	    TSM40,
+	    TSM40 | TSX205,
 	.tbl = display_table,
 };
 
