@@ -1,3 +1,15 @@
+omnibook (2:2.20070211+svn20090714-1) unstable; urgency=low
+
+  * New SVN snapshot:
+    + Applied patches from Azael Avalos <coproscefalo@gmail.com>
+    to add support to Satellite X205 and other laptops based on
+    ICH8
+  * New Standards version 3.8.2
+  * Bumped DH compat to 7
+  * Updated copyright information
+
+ -- Julien Valroff <julien@kirya.net>  Tue, 14 Jul 2009 09:56:01 +0200
+
 omnibook (2:2.20070211+svn20090227-1) unstable; urgency=low
 
   * New SVN snapshot
