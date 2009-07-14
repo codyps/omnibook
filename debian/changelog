@@ -7,8 +7,9 @@ omnibook (2:2.20070211+svn20090714-1) unstable; urgency=low
   * New Standards version 3.8.2
   * Bumped DH compat to 7
   * Updated copyright information
+  * Now use dh_prep instead of dh_clean -k
 
- -- Julien Valroff <julien@kirya.net>  Tue, 14 Jul 2009 09:56:01 +0200
+ -- Julien Valroff <julien@kirya.net>  Tue, 14 Jul 2009 10:03:00 +0200
 
 omnibook (2:2.20070211+svn20090227-1) unstable; urgency=low
 
