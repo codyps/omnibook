@@ -1,3 +1,11 @@
+omnibook (2:2.20070211+svn20090714-2) unstable; urgency=low
+
+  * New SVN snapshot:
+    + fix build issue induced by previous patches
+    + fix build with kernel >= 2.6.30
+
+ -- Julien Valroff <julien@kirya.net>  Tue, 14 Jul 2009 18:17:49 +0200
+
 omnibook (2:2.20070211+svn20090714-1) unstable; urgency=low
 
   * New SVN snapshot:
