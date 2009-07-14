@@ -559,6 +559,7 @@ static inline int omnibook_toggle(const struct omnibook_operation *io_op, int to
 #define TSX205_EVENTS_METHOD	"INFO"
 #define TSX205_NOTIFY_METHOD	"NTFY"
 #define TSX205_KILLSW_METHOD	"KLSW"
+#define TSX205_SLIVDO_METHOD	"CSLI"
 
 #define ACPI_FN_MASK		0x01
 #define ACPI_FN_SCAN		0x6e	/* Fn key scancode */
