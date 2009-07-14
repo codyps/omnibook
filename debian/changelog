@@ -1,4 +1,4 @@
-omnibook (2:2.20070211+svn20090714-2) unstable; urgency=low
+omnibook (2:2.20070211+svn20090714b-1) unstable; urgency=low
 
   * New SVN snapshot:
     + fix build issue induced by previous patches
