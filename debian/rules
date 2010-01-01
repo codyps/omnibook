@@ -4,8 +4,6 @@
 # Uncomment this to turn on verbose mode. 
 #export DH_VERBOSE=1
 
-include /usr/share/dpatch/dpatch.make
-
 CFLAGS = -Wall -g
 
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
@@ -36,22 +34,22 @@ build-arch-stamp:
 	dh_testdir
 	touch build-arch-stamp
 
-build-indep: patch configure-stamp build-indep-stamp
+build-indep: configure-stamp build-indep-stamp
 build-indep-stamp:
 	dh_testdir
 
 	touch build-indep-stamp
 
-build: patch build-arch build-indep
+build: build-arch build-indep
 
-clean: unpatch
+clean:
 	dh_testdir
 	rm -f build-arch-stamp build-indep-stamp configure-stamp
 
 	dh_clean
 
 install: DH_OPTIONS=
-install: patch build
+install: build
 	dh_testdir
 	dh_testroot
 	dh_prep

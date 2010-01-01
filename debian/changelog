@@ -1,3 +1,18 @@
+omnibook (2:2.20070211+svn20090714b-3) unstable; urgency=low
+
+  * Converted source package to 3.0 (quilt) format
+  * Added watch file
+  * Fixed build dependencies
+  * Adjusted module standards version to 3.8.3
+
+ -- Julien Valroff <julien@kirya.net>  Fri, 01 Jan 2010 17:51:34 +0100
+
+omnibook (2:2.20070211+svn20090714b-2) unstable; urgency=low
+
+  * Bumped Standards Version to 3.8.3 (no changes needed)
+
+ -- Julien Valroff <julien@kirya.net>  Fri, 21 Aug 2009 14:01:34 +0200
+
 omnibook (2:2.20070211+svn20090714b-1) unstable; urgency=low
 
   * New SVN snapshot:

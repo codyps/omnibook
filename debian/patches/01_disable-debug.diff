@@ -1,10 +1,7 @@
-#! /bin/sh /usr/share/dpatch/dpatch-run
-## 01_disable-debug.dpatch by  <julien@kirya.net>
-##
-## All lines beginning with `## DP:' are a description of the patch.
-## DP: No description.
+Description: Disable debug flag
+Author: Julien Valroff <julien@kirya.net>
+Forwarded: not-needed
 
-@DPATCH@
 diff -urNad omnibook~/Makefile omnibook/Makefile
 --- omnibook~/Makefile	2007-04-01 11:37:03.000000000 +0200
 +++ omnibook/Makefile	2007-05-26 15:20:41.000000000 +0200
