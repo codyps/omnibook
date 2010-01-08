@@ -1,0 +1,21 @@
+Basic installation instructions
+==================================
+
+1/ Install GNU make and C compiler (gcc), as well as the configured
+source of the running kernels (ie. either the kernel headers or the
+sources from which you have compiled your own kernel)
+
+2/ get the up-to-date sources:
+$ git://omnibook.git.sourceforge.net/gitroot/omnibook/omnibook
+
+3/ compile, install and load the module against your kernel sources:
+$ cd omnibook/
+# make load
+
+4/ (Optional) Add necessary module options to your /etc/modprobe.conf or in
+a file in /etc/modprobe.d/. e.g.: "options omnibook apmemu=1 dock=1
+user=1"
+
+5/ (Optional) Edit your startup scripts (eg. /etc/rc.local, /etc/rc.modules
+or /etc/modules) to load this module at boot time.
+
