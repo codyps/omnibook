@@ -1,0 +1,16 @@
+Description: Disable debug flag
+Author: Julien Valroff <julien@kirya.net>
+Forwarded: not-needed
+
+diff -urNad omnibook~/Makefile omnibook/Makefile
+--- omnibook~/Makefile	2007-04-01 11:37:03.000000000 +0200
++++ omnibook/Makefile	2007-05-26 15:20:41.000000000 +0200
+@@ -29,7 +29,7 @@
+ #Uncomment and set to force debug behavior
+ #NOTE:	Default (commented) behavior is to enable debug in trunk or branch svn 
+ #	snapshot and to disable it for release
+-#OMNIBOOK_WANT_DEBUG=n
++OMNIBOOK_WANT_DEBUG=n
+ 
+ #comment to disable backlight device support
+ OMNIBOOK_WANT_BACKLIGHT=y
