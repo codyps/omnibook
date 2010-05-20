@@ -1,4 +1,4 @@
-omnibook (2:2.20070211+svn20090714b-4) unstable; urgency=low
+omnibook (2:2.20070211+svn20100520-1) unstable; urgency=low
 
   * Bump Debian policy version to 3.8.4
   * Move to git - update VCS fields accordingly
