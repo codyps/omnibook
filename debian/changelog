@@ -1,8 +1,11 @@
-omnibook (2:2.20070211+svn20090714b-4) UNRELEASED; urgency=low
+omnibook (2:2.20070211+svn20090714b-4) unstable; urgency=low
 
   * Bump Debian policy version to 3.8.4
+  * Move to git - update VCS fields accordingly
+  * Apply patch from Tiago Batista <a19944@gmail.com> to fix
+    backlight compilation issue with kernel >= 2.6.34
 
- -- Julien Valroff <julien@kirya.net>  Fri, 01 Jan 2010 17:59:41 +0100
+ -- Julien Valroff <julien@kirya.net>  Thu, 20 May 2010 21:07:21 +0200
 
 omnibook (2:2.20070211+svn20090714b-3) unstable; urgency=low
 
