@@ -80,7 +80,7 @@ static struct omnibook_tbl cooling_table[] __initdata = {
 	{0,}
 };
 
-struct omnibook_feature __declared_feature cooling_driver = {
+static struct omnibook_feature __declared_feature cooling_driver = {
 	.name = "cooling",
 	.enabled = 1,
 	.read = omnibook_cooling_read,

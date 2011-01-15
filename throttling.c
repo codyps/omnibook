@@ -68,7 +68,7 @@ static struct omnibook_tbl throttle_table[] __initdata = {
 	{0,}
 };
 
-struct omnibook_feature __declared_feature throttle_driver = {
+static struct omnibook_feature __declared_feature throttle_driver = {
 	.name = "throttling",
 	.enabled = 1,
 	.read = omnibook_throttle_read,

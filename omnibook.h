@@ -66,6 +66,7 @@ struct omnibook_feature {
 	struct omnibook_tbl *tbl;
 	struct omnibook_operation *io_op;
 	struct list_head list;
+        long pad[3];
 };
 
 /*

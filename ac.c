@@ -42,7 +42,7 @@ static struct omnibook_tbl ac_table[] __initdata = {
 	{0,}
 };
 
-struct omnibook_feature __declared_feature ac_driver = {
+static struct omnibook_feature __declared_feature ac_driver = {
 	.name = "ac",
 #ifdef CONFIG_OMNIBOOK_LEGACY
 	.enabled = 1,

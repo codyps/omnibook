@@ -2,8 +2,10 @@ omnibook (2:2.20070211+svn20100520-2) unstable; urgency=low
 
   * Update my email address
   * Bump Debian policy to 3.9.1 
+  * Apply patch from Ryan Martin <kynalvarus@gmail.com> to fix
+    alignment issue with kernel >= 2.6.33
 
- -- Julien Valroff <julien@debian.org>  Sat, 15 Jan 2011 10:11:40 +0100
+ -- Julien Valroff <julien@debian.org>  Sat, 15 Jan 2011 10:12:15 +0100
 
 omnibook (2:2.20070211+svn20100520-1) unstable; urgency=low
 

@@ -216,6 +216,8 @@ static struct omnibook_operation *omnibook_backend_match(struct omnibook_tbl *tb
 
 	for (i = 0; tbl[i].ectypes; i++) {
 		if (omnibook_ectype & tbl[i].ectypes) {
+                    dprintk("Attempting backend %s init.\n",
+                            tbl[i].io_op.backend->name);
 			if (tbl[i].io_op.backend->init && tbl[i].io_op.backend->init(&tbl[i].io_op)) {
 				dprintk("Backend %s init failed, skipping entry.\n",
 					tbl[i].io_op.backend->name);
@@ -253,6 +255,7 @@ static int __init omnibook_init(struct omnibook_feature *feature)
 			dprintk("Match failed: disabling %s.\n", feature->name);
 			return -ENODEV;
 		}
+                dprintk("Match succeeded: continuing with %s.\n", feature->name);
 		feature->io_op = kmalloc(sizeof(struct omnibook_operation), GFP_KERNEL);
 		if (!feature->io_op)
 			return -ENOMEM;
@@ -323,10 +326,14 @@ static int __init omnibook_probe(struct platform_device *dev)
 		return -ENOMEM;
 	INIT_LIST_HEAD(&omnibook_available_feature->list);
 
+        dprintk("Feature range %p - %p\n", _start_features_driver, _end_features_driver);
+
 	for (i = 0; i < _end_features_driver - _start_features_driver; i++) {
 
 		feature = &_start_features_driver[i];
-
+                dprintk("Testing feature %s at address %p\n", feature->name, feature);
+		if (!feature->name)
+			continue;
 		if (!feature->enabled)
 			continue;
 
