@@ -1,3 +1,10 @@
+omnibook (2:2.20070211+svn20100520-2) unstable; urgency=low
+
+  * Update my email address
+  * Bump Debian policy to 3.9.1 
+
+ -- Julien Valroff <julien@debian.org>  Sat, 15 Jan 2011 10:11:40 +0100
+
 omnibook (2:2.20070211+svn20100520-1) unstable; urgency=low
 
   * Bump Debian policy version to 3.8.4

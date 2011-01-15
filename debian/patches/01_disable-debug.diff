@@ -1,5 +1,5 @@
 Description: Disable debug flag
-Author: Julien Valroff <julien@kirya.net>
+Author: Julien Valroff <julien@debian.org>
 Forwarded: not-needed
 
 diff -urNad omnibook~/Makefile omnibook/Makefile

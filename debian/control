@@ -1,10 +1,10 @@
 Source: omnibook
 Section: misc
 Priority: optional
-Maintainer: Julien Valroff <julien@kirya.net>
+Maintainer: Julien Valroff <julien@debian.org>
 Build-Depends: debhelper (>> 7.0.0)
 Build-Depends-Indep: bzip2
-Standards-Version: 3.8.4
+Standards-Version: 3.9.1
 Homepage: http://omnibook.sf.net
 Vcs-Git: git://omnibook.git.sourceforge.net/gitroot/omnibook/omnibook
 Vcs-Browser: http://omnibook.git.sourceforge.net/
