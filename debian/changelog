@@ -1,5 +1,6 @@
-omnibook (2:2.20070211+svn20100520-2) unstable; urgency=low
+omnibook (3:2.20070211+git20110115.208d01c-1) unstable; urgency=low
 
+  * Change package versioning scheme following to the switch to git
   * Update my email address
   * Bump Debian policy to 3.9.2 
   * Apply patch from Ryan Martin <kynalvarus@gmail.com> to fix

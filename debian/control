@@ -1,7 +1,7 @@
 Source: omnibook
 Section: misc
 Priority: optional
-Maintainer: Julien Valroff <julien@kirya.net>
+Maintainer: Julien Valroff <julien@debian.org>
 Build-Depends: debhelper (>= 8.0.0)
 Build-Depends-Indep: bzip2
 Standards-Version: 3.9.2
@@ -16,7 +16,8 @@ Description: Source for the omnibook kernel module
  The omnibook kernel module is intended to provide Linux kernel support for many
  laptops such as:
   * HP OmniBook and Pavilion
-  * Toshiba Satellite and Tecra which are not supported by the toshiba_acpi module
+  * Toshiba Satellite and Tecra which are not supported by the
+    toshiba_acpi module
   * Compal ACL00
   * Many laptops manufactured by Compal Electronics, Inc as ODM
  .
@@ -48,7 +49,8 @@ Description: omnibook kernel module sources for dkms
  The omnibook kernel module is intended to provide Linux kernel support for many
  laptops such as:
   * HP OmniBook and Pavilion
-  * Toshiba Satellite and Tecra which are not supported by the toshiba_acpi module
+  * Toshiba Satellite and Tecra which are not supported by the
+    toshiba_acpi module
   * Compal ACL00
   * Many laptops manufactured by Compal Electronics, Inc as ODM
  .
