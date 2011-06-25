@@ -48,7 +48,7 @@ install: build
 	cp debian/compat debian/rules debian/changelog \
 		debian/control debian/copyright debian/*.modules.in \
 		debian/$(psource)/usr/src/modules/$(sname)/debian
-	cp Makefile *.c *.h debian/$(psource)/usr/src/modules/$(sname)
+	cp Makefile *.c *.h *.lds debian/$(psource)/usr/src/modules/$(sname)
 
 	cd debian/$(psource)/usr/src && tar c modules | bzip2 -9 > $(sname).tar.bz2 && rm -rf modules
 	dh_install
