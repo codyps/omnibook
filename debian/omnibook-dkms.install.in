@@ -1,4 +1,5 @@
 *.c              usr/src/omnibook-_VERSION_/
 *.h              usr/src/omnibook-_VERSION_/
+*.lds            usr/src/omnibook-_VERSION_/
 Makefile         usr/src/omnibook-_VERSION_/
 debian/dkms.conf usr/src/omnibook-_VERSION_/
