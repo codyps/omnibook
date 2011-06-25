@@ -22,9 +22,8 @@ The omnibook-source package can be used in several ways,
    and install a module specific to the system you are building on and is
    not under control of the packaging system.
 
-If your are not using module-assisatant, you have to unpack 
+If your are not using module-assistant, you have to unpack 
 /usr/src/omnibook-source.tar.bz2 to /usr/src.
 
  -- Peter Soos <sp@osb.hu>, Wed, 25 Jan 2006 21:06:28 +0100
  -- Julien Valroff <julien@kirya.net>  Sun, 07 Oct 2007 10:38:07 +0200
-

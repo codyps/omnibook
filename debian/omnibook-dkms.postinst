@@ -1,0 +1,18 @@
+#!/bin/sh
+set -e
+
+CVERSION=`dpkg-query -W -f='${Version}' omnibook-dkms | awk -F "-" '{print $1}' | cut -d\: -f2`
+
+#DEBHELPER#
+
+case "$1" in
+    configure)
+        echo "Adding Module to DKMS build system"
+        dkms add -m omnibook -v $CVERSION > /dev/null
+        echo "Doing initial module build"
+        dkms build -m omnibook -v $CVERSION > /dev/null
+        echo "Installing initial module"
+        dkms install -m omnibook -v $CVERSION --force > /dev/null
+        echo "Done."
+    ;;
+esac

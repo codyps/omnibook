@@ -1,22 +1,73 @@
 Source: omnibook
 Section: misc
 Priority: optional
-Maintainer: Julien Valroff <julien@debian.org>
-Build-Depends: debhelper (>> 7.0.0)
+Maintainer: Julien Valroff <julien@kirya.net>
+Build-Depends: debhelper (>= 8.0.0)
 Build-Depends-Indep: bzip2
-Standards-Version: 3.9.1
+Standards-Version: 3.9.2
 Homepage: http://omnibook.sf.net
 Vcs-Git: git://omnibook.git.sourceforge.net/gitroot/omnibook/omnibook
 Vcs-Browser: http://omnibook.git.sourceforge.net/
 
 Package: omnibook-source
 Architecture: all
-Depends: debhelper (>= 7.0.0), make, module-assistant, kernel-package, bzip2
-Description: Source for the omnibook driver
- This package contains the loadable kernel modules for the HP OmniBooks,
- Pavilions, Toshiba Satellites and some other laptops manufactured by
- Compal Electronics, Inc as ODM.
+Depends: ${misc:Depends}, module-assistant, debhelper (>= 7), make, bzip2
+Description: Source for the omnibook kernel module
+ The omnibook kernel module is intended to provide Linux kernel support for many
+ laptops such as:
+  * HP OmniBook and Pavilion
+  * Toshiba Satellite and Tecra which are not supported by the toshiba_acpi module
+  * Compal ACL00
+  * Many laptops manufactured by Compal Electronics, Inc as ODM
+ .
+ Supported features depends on the exact laptop model but may include:
+  * Enabling hotkey buttons
+  * Console (LCD display) blanking
+  * Battery status monitoring.
+  * Fan and fan policy support
+  * Touchpad control
+  * AC Adapter status monitoring
+  * External display monitors status monitoring and control
+  * LCD brightness (backlight) monitoring and control
+  * Docking station/port replicator status
+  * CPU temperature monitoring
+  * Mute LED monitoring and control
+  * Wifi and Bluetooth adapters monitoring and control
+  * Cooling method control
+  * CPU Throttling control
  .
  This module is only compatible with Linux kernels >= 2.6.9
  .
- Kernel source is required to compile this module.
+ This package provides the source code for the acerhdf kernel module.
+ Kernel source or headers are required to compile this module.
+
+Package: omnibook-dkms
+Architecture: all
+Depends: ${misc:Depends}, dkms (>= 1.95)
+Description: omnibook kernel module sources for dkms
+ The omnibook kernel module is intended to provide Linux kernel support for many
+ laptops such as:
+  * HP OmniBook and Pavilion
+  * Toshiba Satellite and Tecra which are not supported by the toshiba_acpi module
+  * Compal ACL00
+  * Many laptops manufactured by Compal Electronics, Inc as ODM
+ .
+ Supported features depends on the exact laptop model but may include:
+  * Enabling hotkey buttons
+  * Console (LCD display) blanking
+  * Battery status monitoring.
+  * Fan and fan policy support
+  * Touchpad control
+  * AC Adapter status monitoring
+  * External display monitors status monitoring and control
+  * LCD brightness (backlight) monitoring and control
+  * Docking station/port replicator status
+  * CPU temperature monitoring
+  * Mute LED monitoring and control
+  * Wifi and Bluetooth adapters monitoring and control
+  * Cooling method control
+  * CPU Throttling control
+  .
+  This package provides the source code for the omnibook kernel module to be
+  built with dkms. Kernel sources or headers are required to compile this
+  module.
