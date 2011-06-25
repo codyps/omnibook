@@ -7,9 +7,10 @@ omnibook (3:2.20070211+git20110115.208d01c-1) unstable; urgency=low
     alignment issue with kernel >= 2.6.33
   * Add omnibook-dkms package
   * Rephrase package description
+  * Switch to DEP-5 style copyright file
   * Various packaging improvements 
 
- -- Julien Valroff <julien@debian.org>  Sat, 25 Jun 2011 07:49:52 +0200
+ -- Julien Valroff <julien@debian.org>  Sat, 25 Jun 2011 08:15:49 +0200
 
 omnibook (2:2.20070211+svn20100520-1) unstable; urgency=low
 

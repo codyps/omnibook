@@ -1,32 +1,33 @@
-This package was debianized by Peter Soos <sp@osb.hu> on
-Wed, 25 Jan 2006 21:06:28 +0100.
-Debian package was improved by Julien Valroff <julien@kirya.net>
+Format: http://dep.debian.net/deps/dep5
+Upstream-Name: omnibook
+Source: http://sourceforge.net/projects/omnibook
 
-It was downloaded from http://sourceforge.net/projects/omnibook
+Files: *
+Copyright: 2006-2007 Mathieu Bérard <math_b@users.sourceforge.net>
+License: GPL-2+
 
-Copyright Holder: 2006-2007 Mathieu Bérard <math_b@users.sourceforge.net>
+Files: dump.c
+Copyright: 2004-2005 Borislav Deianov <borislav@users.sf.net>
+License: GPL-2+
 
-dump.c:
-   Copyright (C) 2004-2005 Borislav Deianov <borislav@users.sf.net>
+Files: debian/*
+Copyright: 2006 Peter Soos <sp@osb.hu>
+           2006-2011 Julien Valroff <julien@debian.org>
+License: GPL-2+
 
-License:
-
-   This package is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
-
-   This package is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-The Debian packaging is
-  Copyright (C) 2006 Peter Soos <sp@osb.hu>
-  Copyright (C) 2006-2010 Julien Valroff <julien@kirya.net>
-It is licensed under the GPL, version 2.
-
-You should have received a copy of the GNU General Public License with
-the Debian GNU/Linux distribution in file /usr/share/common-licenses/GPL-2;
-if not, write to the  Free Software Foundation, Inc., 51 Franklin St,
-Fifth Floor, Boston, MA 02110-1301, USA.
+License: GPL-2+
+ This package is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ .
+ This package is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with this program. If not, see <http://www.gnu.org/licenses/>
+ .
+ On Debian systems, the complete text of the GNU General
+ Public License version 2 can be found in "/usr/share/common-licenses/GPL-2".
