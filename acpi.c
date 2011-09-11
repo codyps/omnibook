@@ -758,11 +758,11 @@ static int set_tsx205_wireless_status(const struct acpi_backend_data *priv_data,
 {
 	int retval;
 	int raw_state = !!(state & WIFI_STA);
+	u32 in[HCI_WORDS] = { HCI_SET, HCI_RF_CONTROL, raw_state, HCI_WIRELESS_POWER, 0, 0 };
+	u32 out[HCI_WORDS];
 
 	dprintk("set_wireless raw_state: %x\n", raw_state);
 
-	u32 in[HCI_WORDS] = { HCI_SET, HCI_RF_CONTROL, raw_state, HCI_WIRELESS_POWER, 0, 0 };
-	u32 out[HCI_WORDS];
 	hci_raw(in, out);
 
 	raw_state |= !!(state & BT_STA) << 0x1;	/* bit 1 */
@@ -1011,10 +1011,12 @@ static int omnibook_hci_set_hotkeys(const struct omnibook_operation *io_op, unsi
 {
 	u32 in[HCI_WORDS] = { 0, 0, 0, 0, 0, 0 };
 	u32 out[HCI_WORDS];
+	acpi_status status;
 	in[0] = HCI_SET;
 	in[1] = HCI_HOTKEY_EVENT;
 	in[2] = (state & HKEY_FN) ? 1 : 0;
-	acpi_status status = hci_raw(in, out);
+
+	status = hci_raw(in, out);
 
 	dprintk("set_hotkeys (Fn interface) raw_state: %x\n", in[2]);
 

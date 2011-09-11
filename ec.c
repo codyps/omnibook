@@ -169,7 +169,7 @@ static int omnibook_ec_display(const struct omnibook_operation *io_op, unsigned 
 	if (retval < 0)
 		return retval;
 
-	*state = !!(raw_state) & DISPLAY_CRT_DET;
+	*state = !!(raw_state & DISPLAY_CRT_DET);
 
 	return DISPLAY_CRT_DET;
 }

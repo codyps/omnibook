@@ -33,6 +33,9 @@ static struct backlight_device *omnibook_backlight_device;
 static int omnibook_get_backlight(struct backlight_device *bd);
 static int omnibook_set_backlight(struct backlight_device *bd);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,34)
+static struct backlight_properties props;
+#endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,21)
 static struct backlight_ops omnibookbl_ops = {
 #else /* 2.6.21 */
@@ -147,7 +150,6 @@ static int __init omnibook_brightness_init(struct omnibook_operation *io_op)
 
 #ifdef CONFIG_OMNIBOOK_BACKLIGHT
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,34)
-	struct backlight_properties props;
 	memset (&props, 0, sizeof(struct backlight_properties));
 	props.max_brightness = omnibook_max_brightness;
 	omnibook_backlight_device =
