@@ -126,7 +126,7 @@ ifeq ($(OMNIBOOK_STANDALONE),y)
 ifeq ($(OMNIBOOK_WANT_BACKLIGHT),y)
 ifdef CONFIG_BACKLIGHT_CLASS_DEVICE
 # we support backlight interface only after 2.6.16
-ifeq ($(shell if [ $(SUBLEVEL) -gt 16 ] ; then echo -n 'y'; fi),y)
+ifeq ($(shell if [ $(VERSION) -gt 2 -o $(SUBLEVEL) -gt 16 ] ; then echo -n 'y'; fi),y)
 EXTRA_CFLAGS += -DCONFIG_OMNIBOOK_BACKLIGHT
 else
 $(warning "Backlight support in only supported for kernel version newer than 2.6.16")
