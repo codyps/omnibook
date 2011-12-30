@@ -125,7 +125,11 @@ static int omnibook_key_polling_disable(void)
 	if(!key_polling_enabled)
 		goto out;
 
+#ifdef OLD_WORKQUEUE_COMPAT
 	cancel_rearming_delayed_workqueue(omnibook_wq, &omnibook_poll_work);
+#else
+	cancel_delayed_work_sync(&omnibook_poll_work);
+#endif
 	dprintk("Scancode emulation for volume buttons disabled.\n");
 	key_polling_enabled = 0;
 
@@ -187,8 +191,13 @@ static int omnibook_key_polling_resume(struct omnibook_operation *io_op)
 static int omnibook_key_polling_suspend(struct omnibook_operation *io_op)
 {
 	mutex_lock(&poll_mutex);
-	if(key_polling_enabled)
+	if(key_polling_enabled) {
+#ifdef OLD_WORKQUEUE_COMPAT
 		cancel_rearming_delayed_workqueue(omnibook_wq, &omnibook_poll_work);
+#else
+		cancel_delayed_work_sync(&omnibook_poll_work);
+#endif
+	}
 	mutex_unlock(&poll_mutex);
 	return 0;
 }

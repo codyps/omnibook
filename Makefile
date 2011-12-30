@@ -121,6 +121,10 @@ else
 EXTRA_CFLAGS += -DOMNIBOOK_MODULE_VERSION='"$(MODULE_VERSION)"'
 endif
 
+ifeq ($(shell if [ $(VERSION) -le 2 -a $(SUBLEVEL) -lt 37 ]; then echo -n 'y'; fi),y)
+EXTRA_CFLAGS += -DOLD_WORKQUEUE_COMPAT
+endif
+
 ifeq ($(OMNIBOOK_STANDALONE),y)
 
 ifeq ($(OMNIBOOK_WANT_BACKLIGHT),y)
